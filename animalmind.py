@@ -8,6 +8,10 @@ from typing import List, Dict, Optional
 from dataclasses import dataclass
 from datetime import datetime
 
+# Configuration constants
+MAX_CONTEXT_MESSAGES = 5
+MAX_SUMMARY_CONTENT_LENGTH = 100
+
 
 @dataclass
 class Message:
@@ -33,7 +37,7 @@ class Agent:
         In a real implementation, this would call an LLM API.
         """
         # Build context from recent messages
-        recent_context = context[-5:] if len(context) > 5 else context
+        recent_context = context[-MAX_CONTEXT_MESSAGES:]
         context_str = "\n".join([f"{msg.agent_name}: {msg.content}" for msg in recent_context])
         
         # Create a structured prompt for the agent
@@ -152,7 +156,10 @@ Key Areas Discussed:
         for spec, contents in by_spec.items():
             summary += f"\n{spec}:\n"
             for content in contents:
-                summary += f"  - {content[:100]}...\n" if len(content) > 100 else f"  - {content}\n"
+                if len(content) > MAX_SUMMARY_CONTENT_LENGTH:
+                    summary += f"  - {content[:MAX_SUMMARY_CONTENT_LENGTH]}...\n"
+                else:
+                    summary += f"  - {content}\n"
         
         summary += f"\n{'='*80}\n"
         return summary
