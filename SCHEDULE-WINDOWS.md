@@ -1,6 +1,6 @@
-# Running the ingest every hour on Windows (autonomous)
+# Running the ingest every 6 hours on Windows (autonomous)
 
-**Most efficient:** use **Windows Task Scheduler**. No extra process runs between runs; the task simply triggers once per hour. No Node daemon, no cron service—just a scheduled task.
+**Most efficient:** use **Windows Task Scheduler**. No extra process runs between runs; the task simply triggers every 6 hours. No Node daemon, no cron service—just a scheduled task.
 
 ## One-click setup (recommended)
 
@@ -10,7 +10,7 @@ Run this **once** from the repo (no need to open Task Scheduler yourself):
 scripts\setup-hourly-task.cmd
 ```
 
-That creates the scheduled task **AnimalMind Ingest** to run every hour. If you get "access denied," right‑click the script → **Run as administrator**. To run the task now: `schtasks /run /tn "AnimalMind Ingest"`. To remove it: `schtasks /delete /tn "AnimalMind Ingest" /f`.
+That creates the scheduled task **AnimalMind Ingest** to run every 6 hours. If you get "access denied," right‑click the script → **Run as administrator**. To run the task now: `schtasks /run /tn "AnimalMind Ingest"`. To remove it: `schtasks /delete /tn "AnimalMind Ingest" /f`.
 
 ---
 
@@ -26,7 +26,7 @@ If you prefer to create the task by hand:
 
 3. **General**
    - Name: `AnimalMind Ingest`
-   - Description: `Hourly data ingest (PubMed + CDC) for animal health insights`
+   - Description: `Data ingest every 6 hours (PubMed + CDC) for animal health insights`
    - Select **Run whether user is logged on or not** (and enter your password when prompted) so it runs when the machine is locked or you’re away.
    - Optionally: **Run with highest privileges** only if you need it (usually not).
 
@@ -62,7 +62,7 @@ If you prefer to create the task by hand:
 - In Task Scheduler, right‑click **AnimalMind Ingest** → **Run**. Check that `memory\data-sources\pubmed-recent.json` and `memory\data-sources\cdc-travel-notices.json` update and that `memory\ingest.log` gets a new line (e.g. `01/31/2026 12:00:00 ok`).
 - **Task Scheduler Library** → **AnimalMind Ingest** → **History** shows last run and result.
 
-## What runs every hour
+## What runs every 6 hours
 
 - **Program:** `scripts\run-ingest.cmd`  
   Runs `node scripts\ingest-data-sources.js` from the repo root, appends one line to `memory\ingest.log` (timestamp + ok/FAIL), then runs `node scripts\push-ingest-to-github.js` to **commit and push** the ingest (DB + JSON) to GitHub so the latest data is stored in the repo.
@@ -70,6 +70,6 @@ If you prefer to create the task by hand:
 
 ## Why Task Scheduler
 
-- **Efficient:** No process running between runs; OS wakes the task once per hour.
+- **Efficient:** No process running between runs; OS wakes the task every 6 hours.
 - **Native:** No extra services or cron ports; works on any Windows machine.
 - **Autonomous:** With “Run whether user is logged on or not,” it keeps running when you’re not there.
