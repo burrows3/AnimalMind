@@ -49,6 +49,15 @@ function main() {
     const docsDir = path.join(REPO_ROOT, 'docs');
     if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
     fs.writeFileSync(DOCS_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
+    // Inline fallback in index.html so data shows even if fetch path fails
+    const indexPath = path.join(REPO_ROOT, 'docs', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      let html = fs.readFileSync(indexPath, 'utf8');
+      if (html.includes('window.__DATA_SUMMARY__')) {
+        html = html.replace(/window\.__DATA_SUMMARY__\s*=\s*[^;]+;/, 'window.__DATA_SUMMARY__ = ' + JSON.stringify(summary) + ';');
+        fs.writeFileSync(indexPath, html, 'utf8');
+      }
+    }
   } catch (e) {
     console.warn('Could not write docs/data-summary.json:', e.message);
   }
