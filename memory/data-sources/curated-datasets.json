@@ -1,0 +1,34 @@
+{
+  "description": "Curated open datasets: animal cancer, imaging, radiographs, case data. Ingested into DB for discovery.",
+  "lastUpdated": "2026-02-01",
+  "items": [
+    {
+      "title": "Integrated Canine Data Commons (ICDC)",
+      "url": "https://caninecommons.cancer.gov/",
+      "data_type": "cancer",
+      "condition_or_topic": "Canine cancer",
+      "description": "NCI open-access canine cancer data: clinical, genomic, transcriptomic. API available."
+    },
+    {
+      "title": "CATCH – Canine Cutaneous Cancer Histology (TCIA)",
+      "url": "https://wiki.cancerimagingarchive.net/pages/viewpage.action?pageId=101941773",
+      "data_type": "imaging",
+      "condition_or_topic": "Canine cutaneous tumors",
+      "description": "350 histologic samples, seven canine cutaneous tumor types; high-res digital imaging."
+    },
+    {
+      "title": "Canine thoracic radiographs (VHS dataset)",
+      "url": "https://data.mendeley.com/datasets/ktx4cj55pn/1",
+      "data_type": "imaging",
+      "condition_or_topic": "Radiography",
+      "description": "152 canine lateral thoracic radiographs (PNG); vertebral heart score; Mendeley Data, CC BY 4.0."
+    },
+    {
+      "title": "Canine/feline skull HRCT (figshare)",
+      "url": "https://springernature.figshare.com/collections/High-resolution_computed_tomographic_HRCT_image_series_from_413_canid_and_18_felid_skulls/7296568",
+      "data_type": "imaging",
+      "condition_or_topic": "Skull CT",
+      "description": "431 animal skulls (dogs, cats, wild canids/felids); NIfTI format; comparative anatomy."
+    }
+  ]
+}
