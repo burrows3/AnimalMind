@@ -1,0 +1,15 @@
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Dependencies and cache
+node_modules/
+.npm-cache/
+
+# OS and editor
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
