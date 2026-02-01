@@ -13,3 +13,7 @@ Thumbs.db
 *.log
 .idea/
 .vscode/
+
+# Ingested data (run npm run ingest to regenerate)
+memory/data-sources/*.json
+memory/ingest.log
