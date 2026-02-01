@@ -4,7 +4,12 @@
   "description": "Autonomous animal health research agents — data ingest and app",
   "private": true,
   "scripts": {
-    "ingest": "node scripts/ingest-data-sources.js"
+    "ingest": "node scripts/ingest-data-sources.js",
+    "report": "node scripts/write-report.js",
+    "test-live": "node scripts/ingest-data-sources.js && node scripts/write-report.js",
+    "audit": "npm audit"
   },
-  "dependencies": {}
+  "dependencies": {
+    "better-sqlite3": "^11.6.0"
+  }
 }

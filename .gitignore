@@ -14,6 +14,8 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Ingested data (run npm run ingest to regenerate)
-memory/data-sources/*.json
+# Ingested data: DB and JSON are committed and pushed after each ingest
 memory/ingest.log
+memory/ingest-report.html
+memory/*.db-wal
+memory/*.db-shm

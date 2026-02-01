@@ -1,0 +1,14 @@
+# Dependabot: automated dependency and security update PRs for a public repo
+# Enable "Dependabot alerts" and "Dependabot security updates" in repo Settings → Security
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3

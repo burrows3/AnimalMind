@@ -117,4 +117,4 @@ The goal is to run **autonomously**: data collection on a schedule (e.g. every 1
 - **Windows, every 1 hour (autonomous):** Use Task Scheduler; see [SCHEDULE-WINDOWS.md](./SCHEDULE-WINDOWS.md).
 - **Linux/macOS:** Use cron (e.g. `0 * * * * cd /path/to/AnimalMind && node scripts/ingest-data-sources.js`).
 
-The script fetches from PubMed and CDC Travel Notices RSS and writes results under `memory/data-sources/`. The agent (or a human) then reads those files to spot opportunities (new papers, new outbreak notices) and draft alerts or posts.
+The script fetches from PubMed and CDC Travel Notices RSS, writes JSON under `memory/data-sources/`, and **ingests into SQLite** at `memory/animalmind.db`. Rows are **sorted by data type** (literature | surveillance) and **condition or topic** (e.g. Rabies, Dengue, one health animal). The report and agents read from this DB to spot opportunities (new papers, new outbreak notices) and draft alerts or posts.

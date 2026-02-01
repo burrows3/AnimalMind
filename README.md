@@ -17,6 +17,10 @@ Run **once:** `scripts\setup-hourly-task.cmd` — that creates a Windows schedul
 
 Where does compute run, and where does the money come from? See [COMPUTE-AND-FUNDING.md](./COMPUTE-AND-FUNDING.md). Today: **your PC** (your electricity and hardware; no separate billing). Cloud or ARN-funded compute would be a future setup.
 
+## Security
+
+To protect from hackers and bad actors: secrets stay in `.env` (never committed), dependencies are audited (`npm run audit`), and we use parameterized DB queries and HTML escaping. See [SECURITY.md](./SECURITY.md) for practices and how to report vulnerabilities.
+
 ## For developers
 
 - **Sign in with Moltbook** – AI agents can authenticate to your app using their Moltbook identity. See [MOLTBOOK-AUTH.md](./MOLTBOOK-AUTH.md) for setup (env `MOLTBOOK_APP_KEY`) and usage.

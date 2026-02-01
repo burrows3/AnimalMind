@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 /**
- * VM job: fetch from data sources and write to memory/data-sources/.
- * Run on a schedule (e.g. cron every 6–12h): npm run ingest
+ * VM job: fetch from data sources and ingest into DB (sorted by data_type and condition).
+ * Also writes JSON snapshots to memory/data-sources/.
  *
  * Data sources:
- * 1. PubMed (NCBI E-utilities) – recent papers, one health / animal
- * 2. CDC Travel Notices (RSS) – outbreak and travel health notices
+ * 1. PubMed (NCBI E-utilities) – literature, one health / animal
+ * 2. CDC Travel Notices (RSS) – surveillance, outbreak notices
  */
 
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const { upsertIngested } = require('../lib/db');
 
 const MEMORY_DIR = path.join(__dirname, '..', 'memory', 'data-sources');
 
@@ -23,6 +24,14 @@ function writeJson(filename, data) {
   const filepath = path.join(MEMORY_DIR, filename);
   fs.writeFileSync(filepath, JSON.stringify(data, null, 2), 'utf8');
   console.log('Wrote', filepath);
+}
+
+/** Extract condition/topic from CDC notice title (e.g. "Level 2 - Monkeypox in Ghana" -> "Monkeypox"). */
+function conditionFromCdcTitle(title) {
+  if (!title || typeof title !== 'string') return 'Other';
+  const afterLevel = title.replace(/^Level \d+\s*-\s*/i, '').trim();
+  const match = afterLevel.match(/^(.+?)\s+in\s+/i);
+  return (match ? match[1].trim() : afterLevel) || 'Other';
 }
 
 // --- 1. PubMed (E-utilities) ---
@@ -102,6 +111,41 @@ async function fetchCdcTravelNotices() {
   };
 }
 
+// --- Ingest into DB (sorted by data_type, condition_or_topic) ---
+function ingestIntoDb(pubmed, cdc) {
+  const fetchedAt = new Date().toISOString();
+
+  // Literature: PubMed
+  const queryTopic = 'one health animal';
+  for (const pmid of pubmed.idlist || []) {
+    upsertIngested({
+      data_type: 'literature',
+      source: 'pubmed',
+      condition_or_topic: queryTopic,
+      title: null,
+      url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
+      external_id: pmid,
+      published_at: null,
+      fetched_at: fetchedAt,
+    });
+  }
+
+  // Surveillance: CDC Travel Notices
+  for (const item of cdc.items || []) {
+    const condition = conditionFromCdcTitle(item.title);
+    upsertIngested({
+      data_type: 'surveillance',
+      source: 'cdc_travel_notices',
+      condition_or_topic: condition,
+      title: item.title,
+      url: item.link,
+      external_id: item.link,
+      published_at: item.pubDate || null,
+      fetched_at: fetchedAt,
+    });
+  }
+}
+
 // --- Run ---
 async function main() {
   console.log('Ingesting data sources...');
@@ -109,6 +153,8 @@ async function main() {
     const [pubmed, cdc] = await Promise.all([fetchPubMed(), fetchCdcTravelNotices()]);
     writeJson('pubmed-recent.json', pubmed);
     writeJson('cdc-travel-notices.json', cdc);
+    ingestIntoDb(pubmed, cdc);
+    console.log('Ingested into database (sorted by data_type and condition_or_topic).');
     console.log('Done.');
   } catch (err) {
     console.error('Ingest failed:', err.message);

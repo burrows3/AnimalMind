@@ -65,7 +65,7 @@ If you prefer to create the task by hand:
 ## What runs every hour
 
 - **Program:** `scripts\run-ingest.cmd`  
-  Runs `node scripts\ingest-data-sources.js` from the repo root, then appends one line to `memory\ingest.log` (timestamp + ok/FAIL).
+  Runs `node scripts\ingest-data-sources.js` from the repo root, appends one line to `memory\ingest.log` (timestamp + ok/FAIL), then runs `node scripts\push-ingest-to-github.js` to **commit and push** the ingest (DB + JSON) to GitHub so the latest data is stored in the repo.
 - **Result:** `memory\data-sources\pubmed-recent.json` and `memory\data-sources\cdc-travel-notices.json` are refreshed. Agents (or you) use these for insights, risks, opportunities, and partnerships—see [ARCHITECTURE.md](./ARCHITECTURE.md) and the “Agent tasks and goals” section there.
 
 ## Why Task Scheduler
