@@ -1,0 +1,97 @@
+{
+  "fetchedAt": "2026-02-01T04:33:59.384Z",
+  "source": "CDC Travel Notices RSS",
+  "url": "https://wwwnc.cdc.gov/travel/rss/notices.xml",
+  "items": [
+    {
+      "title": "Level 2 - Clade II Monkeypox in Ghana and Liberia",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/monkeypox-western-africa",
+      "pubDate": "Mon, 26 Jan 2026 05:00:00 GMT"
+    },
+    {
+      "title": "Level 1 - Global Dengue",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/dengue-global",
+      "pubDate": "Thu, 22 Jan 2026 05:00:00 GMT"
+    },
+    {
+      "title": "Level 1 - Rabies in Morocco",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rabies-morocco",
+      "pubDate": "Tue, 23 Dec 2025 05:00:00 GMT"
+    },
+    {
+      "title": "Level 1 - Rocky Mountain Spotted Fever in Mexico",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rmsf-mexico",
+      "pubDate": "Tue, 23 Dec 2025 05:00:00 GMT"
+    },
+    {
+      "title": "Level 1 - Rift Valley Fever in Mauritania and Senegal",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rift-valley-fever-mauritania-senegal",
+      "pubDate": "Thu, 11 Dec 2025 05:00:00 GMT"
+    },
+    {
+      "title": "Level 2 - Chikungunya in Sri Lanka",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/chikungunya-sri-lanka",
+      "pubDate": "Fri, 05 Dec 2025 05:00:00 GMT"
+    },
+    {
+      "title": "Level 2 - Global Polio",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/global-polio",
+      "pubDate": "Tue, 25 Nov 2025 05:00:00 GMT"
+    },
+    {
+      "title": "Level 1 - Rabies in India",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rabies-india",
+      "pubDate": "Tue, 25 Nov 2025 05:00:00 GMT"
+    },
+    {
+      "title": "Level 2 - Chikungunya in Cuba",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/chikungunya-cuba",
+      "pubDate": "Fri, 26 Sep 2025 04:00:00 GMT"
+    },
+    {
+      "title": "Level 1 - Oropouche in the Americas",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/oropouche-in-the-americas",
+      "pubDate": "Thu, 18 Sep 2025 04:00:00 GMT"
+    },
+    {
+      "title": "Level 2 - Yellow Fever in Colombia",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/yellow-fever-colombia",
+      "pubDate": "Tue, 02 Sep 2025 04:00:00 GMT"
+    },
+    {
+      "title": "Level 2 - Diphtheria in Guinea",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/diphtheria-guinea",
+      "pubDate": "Tue, 22 Jul 2025 04:00:00 GMT"
+    },
+    {
+      "title": "Level 1 - Global Measles",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/measles-globe",
+      "pubDate": "Wed, 28 May 2025 04:00:00 GMT"
+    },
+    {
+      "title": "Level 1 - Malaria in Ethiopia",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/malaria-ethiopia",
+      "pubDate": "Fri, 17 Jan 2025 05:00:00 GMT"
+    },
+    {
+      "title": "Level 1 - East African Sleeping Sickness in Zambia and Zimbabwe",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/human-trypanosomiasis-east-africa",
+      "pubDate": "Wed, 18 Dec 2024 05:00:00 GMT"
+    },
+    {
+      "title": "Level 1 - A Strain of Multidrug-Resistant &lt;em&gt;Salmonella&lt;/em&gt; Newport in Mexico",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/salmonella-newport-mexico",
+      "pubDate": "Thu, 30 May 2024 04:00:00 GMT"
+    },
+    {
+      "title": "Level 2 - Diphtheria in Nigeria",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/diphtheria-nigeria",
+      "pubDate": "Fri, 16 Feb 2024 05:00:00 GMT"
+    },
+    {
+      "title": "Level 1 - Extensively Drug-Resistant Typhoid Fever in Pakistan",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/xdr-typhoid-fever-pakistan",
+      "pubDate": "Tue, 30 May 2023 04:00:00 GMT"
+    }
+  ]
+}
