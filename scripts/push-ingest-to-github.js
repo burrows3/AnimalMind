@@ -11,6 +11,7 @@ const fs = require('fs');
 const REPO_ROOT = path.join(__dirname, '..');
 const DB_PATH = path.join(REPO_ROOT, 'memory', 'animalmind.db');
 const DATA_DIR = path.join(REPO_ROOT, 'memory', 'data-sources');
+const DOCS_SUMMARY = path.join(REPO_ROOT, 'docs', 'data-summary.json');
 
 function run(cmd, opts = {}) {
   return execSync(cmd, { encoding: 'utf8', cwd: REPO_ROOT, ...opts });
@@ -31,7 +32,29 @@ function main() {
     return;
   }
 
-  run('git add memory/animalmind.db memory/data-sources/');
+  // Write docs/data-summary.json for landing page (GitHub Pages)
+  try {
+    const { getIngestedMeta } = require(path.join(REPO_ROOT, 'lib', 'db.js'));
+    const meta = getIngestedMeta();
+    const summary = {
+      lastUpdated: meta.lastFetched || null,
+      counts: {
+        surveillance: meta.counts.surveillance || 0,
+        literature: meta.counts.literature || 0,
+        cancer: meta.counts.cancer || 0,
+        case_data: meta.counts.case_data || 0,
+        imaging: meta.counts.imaging || 0,
+      },
+    };
+    const docsDir = path.join(REPO_ROOT, 'docs');
+    if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
+    fs.writeFileSync(DOCS_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
+  } catch (e) {
+    console.warn('Could not write docs/data-summary.json:', e.message);
+  }
+
+  run('git add memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md');
+  if (fs.existsSync(DOCS_SUMMARY)) run('git add docs/data-summary.json');
   if (!hasStagedChanges()) {
     console.log('No ingest changes to commit.');
     return;

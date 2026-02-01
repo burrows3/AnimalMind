@@ -5,27 +5,125 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Animal Mind – Animal Research Network by ChatVet</title>
   <meta name="description" content="Animal health research and insights — surveillance, literature, and data for veterinarians and researchers. Built by ChatVet.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: linear-gradient(160deg, #0f3460 0%, #16213e 50%, #1a1a2e 100%); color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; line-height: 1.6; }
-    .wrap { max-width: 32rem; text-align: center; }
-    h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); font-weight: 700; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
-    .tagline { font-size: 1.1rem; opacity: 0.9; margin: 0 0 2rem; }
-    .by { font-size: 0.95rem; opacity: 0.75; margin-bottom: 2rem; }
-    .cta { display: inline-block; background: #fff; color: #0f3460; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1rem; transition: transform 0.15s, box-shadow 0.15s; }
-    .cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
-    .foot { margin-top: 3rem; font-size: 0.85rem; opacity: 0.7; }
+    body {
+      margin: 0;
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(165deg, #0a1628 0%, #0f3460 35%, #16213e 70%, #1a1a2e 100%);
+      color: #e8eef4;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .page { max-width: 56rem; margin: 0 auto; padding: 2rem 1.5rem; }
+    /* Hero */
+    .hero { text-align: center; padding: 3rem 0 2.5rem; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 700; margin: 0 0 0.5rem; letter-spacing: -0.03em; color: #fff; }
+    .hero .tagline { font-size: 1.15rem; opacity: 0.92; margin: 0 0 0.25rem; max-width: 28rem; margin-left: auto; margin-right: auto; }
+    .hero .by { font-size: 0.9rem; opacity: 0.75; margin-bottom: 2rem; }
+    .cta {
+      display: inline-block;
+      background: #fff;
+      color: #0f3460;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .cta:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,0.25); }
+    /* Data section */
+    .section-title { font-size: 1.1rem; font-weight: 600; color: #fff; margin: 0 0 1rem; }
+    .data-section { background: rgba(255,255,255,0.06); border-radius: 14px; padding: 1.5rem; margin-top: 2rem; border: 1px solid rgba(255,255,255,0.08); }
+    .data-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .data-card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .data-card .num { font-size: 1.75rem; font-weight: 700; color: #a0c4ff; display: block; }
+    .data-card .label { font-size: 0.8rem; opacity: 0.85; margin-top: 0.25rem; }
+    .data-meta { font-size: 0.85rem; opacity: 0.7; margin-top: 0.75rem; }
+    .data-section .loading { opacity: 0.7; font-size: 0.95rem; }
+    /* What we track */
+    .track-section { margin-top: 2.5rem; }
+    .track-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin-top: 0.5rem; }
+    .track-item { background: rgba(255,255,255,0.05); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.9rem; border-left: 3px solid #0f3460; }
+    /* Footer */
+    .foot { margin-top: 2.5rem; text-align: center; font-size: 0.85rem; opacity: 0.7; }
     .foot a { color: #a0c4ff; text-decoration: none; }
     .foot a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Animal Mind</h1>
-    <p class="tagline">Animal Research Network — surveillance, literature, and insights for animal health.</p>
-    <p class="by">Built by ChatVet</p>
-    <a href="https://github.com/burrows3/AnimalMind" class="cta">View on GitHub</a>
+  <div class="page">
+    <header class="hero">
+      <h1>Animal Mind</h1>
+      <p class="tagline">Animal Research Network — surveillance, literature, and insights for animal health.</p>
+      <p class="by">Built by ChatVet</p>
+      <a href="https://github.com/burrows3/AnimalMind" class="cta">View on GitHub</a>
+    </header>
+
+    <section class="data-section" aria-labelledby="data-heading">
+      <h2 id="data-heading" class="section-title">Data at a glance</h2>
+      <div id="data-cards" class="data-cards">
+        <span class="loading">Loading…</span>
+      </div>
+      <p id="data-meta" class="data-meta"></p>
+    </section>
+
+    <section class="track-section" aria-labelledby="track-heading">
+      <h2 id="track-heading" class="section-title">What we track</h2>
+      <div class="track-grid">
+        <div class="track-item">Surveillance (CDC travel notices)</div>
+        <div class="track-item">Literature (PubMed)</div>
+        <div class="track-item">Cancer (animal / veterinary oncology)</div>
+        <div class="track-item">Case data (veterinary case reports)</div>
+        <div class="track-item">Imaging (TCIA, radiographs)</div>
+      </div>
+    </section>
+
     <p class="foot">Research engine for veterinarians and partners. Data refreshed every 6 hours.</p>
   </div>
+  <script>
+    (function () {
+      var labels = {
+        surveillance: 'Surveillance',
+        literature: 'Literature',
+        cancer: 'Cancer',
+        case_data: 'Case reports',
+        imaging: 'Imaging'
+      };
+      var order = ['surveillance', 'literature', 'cancer', 'case_data', 'imaging'];
+      fetch('data-summary.json')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          var container = document.getElementById('data-cards');
+          var metaEl = document.getElementById('data-meta');
+          if (!data || !data.counts) {
+            container.innerHTML = '<span class="loading">No summary yet. Run ingest and push to GitHub.</span>';
+            return;
+          }
+          container.innerHTML = order.map(function (key) {
+            var count = data.counts[key] || 0;
+            var label = labels[key] || key;
+            return '<div class="data-card"><span class="num">' + count + '</span><span class="label">' + label + '</span></div>';
+          }).join('');
+          if (data.lastUpdated) {
+            var d = new Date(data.lastUpdated);
+            metaEl.textContent = 'Last updated: ' + d.toLocaleString();
+          }
+        })
+        .catch(function () {
+          document.getElementById('data-cards').innerHTML = '<span class="loading">Summary will appear after the next ingest and push.</span>';
+        });
+    })();
+  </script>
 </body>
 </html>
