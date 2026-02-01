@@ -62,6 +62,20 @@
     .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 0.5rem; }
     .how-item { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 1rem; font-size: 0.88rem; border-left: 3px solid rgba(125,211,252,0.5); }
     .how-item strong { color: #e8eef4; }
+    /* Browse data / memory */
+    .memory-section { margin-top: 2.5rem; }
+    .memory-toggle { display: inline-block; background: rgba(125,211,252,0.2); color: #7dd3fc; border: 1px solid rgba(125,211,252,0.4); padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-bottom: 1rem; }
+    .memory-toggle:hover { background: rgba(125,211,252,0.25); }
+    .memory-panel { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1.25rem; border: 1px solid rgba(255,255,255,0.1); margin-top: 0.5rem; max-height: 70vh; overflow-y: auto; }
+    .memory-panel .loading, .memory-panel .error { opacity: 0.85; font-size: 0.9rem; }
+    .memory-group { margin-bottom: 1.25rem; }
+    .memory-group:last-child { margin-bottom: 0; }
+    .memory-group-title { font-size: 0.85rem; font-weight: 600; color: #a0c4ff; margin-bottom: 0.5rem; text-transform: capitalize; }
+    .memory-list { list-style: none; margin: 0; padding: 0; }
+    .memory-list li { margin: 0.35rem 0; font-size: 0.88rem; }
+    .memory-list a { color: #e8eef4; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.15); }
+    .memory-list a:hover { color: #7dd3fc; border-bottom-color: #7dd3fc; }
+    .memory-list .condition { font-size: 0.78rem; opacity: 0.75; margin-top: 0.15rem; }
     /* Footer */
     .foot { margin-top: 2.5rem; text-align: center; font-size: 0.82rem; opacity: 0.6; }
     .foot a { color: #7dd3fc; text-decoration: none; }
@@ -99,6 +113,13 @@
         <div class="how-item"><strong>Case data</strong> — Veterinary case reports</div>
         <div class="how-item"><strong>Imaging</strong> — TCIA, radiographs</div>
       </div>
+    </section>
+
+    <section class="memory-section section" aria-labelledby="memory-heading">
+      <h2 id="memory-heading" class="section-title">Browse data (agent memory)</h2>
+      <p style="font-size:0.9rem; opacity:0.85; margin-bottom:0.75rem;">Click to open the latest items ingested by the autonomous agents. Links open the source (CDC, PubMed, etc.).</p>
+      <button type="button" class="memory-toggle" id="memory-toggle" aria-expanded="false" aria-controls="memory-panel">Show data</button>
+      <div id="memory-panel" class="memory-panel" hidden aria-live="polite"></div>
     </section>
 
     <p class="foot">Built by ChatVet. Research engine for veterinarians and partners. Data refreshed every 6 hours by autonomous agents.</p>
@@ -143,6 +164,73 @@
         .catch(function () {
           render(null);
         });
+    })();
+
+    (function () {
+      var btn = document.getElementById('memory-toggle');
+      var panel = document.getElementById('memory-panel');
+      var labels = { surveillance: 'Surveillance', literature: 'Literature', cancer: 'Cancer', case_data: 'Case reports', imaging: 'Imaging' };
+      var order = ['surveillance', 'literature', 'cancer', 'case_data', 'imaging'];
+
+      function groupByType(rows) {
+        var by = {};
+        rows.forEach(function (r) {
+          if (!by[r.data_type]) by[r.data_type] = [];
+          by[r.data_type].push(r);
+        });
+        return by;
+      }
+
+      function escapeHtml(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      function renderMemory(data) {
+        if (!data || !Array.isArray(data) || data.length === 0) {
+          panel.innerHTML = '<p class="loading">No data yet. Run ingest and push to GitHub.</p>';
+          return;
+        }
+        var by = groupByType(data);
+        panel.innerHTML = order.map(function (type) {
+          var items = by[type] || [];
+          if (items.length === 0) return '';
+          var label = labels[type] || type;
+          var list = items.map(function (item) {
+            var title = escapeHtml(item.title || 'Untitled');
+            var url = item.url ? escapeHtml(item.url) : '#';
+            var condition = item.condition_or_topic ? escapeHtml(item.condition_or_topic) : '';
+            var link = url && url !== '#' ? '<a href="' + url + '" target="_blank" rel="noopener">' + title + '</a>' : '<span>' + title + '</span>';
+            var condHtml = condition ? '<div class="condition">' + condition + '</div>' : '';
+            return '<li>' + link + condHtml + '</li>';
+          }).join('');
+          return '<div class="memory-group"><div class="memory-group-title">' + label + ' (' + items.length + ')</div><ul class="memory-list">' + list + '</ul></div>';
+        }).join('');
+      }
+
+      btn.addEventListener('click', function () {
+        if (panel.hidden) {
+          panel.hidden = false;
+          btn.textContent = 'Hide data';
+          if (!panel.innerHTML || panel.querySelector('.loading') || panel.querySelector('.error')) {
+            panel.innerHTML = '<p class="loading">Loading…</p>';
+            var url = new URL('data/ingested.json', document.location.href).href;
+            fetch(url, { cache: 'no-store' })
+              .then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (data) {
+                renderMemory(data);
+              })
+              .catch(function () {
+                panel.innerHTML = '<p class="error">Could not load data. Try again after the next ingest and push.</p>';
+              });
+          }
+        } else {
+          panel.hidden = true;
+          btn.textContent = 'Show data';
+        }
+      });
     })();
   </script>
 </body>

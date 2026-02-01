@@ -12,6 +12,9 @@ const REPO_ROOT = path.join(__dirname, '..');
 const DB_PATH = path.join(REPO_ROOT, 'memory', 'animalmind.db');
 const DATA_DIR = path.join(REPO_ROOT, 'memory', 'data-sources');
 const DOCS_SUMMARY = path.join(REPO_ROOT, 'docs', 'data-summary.json');
+const DOCS_DATA_DIR = path.join(REPO_ROOT, 'docs', 'data');
+const DOCS_INGESTED_JSON = path.join(DOCS_DATA_DIR, 'ingested.json');
+const INGESTED_EXPORT_LIMIT = 200;
 
 function run(cmd, opts = {}) {
   return execSync(cmd, { encoding: 'utf8', cwd: REPO_ROOT, ...opts });
@@ -34,7 +37,7 @@ function main() {
 
   // Write docs/data-summary.json for landing page (GitHub Pages)
   try {
-    const { getIngestedMeta } = require(path.join(REPO_ROOT, 'lib', 'db.js'));
+    const { getIngestedMeta, getIngestedSorted } = require(path.join(REPO_ROOT, 'lib', 'db.js'));
     const meta = getIngestedMeta();
     const summary = {
       lastUpdated: meta.lastFetched || null,
@@ -49,6 +52,12 @@ function main() {
     const docsDir = path.join(REPO_ROOT, 'docs');
     if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
     fs.writeFileSync(DOCS_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
+    // Export ingested rows for landing page "Browse data" (embed memory)
+    const rows = getIngestedSorted()
+      .slice(0, INGESTED_EXPORT_LIMIT)
+      .map((r) => ({ data_type: r.data_type, condition_or_topic: r.condition_or_topic, title: r.title || '', url: r.url || '' }));
+    if (!fs.existsSync(DOCS_DATA_DIR)) fs.mkdirSync(DOCS_DATA_DIR, { recursive: true });
+    fs.writeFileSync(DOCS_INGESTED_JSON, JSON.stringify(rows), 'utf8');
     // Inline fallback in index.html so data shows even if fetch path fails
     const indexPath = path.join(REPO_ROOT, 'docs', 'index.html');
     if (fs.existsSync(indexPath)) {
@@ -64,6 +73,7 @@ function main() {
 
   run('git add memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md');
   if (fs.existsSync(DOCS_SUMMARY)) run('git add docs/data-summary.json');
+  if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
   if (!hasStagedChanges()) {
     console.log('No ingest changes to commit.');
     return;
