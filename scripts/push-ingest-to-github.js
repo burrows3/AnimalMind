@@ -72,6 +72,7 @@ function main() {
       if (html.includes('window.__DATA_SUMMARY__')) {
         html = html.replace(/window\.__DATA_SUMMARY__\s*=\s*[^;]+;/, 'window.__DATA_SUMMARY__ = ' + JSON.stringify(summary) + ';');
         fs.writeFileSync(indexPath, html, 'utf8');
+        run('git add docs/index.html');
       }
     }
   } catch (e) {
@@ -81,6 +82,7 @@ function main() {
   run('git add memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md memory/agent-outputs/ memory/opportunities.md');
   if (fs.existsSync(DOCS_SUMMARY)) run('git add docs/data-summary.json');
   if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
+  if (fs.existsSync(path.join(REPO_ROOT, 'docs', 'index.html'))) run('git add docs/index.html');
   if (!hasStagedChanges()) {
     console.log('No ingest changes to commit.');
     return;

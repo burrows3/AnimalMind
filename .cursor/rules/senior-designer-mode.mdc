@@ -1,0 +1,50 @@
+---
+description: Senior Designer Mode — UI design rules. Follow whenever designing or building UI.
+globs: "**/*.tsx,**/*.jsx,**/*.html,**/index.html"
+alwaysApply: false
+---
+
+# Senior Designer Mode — UI design rules
+
+Always follow these rules when designing or implementing UI in this project.
+
+## Hierarchy and spacing
+- **Clear visual hierarchy**: Use distinct type scale (e.g. text-3xl for hero, text-lg for section titles, text-sm for meta). One clear primary headline per view.
+- **Consistent spacing**: Use a spacing scale (4, 8, 12, 16, 24, 32, 48, 64). Prefer Tailwind spacing (e.g. space-y-6, gap-4, p-6). Avoid one-off values.
+- **Breathing room**: Don’t crowd content. Use max-width containers (e.g. max-w-4xl) for reading; allow generous padding on small screens.
+
+## Color and contrast
+- **Accessible contrast**: Text on background must meet WCAG AA (4.5:1 for body, 3:1 for large text). Use semantic colors (e.g. success green, warning amber) sparingly and consistently.
+- **Limited palette**: Prefer a small set of neutrals plus one primary (e.g. slate/gray + blue or emerald). Avoid many competing accent colors.
+- **Backgrounds**: Prefer subtle background steps (e.g. bg-background, bg-muted) over heavy borders to separate sections.
+
+## Components (shadcn / Tailwind UI style)
+- **Use shadcn/ui components** where they exist: Button, Card, Badge, etc. Use them as designed; don’t reinvent.
+- **Cards**: Clear border or subtle shadow, rounded corners (rounded-lg), padding inside. Use CardHeader, CardContent, CardFooter for structure.
+- **Buttons**: Primary for main action, secondary/outline for secondary. Consistent size (default, sm) and disabled state.
+- **Badges**: For status, counts, or labels. Keep text short and legible.
+
+## Typography
+- **Font stack**: Prefer system UI or a single custom font (e.g. Inter, Geist). Use font-medium or font-semibold for emphasis, not only color.
+- **Line length**: Cap body text around 65–75 characters for readability.
+- **Lists and labels**: Use consistent list spacing and label style (e.g. text-sm text-muted-foreground for secondary labels).
+
+## Motion and feedback
+- **Subtle motion**: Prefer short, subtle transitions (e.g. transition-colors, hover scale) over heavy animation. Respect prefers-reduced-motion.
+- **Loading and empty states**: Always show loading (skeleton or spinner) and empty state (short message + optional CTA). Never leave a blank area without explanation.
+
+## Accessibility
+- **Semantic HTML**: Use header, main, section, nav, button, a. Use heading levels in order (h1 → h2 → h3).
+- **Focus and keyboard**: Visible focus ring on interactive elements; ensure full keyboard navigation.
+- **ARIA when needed**: aria-label, aria-expanded, aria-live for dynamic content. Don’t rely on color alone for meaning.
+
+## Responsiveness
+- **Mobile-first**: Base layout for small screens; add breakpoints (sm, md, lg) for larger. Test at 320px, 768px, 1024px.
+- **Touch targets**: Buttons and links at least 44×44px on touch devices.
+- **No horizontal scroll**: Contain content; use overflow-x-auto only for intentional scroll areas (e.g. tables).
+
+## Don’ts
+- Don’t use more than two font families.
+- Don’t use tiny font sizes (minimum 14px for body).
+- Don’t leave “Loading…” or blank sections without a clear state.
+- Don’t use low-contrast gray-on-gray for primary content.

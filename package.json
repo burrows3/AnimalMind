@@ -8,7 +8,9 @@
     "report": "node scripts/write-report.js",
     "test-live": "node scripts/ingest-data-sources.js && node scripts/write-report.js",
     "audit": "npm audit",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build:ui": "cd frontend && npm run build",
+    "deploy:ui": "npm run build:ui && node scripts/copy-build.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.6.0",
