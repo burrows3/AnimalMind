@@ -155,6 +155,12 @@ export default function App() {
           </a>
           <div className="flex items-center gap-3">
             <a
+              href="#mission"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Mission
+            </a>
+            <a
               href="#data"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -180,7 +186,7 @@ export default function App() {
 
       <main className="flex-1 mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 relative z-[1]">
         {/* Hero */}
-        <section className="text-center space-y-5 pb-12">
+        <section className="text-center space-y-6 pb-12">
           <Badge
             variant="secondary"
             className="rounded-full px-3 py-1 text-xs font-medium gap-1.5"
@@ -191,22 +197,64 @@ export default function App() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
             Animal Research Network
           </h1>
-          <p className="text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Surveillance, literature, clinical, and vet practice resources for
-            animal health. Collected and updated by autonomous agents.
-          </p>
-          <p className="text-sm text-foreground/80">
-            Agents run on a schedule: ingest, analyze, push. No credentials or
-            PII in this interface.
+          <p className="text-lg text-foreground max-w-2xl mx-auto font-medium leading-relaxed">
+            One place for animal health research and practice.
           </p>
           <a
-            href="https://github.com/burrows3/AnimalMind"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#mission"
             className={cn(buttonVariants({ size: "lg" }), "rounded-lg shadow-sm")}
           >
-            View source
+            How it works
           </a>
+        </section>
+
+        {/* Mission & how it works */}
+        <section
+          id="mission"
+          aria-labelledby="mission-heading"
+          className="pb-12 space-y-6"
+        >
+          <h2 id="mission-heading" className="sr-only">
+            Mission and how it works
+          </h2>
+          <Card className="shadow-sm border-border bg-card/95">
+            <CardContent className="p-6 sm:p-8 space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Our mission
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  We exist to improve animal health. By bringing surveillance, literature,
+                  clinical, and vet practice resources into one research network, we help
+                  veterinarians, researchers, and one-health teams make better decisions—
+                  from outbreak awareness to oncology, imaging, and guidelines.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  How it works
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Autonomous agents run on a schedule: they ingest data from trusted
+                  sources (CDC, PubMed, TCIA, AAHA, AVMA, Merck, and more), analyze and
+                  organize it, then push updates here. This site is read-only—you see the
+                  latest evidence and links; no credentials or PII are used in this
+                  interface.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Who it’s for
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Clinicians checking travel notices or differentials; researchers
+                  scanning literature and case data; educators and students building on
+                  current evidence. If your goal is better outcomes for animals, this
+                  network is for you.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         {/* Two-column: Live data + What the agents track */}
