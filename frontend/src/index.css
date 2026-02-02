@@ -1,18 +1,19 @@
 @import "tailwindcss";
+@import "@fontsource-variable/dm-sans";
 
 @theme inline {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  /* Light theme (research lab aesthetic) */
-  --color-background: #fafbfc;
-  --color-foreground: #111827;
-  --color-muted: #f3f4f6;
-  --color-muted-foreground: #6b7280;
-  --color-border: #e5e7eb;
-  --color-primary: #2563eb;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Refined light theme — research / medical */
+  --color-background: #f8fafc;
+  --color-foreground: #0f172a;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-border: #e2e8f0;
+  --color-primary: #1e40af;
   --color-primary-foreground: #ffffff;
   --color-card: #ffffff;
-  --color-card-foreground: #111827;
-  --color-ring: #2563eb;
+  --color-card-foreground: #0f172a;
+  --color-ring: #1e40af;
 }
 
 body {
@@ -22,3 +23,11 @@ body {
   line-height: 1.6;
   min-height: 100vh;
 }
+
+/* Restrained depth: very subtle gradient only (not “kid” wave) */
+.app-bg {
+  background-image:
+    radial-gradient(ellipse 70% 40% at 75% 15%, rgba(30, 64, 175, 0.06) 0%, transparent 55%),
+    linear-gradient(to bottom, transparent 0%, var(--color-background) 25%);
+}
+

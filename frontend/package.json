@@ -11,11 +11,13 @@
   "dependencies": {
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "lucide-react": "^0.460.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^2.5.0"
   },
   "devDependencies": {
+    "@fontsource-variable/dm-sans": "^5.1.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
