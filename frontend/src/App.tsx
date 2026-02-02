@@ -82,6 +82,23 @@ function safeHref(url: string | undefined): string {
   return "#";
 }
 
+/** Animal Mind logo: animal head (profile) + mind dot. Same as favicon. */
+function AnimalMindLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      className={cn("shrink-0", className)}
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <ellipse cx="16" cy="18" rx="10" ry="9" fill="currentColor" />
+      <path fill="currentColor" d="M10 10 L8 16 L12 14 Z" />
+      <circle cx="24" cy="10" r="4" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function App() {
   const [summary, setSummary] = useState<DataSummary | null>(null);
   const [memory, setMemory] = useState<IngestedRow[] | null>(null);
@@ -128,7 +145,12 @@ export default function App() {
       {/* Nav */}
       <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
         <nav className="mx-auto max-w-5xl px-4 py-3 sm:px-6 flex justify-between items-center gap-4">
-          <a href="#" className="font-semibold text-foreground tracking-tight text-lg">
+          <a href="#" className="flex items-center gap-2 font-semibold text-foreground tracking-tight text-lg">
+            <AnimalMindLogo className="size-8 text-primary" />
+            <span className="hidden sm:inline">
+              <span className="text-muted-foreground font-medium text-sm">Animal Mind</span>
+              <span className="mx-1.5 text-border">/</span>
+            </span>
             Animal Research Network
           </a>
           <div className="flex items-center gap-3">

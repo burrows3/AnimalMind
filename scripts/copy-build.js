@@ -35,12 +35,19 @@ function copyDir(srcDir, destDir) {
 const publicDir = path.join(REPO_ROOT, "public");
 copyFile(path.join(DIST, "index.html"), path.join(publicDir, "index.html"));
 copyDir(path.join(DIST, "assets"), path.join(publicDir, "assets"));
+const faviconSrc = path.join(DIST, "favicon.svg");
+if (fs.existsSync(faviconSrc)) {
+  copyFile(faviconSrc, path.join(publicDir, "favicon.svg"));
+}
 console.log("Copied build to public/");
 
 // docs/ (GitHub Pages)
 const docsDir = path.join(REPO_ROOT, "docs");
 copyFile(path.join(DIST, "index.html"), path.join(docsDir, "index.html"));
 copyDir(path.join(DIST, "assets"), path.join(docsDir, "assets"));
+if (fs.existsSync(faviconSrc)) {
+  copyFile(faviconSrc, path.join(docsDir, "favicon.svg"));
+}
 console.log("Copied build to docs/");
 
 console.log("Done. Restart server or push docs for GitHub Pages.");

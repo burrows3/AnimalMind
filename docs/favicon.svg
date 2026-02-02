@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+  <!-- Animal Mind: animal head (profile) + mind dot. Simple for tab icon. -->
+  <!-- Head -->
+  <ellipse cx="16" cy="18" rx="10" ry="9" fill="#1e40af"/>
+  <!-- Ear -->
+  <path fill="#1e40af" d="M10 10 L8 16 L12 14 Z"/>
+  <!-- Mind (thought / mind) -->
+  <circle cx="24" cy="10" r="4" fill="#1e40af"/>
+</svg>
