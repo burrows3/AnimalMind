@@ -1,5 +1,5 @@
 {
-  "description": "Curated open datasets: animal cancer, imaging, radiographs, case data. Ingested into DB for discovery.",
+  "description": "Curated open datasets: animal cancer, imaging, radiographs, vet practice (guidelines, resources). Ingested into DB for discovery.",
   "lastUpdated": "2026-02-01",
   "items": [
     {
@@ -29,6 +29,34 @@
       "data_type": "imaging",
       "condition_or_topic": "Skull CT",
       "description": "431 animal skulls (dogs, cats, wild canids/felids); NIfTI format; comparative anatomy."
+    },
+    {
+      "title": "AAHA Guidelines",
+      "url": "https://www.aaha.org/aaha-guidelines/",
+      "data_type": "vet_practice",
+      "condition_or_topic": "Practice guidelines",
+      "description": "AAHA guidelines for canine/feline practice: wellness, vaccination, nutrition, pain management, dentistry, behavior."
+    },
+    {
+      "title": "AVMA Clinical Resources",
+      "url": "https://www.avma.org/resources-tools",
+      "data_type": "vet_practice",
+      "condition_or_topic": "Clinical resources",
+      "description": "AVMA clinical and practice resources, tools, and guidelines for veterinarians."
+    },
+    {
+      "title": "Veterinary Information Network (VIN) – Public",
+      "url": "https://www.vin.com/",
+      "data_type": "vet_practice",
+      "condition_or_topic": "CE and reference",
+      "description": "VIN: CE, drug formulary, differentials, and peer discussion (membership for full access)."
+    },
+    {
+      "title": "Merck Veterinary Manual",
+      "url": "https://www.merckvetmanual.com/",
+      "data_type": "vet_practice",
+      "condition_or_topic": "Reference",
+      "description": "Free online reference: species, conditions, therapeutics, diagnostics."
     }
   ]
 }

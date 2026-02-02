@@ -22,7 +22,7 @@ openclaw configure --section channels
 When prompted, choose Telegram and paste your bot token.
 
 **Option B – Manual**  
-1. Open `C:\Users\burro\.openclaw\openclaw.json` in an editor.
+1. Open your OpenClaw config file (e.g. `%USERPROFILE%\.openclaw\openclaw.json` on Windows) in an editor.
 2. Find `"channels": { "telegram": { "botToken": "" }`.
 3. Paste your token between the quotes: `"botToken": "YOUR_TOKEN_HERE"`.
 4. Save the file.

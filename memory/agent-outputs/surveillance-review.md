@@ -1,8 +1,8 @@
 # Surveillance reviewer
 
 **Agent:** Surveillance reviewer (autonomous)
-**Last run:** 2026-02-02T01:24:04.227Z
-**Data as of:** 2026-02-02T01:24:04.061Z
+**Last run:** 2026-02-02T01:28:51.361Z
+**Data as of:** 2026-02-02T01:28:07.318Z
 
 ---
 
@@ -60,4 +60,5 @@ Conditions currently in CDC travel notices (and similar surveillance):
 ## For other agents
 
 - **Travel / zoonotic:** Use the list above for travel alerts and client advice (rabies, dengue, etc.).
+- **Veterinary medicine:** Use for client handouts and travel health advice in the clinic.
 - **Synthesizer:** Consider these conditions when writing opportunities (e.g. "New rabies notice; suggest alert").

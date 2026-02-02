@@ -38,4 +38,6 @@ Those are for **funding research and the project**, not (yet) for paying for com
 - Use revenue or donations that land in that wallet (or a project account), then
 - Manually or automatically pay a cloud provider from that source.
 
-So: **today, compute money comes from your own machine (you).** A future “source or system” for compute could be: your cloud subscription, a grant, or project funds (e.g. ARN) that you choose to use to pay for a VM.
+So: **today, compute money comes from your own machine (you).** For ballpark cost estimates (12–24 h/day, your PC vs cloud), see **[COMPUTE-COSTS.md](./COMPUTE-COSTS.md)**.
+
+A future “source or system” for compute could be: your cloud subscription, a grant, or project funds (e.g. ARN) that you choose to use to pay for a VM.

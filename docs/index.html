@@ -3,97 +3,132 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Animal Mind – Autonomous AI Research Network | ChatVet</title>
-  <meta name="description" content="AI agents run autonomously to collect surveillance, literature, and animal health data. Built by ChatVet.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Animal Research Network</title>
+  <meta name="description" content="Surveillance, literature, clinical, and vet practice resources for animal health. Read-only research interface. No credentials or PII exposed.">
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
-      background: #0a0e17;
-      color: #e8eef4;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: #fafbfc;
+      color: #1f2937;
       min-height: 100vh;
       line-height: 1.6;
     }
     .page { max-width: 64rem; margin: 0 auto; padding: 2rem 1.5rem; }
-    /* Top bar */
-    .top-bar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 2rem; }
-    .logo { font-weight: 700; font-size: 1.25rem; color: #fff; }
-    .badge { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #7dd3fc; background: rgba(125,211,252,0.12); padding: 0.35rem 0.65rem; border-radius: 6px; }
-    /* Hero */
-    .hero { text-align: center; padding: 2.5rem 0 2rem; }
-    .hero h1 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 700; margin: 0 0 0.5rem; letter-spacing: -0.03em; color: #fff; }
-    .hero .tagline { font-size: 1.1rem; opacity: 0.9; max-width: 32rem; margin: 0 auto 0.5rem; }
-    .hero .autonomous { font-size: 0.95rem; color: #7dd3fc; margin-bottom: 1.5rem; font-weight: 600; }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 2rem;
+    }
+    .logo { font-weight: 600; font-size: 1.25rem; color: #111827; }
+    .badge { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #059669; background: #ecfdf5; padding: 0.35rem 0.65rem; border-radius: 6px; }
+    .hero { text-align: center; padding: 2rem 0 1.5rem; }
+    .hero h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); font-weight: 600; margin: 0 0 0.5rem; letter-spacing: -0.02em; color: #111827; }
+    .hero .tagline { font-size: 1rem; color: #6b7280; max-width: 32rem; margin: 0 auto 0.5rem; }
+    .hero .autonomous { font-size: 0.875rem; color: #374151; margin-bottom: 1.25rem; }
     .cta {
       display: inline-block;
-      background: #fff;
-      color: #0f3460;
-      padding: 0.7rem 1.4rem;
-      border-radius: 8px;
+      background: #111827;
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
       text-decoration: none;
-      font-weight: 600;
-      font-size: 0.95rem;
-      transition: transform 0.12s, box-shadow 0.12s;
+      font-weight: 500;
+      font-size: 0.875rem;
     }
-    .cta:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
-    /* Data section */
-    .section { margin-top: 2.5rem; }
-    .section-title { font-size: 1rem; font-weight: 600; color: #fff; margin: 0 0 1rem; letter-spacing: -0.01em; }
-    .data-section { background: linear-gradient(145deg, rgba(15,52,96,0.35) 0%, rgba(22,33,62,0.4) 100%); border-radius: 12px; padding: 1.75rem; border: 1px solid rgba(255,255,255,0.1); }
-    .data-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 0.75rem; }
-    @media (max-width: 640px) { .data-cards { grid-template-columns: repeat(2, 1fr); } }
+    .cta:hover { background: #374151; }
+    .section { margin-top: 2rem; }
+    .section-title { font-size: 1rem; font-weight: 600; color: #111827; margin: 0 0 1rem; }
+    .data-section {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+    .data-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 1rem; margin-bottom: 0.75rem; }
     .data-card {
-      background: rgba(255,255,255,0.06);
-      border-radius: 10px;
-      padding: 1.1rem 1rem;
+      background: #fafbfc;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 1rem;
       text-align: center;
-      border: 1px solid rgba(255,255,255,0.08);
     }
-    .data-card .num { font-size: 1.65rem; font-weight: 700; color: #a0c4ff; display: block; line-height: 1.2; }
-    .data-card .label { font-size: 0.78rem; opacity: 0.88; margin-top: 0.35rem; }
-    .data-meta { font-size: 0.8rem; opacity: 0.65; margin-top: 0.5rem; }
-    .data-section .msg { opacity: 0.8; font-size: 0.9rem; }
-    /* How it works */
+    .data-card .num { font-size: 1.5rem; font-weight: 600; color: #111827; display: block; }
+    .data-card .label { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; }
+    .data-meta { font-size: 0.8rem; color: #9ca3af; margin-top: 0.5rem; }
+    .data-section .msg { color: #6b7280; font-size: 0.875rem; }
     .how-section { margin-top: 2rem; }
-    .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 0.5rem; }
-    .how-item { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 1rem; font-size: 0.88rem; border-left: 3px solid rgba(125,211,252,0.5); }
-    .how-item strong { color: #e8eef4; }
-    /* Browse data / memory */
-    .memory-section { margin-top: 2.5rem; }
-    .memory-toggle { display: inline-block; background: rgba(125,211,252,0.2); color: #7dd3fc; border: 1px solid rgba(125,211,252,0.4); padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-bottom: 1rem; }
-    .memory-toggle:hover { background: rgba(125,211,252,0.25); }
-    .memory-panel { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1.25rem; border: 1px solid rgba(255,255,255,0.1); margin-top: 0.5rem; max-height: 70vh; overflow-y: auto; }
-    .memory-panel .loading, .memory-panel .error { opacity: 0.85; font-size: 0.9rem; }
-    .memory-group { margin-bottom: 1.25rem; }
-    .memory-group:last-child { margin-bottom: 0; }
-    .memory-group-title { font-size: 0.85rem; font-weight: 600; color: #a0c4ff; margin-bottom: 0.5rem; text-transform: capitalize; }
+    .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; }
+    .how-item {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 0.875rem;
+      font-size: 0.8125rem;
+      color: #4b5563;
+      border-left: 3px solid #2563eb;
+    }
+    .how-item strong { color: #111827; }
+    .memory-section { margin-top: 2rem; }
+    .memory-toggle {
+      display: inline-block;
+      background: #fff;
+      color: #2563eb;
+      border: 1px solid #2563eb;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .memory-toggle:hover { background: #eff6ff; }
+    .memory-panel {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-top: 0.75rem;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .memory-panel .loading, .memory-panel .error { color: #6b7280; font-size: 0.875rem; }
+    .memory-group { margin-bottom: 1rem; }
+    .memory-group-title { font-size: 0.8125rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
     .memory-list { list-style: none; margin: 0; padding: 0; }
-    .memory-list li { margin: 0.35rem 0; font-size: 0.88rem; }
-    .memory-list a { color: #e8eef4; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.15); }
-    .memory-list a:hover { color: #7dd3fc; border-bottom-color: #7dd3fc; }
-    .memory-list .condition { font-size: 0.78rem; opacity: 0.75; margin-top: 0.15rem; }
-    /* Footer */
-    .foot { margin-top: 2.5rem; text-align: center; font-size: 0.82rem; opacity: 0.6; }
-    .foot a { color: #7dd3fc; text-decoration: none; }
+    .memory-list li { margin: 0.35rem 0; font-size: 0.875rem; }
+    .memory-list a { color: #2563eb; text-decoration: none; }
+    .memory-list a:hover { text-decoration: underline; }
+    .memory-list .condition { font-size: 0.75rem; color: #6b7280; margin-top: 0.15rem; }
+    .foot {
+      margin-top: 2.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 0.8125rem;
+      color: #6b7280;
+    }
+    .foot a { color: #2563eb; text-decoration: none; }
     .foot a:hover { text-decoration: underline; }
+    .security-note { font-size: 0.75rem; color: #059669; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
   <div class="page">
     <header class="top-bar">
-      <span class="logo">Animal Mind</span>
-      <span class="badge">Autonomous AI agents</span>
+      <span class="logo">Animal Research Network</span>
+      <span class="badge">Secure · Read-only</span>
     </header>
 
     <section class="hero">
       <h1>Animal Research Network</h1>
-      <p class="tagline">Surveillance, literature, and insights for animal health — collected and updated by AI agents running on a schedule.</p>
-      <p class="autonomous">AI agents run autonomously every 6 hours: ingest, analyze, and push data to this page.</p>
-      <a href="https://github.com/burrows3/AnimalMind" class="cta">View on GitHub</a>
+      <p class="tagline">Surveillance, literature, clinical, and vet practice resources for animal health. Collected and updated by autonomous agents.</p>
+      <p class="autonomous">Agents run on a schedule: ingest, analyze, push. No credentials or PII in this interface.</p>
+      <a href="https://github.com/burrows3/AnimalMind" class="cta" rel="noopener noreferrer">View source</a>
     </section>
 
     <section class="data-section section" aria-labelledby="data-heading">
@@ -109,32 +144,34 @@
       <div class="how-grid">
         <div class="how-item"><strong>Surveillance</strong> — CDC travel notices</div>
         <div class="how-item"><strong>Literature</strong> — PubMed</div>
-        <div class="how-item"><strong>Cancer</strong> — Animal / veterinary oncology</div>
+        <div class="how-item"><strong>Cancer</strong> — Veterinary oncology</div>
         <div class="how-item"><strong>Case data</strong> — Veterinary case reports</div>
+        <div class="how-item"><strong>Clinical</strong> — Practice, small animal, equine</div>
         <div class="how-item"><strong>Imaging</strong> — TCIA, radiographs</div>
+        <div class="how-item"><strong>Vet practice</strong> — AAHA, AVMA, VIN, Merck</div>
       </div>
     </section>
 
     <section class="memory-section section" aria-labelledby="memory-heading">
       <h2 id="memory-heading" class="section-title">Browse data (agent memory)</h2>
-      <p style="font-size:0.9rem; opacity:0.85; margin-bottom:0.75rem;">Click to open the latest items ingested by the autonomous agents. Links open the source (CDC, PubMed, etc.).</p>
+      <p style="font-size:0.875rem; color:#6b7280; margin-bottom:0.75rem;">Latest items from autonomous ingest. Links open the source (CDC, PubMed, etc.).</p>
       <button type="button" class="memory-toggle" id="memory-toggle" aria-expanded="false" aria-controls="memory-panel">Show data</button>
       <div id="memory-panel" class="memory-panel" hidden aria-live="polite"></div>
     </section>
 
-    <p class="foot">Built by ChatVet. Research engine for veterinarians and partners. Data refreshed every 6 hours by autonomous agents.</p>
+    <p class="foot">Research engine for veterinarians and partners. Data from public sources only. <span class="security-note">No credentials, API keys, or PII are exposed in this UI.</span></p>
   </div>
-  <script id="data-summary-inline">window.__DATA_SUMMARY__ = {"lastUpdated":"2026-02-01T17:00:05.363Z","counts":{"surveillance":18,"literature":15,"cancer":16,"case_data":15,"imaging":3}};</script>
+  <script id="data-summary-inline">window.__DATA_SUMMARY__ = {"lastUpdated":null,"counts":{"surveillance":0,"literature":0,"cancer":0,"case_data":0,"clinical":0,"imaging":0,"vet_practice":0}};</script>
   <script>
     (function () {
-      var labels = { surveillance: 'Surveillance', literature: 'Literature', cancer: 'Cancer', case_data: 'Case reports', imaging: 'Imaging' };
-      var order = ['surveillance', 'literature', 'cancer', 'case_data', 'imaging'];
+      var labels = { surveillance: 'Surveillance', literature: 'Literature', cancer: 'Cancer', case_data: 'Case reports', clinical: 'Clinical', imaging: 'Imaging', vet_practice: 'Vet practice' };
+      var order = ['surveillance', 'literature', 'cancer', 'case_data', 'clinical', 'imaging', 'vet_practice'];
 
       function render(data) {
         var container = document.getElementById('data-cards');
         var metaEl = document.getElementById('data-meta');
         if (!data || !data.counts) {
-          container.innerHTML = '<span class="msg">Data will appear after the next autonomous ingest and push to GitHub.</span>';
+          container.innerHTML = '<span class="msg">Data will appear after the next autonomous ingest and push.</span>';
           return;
         }
         container.innerHTML = order.map(function (key) {
@@ -144,33 +181,40 @@
         }).join('');
         if (data.lastUpdated) {
           var d = new Date(data.lastUpdated);
-          metaEl.textContent = 'Last updated by agents: ' + d.toLocaleString();
+          metaEl.textContent = 'Last updated: ' + d.toLocaleString();
         }
       }
 
-      // Inline fallback (written by push script so data always shows)
       if (window.__DATA_SUMMARY__) {
         render(window.__DATA_SUMMARY__);
         return;
       }
 
-      // Fetch from same origin (works on custom domain and GitHub Pages)
       var url = new URL('data-summary.json', document.location.href).href;
       fetch(url, { cache: 'no-store' })
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (data) {
-          render(data);
-        })
-        .catch(function () {
-          render(null);
-        });
+        .then(function (data) { render(data); })
+        .catch(function () { render(null); });
     })();
 
     (function () {
+      function safeHref(url) {
+        if (!url || typeof url !== 'string') return '#';
+        var u = (url + '').trim();
+        if (u.indexOf('http://') === 0 || u.indexOf('https://') === 0) return u;
+        return '#';
+      }
+      function escapeHtml(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
       var btn = document.getElementById('memory-toggle');
       var panel = document.getElementById('memory-panel');
-      var labels = { surveillance: 'Surveillance', literature: 'Literature', cancer: 'Cancer', case_data: 'Case reports', imaging: 'Imaging' };
-      var order = ['surveillance', 'literature', 'cancer', 'case_data', 'imaging'];
+      var labels = { surveillance: 'Surveillance', literature: 'Literature', cancer: 'Cancer', case_data: 'Case reports', clinical: 'Clinical', imaging: 'Imaging', vet_practice: 'Vet practice' };
+      var order = ['surveillance', 'literature', 'cancer', 'case_data', 'clinical', 'imaging', 'vet_practice'];
 
       function groupByType(rows) {
         var by = {};
@@ -181,16 +225,9 @@
         return by;
       }
 
-      function escapeHtml(s) {
-        if (!s) return '';
-        var d = document.createElement('div');
-        d.textContent = s;
-        return d.innerHTML;
-      }
-
       function renderMemory(data) {
         if (!data || !Array.isArray(data) || data.length === 0) {
-          panel.innerHTML = '<p class="loading">No data yet. Run ingest and push to GitHub.</p>';
+          panel.innerHTML = '<p class="loading">No data yet. Run ingest and push.</p>';
           return;
         }
         var by = groupByType(data);
@@ -200,9 +237,9 @@
           var label = labels[type] || type;
           var list = items.map(function (item) {
             var title = escapeHtml(item.title || 'Untitled');
-            var url = item.url ? escapeHtml(item.url) : '#';
             var condition = item.condition_or_topic ? escapeHtml(item.condition_or_topic) : '';
-            var link = url && url !== '#' ? '<a href="' + url + '" target="_blank" rel="noopener">' + title + '</a>' : '<span>' + title + '</span>';
+            var href = safeHref(item.url);
+            var link = href !== '#' ? '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + title + '</a>' : '<span>' + title + '</span>';
             var condHtml = condition ? '<div class="condition">' + condition + '</div>' : '';
             return '<li>' + link + condHtml + '</li>';
           }).join('');
@@ -219,9 +256,7 @@
             var url = new URL('data/ingested.json', document.location.href).href;
             fetch(url, { cache: 'no-store' })
               .then(function (r) { return r.ok ? r.json() : null; })
-              .then(function (data) {
-                renderMemory(data);
-              })
+              .then(function (data) { renderMemory(data); })
               .catch(function () {
                 panel.innerHTML = '<p class="error">Could not load data. Try again after the next ingest and push.</p>';
               });

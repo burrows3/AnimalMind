@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Animal Research Network</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: #fafbfc;
+      color: #1f2937;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 1.25rem 1.5rem;
+    }
+    .header-inner { max-width: 56rem; margin: 0 auto; }
+    .header h1 { margin: 0; font-size: 1.375rem; font-weight: 600; color: #111827; letter-spacing: -0.02em; }
+    .header p { margin: 0.35rem 0 0; font-size: 0.875rem; color: #6b7280; max-width: 36rem; }
+    .security-badge { display: inline-block; margin-top: 0.5rem; font-size: 0.75rem; color: #059669; font-weight: 500; }
+    main { max-width: 56rem; margin: 0 auto; padding: 1.5rem; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .summary-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+    }
+    .summary-card .num { font-size: 1.5rem; font-weight: 600; color: #111827; }
+    .summary-card .label { font-size: 0.8125rem; color: #6b7280; margin-top: 0.25rem; }
+    .summary-card .meta { font-size: 0.75rem; color: #9ca3af; margin-top: 0.5rem; }
+    .filter-wrap { margin-bottom: 1.25rem; }
+    .filter-wrap label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.35rem; }
+    .filter-wrap input {
+      width: 100%;
+      max-width: 24rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+    .filter-wrap input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+    .section {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .section h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section h2 .badge {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      background: #f3f4f6;
+      color: #4b5563;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+    .condition-block { margin-top: 1.25rem; }
+    .condition-block:first-child { margin-top: 0; }
+    .condition-block h3 { margin: 0 0 0.5rem; font-size: 0.9375rem; font-weight: 600; color: #374151; }
+    .condition-block .count { font-size: 0.8125rem; color: #6b7280; margin-bottom: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+    th { color: #6b7280; font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbfc; }
+    a.ext { color: #2563eb; text-decoration: none; font-weight: 500; }
+    a.ext:hover { text-decoration: underline; }
+    .who-benefits {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .who-benefits h2 { margin: 0 0 1rem; font-size: 1rem; font-weight: 600; color: #111827; }
+    .who-benefits ul { margin: 0; padding-left: 1.25rem; color: #4b5563; font-size: 0.875rem; }
+    .who-benefits li { margin-bottom: 0.5rem; }
+    .footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+    .footer strong { color: #6b7280; }
+    .loading { color: #6b7280; padding: 2rem; font-size: 0.875rem; }
+    .error { color: #b91c1c; padding: 1rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; font-size: 0.875rem; }
+    .hidden { display: none !important; }
+    @media (max-width: 640px) { .summary { grid-template-columns: 1fr 1fr; } main { padding: 1rem; } }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <h1>Animal Research Network</h1>
+      <p>Surveillance, literature, clinical, and vet practice resources for animal health. Read-only research interface.</p>
+      <span class="security-badge">Secure · No credentials or PII in this UI</span>
+    </div>
+  </header>
+  <main id="main">
+    <p class="loading">Loading…</p>
+  </main>
+  <script>
+    let allData = null;
+    let meta = null;
+
+    function escape(s) {
+      if (!s) return '';
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function safeHref(url) {
+      if (!url || typeof url !== 'string') return '#';
+      var u = (url + '').trim();
+      if (u.indexOf('http://') === 0 || u.indexOf('https://') === 0) return u;
+      return '#';
+    }
+
+    function formatLastUpdated(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
+      const now = new Date();
+      const diff = (now - d) / 60000;
+      if (diff < 60) return 'Just now';
+      if (diff < 1440) return Math.round(diff / 60) + ' hours ago';
+      return d.toLocaleDateString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    }
+
+    function render(api) {
+      meta = api.meta || {};
+      allData = api.data || {};
+      const data = api.data;
+      const main = document.getElementById('main');
+
+      if (!data || Object.keys(data).length === 0) {
+        main.innerHTML = '<p class="error">No data yet. Run ingest first.</p>';
+        return;
+      }
+
+      const lastFetched = formatLastUpdated(meta.lastFetched);
+      const counts = meta.counts || {};
+      const totalSurv = meta.totalSurveillance ?? counts.surveillance ?? 0;
+      const totalLit = meta.totalLiterature ?? counts.literature ?? 0;
+
+      const summaryCards = [
+        { num: totalSurv, label: 'Surveillance', meta: 'CDC Travel Notices' },
+        { num: totalLit, label: 'Literature', meta: 'PubMed' },
+        { num: counts.cancer || 0, label: 'Cancer', meta: 'Veterinary oncology' },
+        { num: counts.case_data || 0, label: 'Case data', meta: 'Case reports' },
+        { num: counts.clinical || 0, label: 'Clinical', meta: 'Practice, small animal, equine' },
+        { num: counts.imaging || 0, label: 'Imaging', meta: 'TCIA, curated' },
+        { num: counts.vet_practice || 0, label: 'Vet practice', meta: 'AAHA, AVMA, VIN, Merck' },
+        { num: lastFetched, label: 'Last updated', meta: 'On schedule' },
+      ];
+      const cardsHtml = summaryCards
+        .map(function(c) {
+          return '<div class="summary-card"><div class="num">' + escape(String(c.num)) + '</div><div class="label">' + escape(c.label) + '</div><div class="meta">' + escape(c.meta) + '</div></div>';
+        })
+        .join('');
+
+      var html = '<div class="summary">' + cardsHtml + '</div><div class="filter-wrap"><label for="filter">Filter by condition or keyword</label><input type="text" id="filter" placeholder="e.g. Rabies, cancer, equine, guidelines" aria-label="Filter"></div>';
+
+      const labels = {
+        surveillance: 'Surveillance',
+        literature: 'Literature',
+        cancer: 'Cancer (veterinary oncology)',
+        case_data: 'Case data (veterinary case reports)',
+        clinical: 'Clinical (practice, small animal, equine)',
+        imaging: 'Imaging & radiographs',
+        vet_practice: 'Vet practice (guidelines, resources)',
+      };
+      const typeOrder = ['surveillance', 'literature', 'cancer', 'case_data', 'clinical', 'imaging', 'vet_practice'];
+
+      for (var i = 0; i < typeOrder.length; i++) {
+        var type = typeOrder[i];
+        var conditions = data[type];
+        if (!conditions) continue;
+        var typeLabel = labels[type] || type;
+        var typeCount = counts[type] || Object.keys(conditions).reduce(function(n, k) { return n + (conditions[k] && conditions[k].length ? conditions[k].length : 0); }, 0);
+        html += '<section class="section" data-type="' + escape(type) + '"><h2>' + escape(typeLabel) + ' <span class="badge">' + typeCount + ' items</span></h2>';
+        var condKeys = Object.keys(conditions).sort();
+        for (var j = 0; j < condKeys.length; j++) {
+          var condition = condKeys[j];
+          var rows = conditions[condition];
+          html += '<div class="condition-block" data-condition="' + escape(condition).toLowerCase() + '"><h3>' + escape(condition) + '</h3><div class="count">' + rows.length + ' item(s)</div><table><thead><tr><th>Title / ID</th><th>Date</th><th>Link</th></tr></thead><tbody>';
+          for (var k = 0; k < rows.length; k++) {
+            var r = rows[k];
+            var pmid = (r.external_id || '').replace(/^(cancer|case|clinical)-/, '');
+            var title = r.title || (r.external_id ? (type === 'literature' || type === 'cancer' || type === 'case_data' || type === 'clinical' ? (pmid && /^\d+$/.test(pmid) ? 'PMID ' + pmid : r.external_id) : r.external_id) : '—');
+            var date = r.published_at ? new Date(r.published_at).toLocaleDateString(undefined, { dateStyle: 'short' }) : '';
+            var href = safeHref(r.url);
+            var link = href !== '#' ? '<a class="ext" href="' + escape(href) + '" target="_blank" rel="noopener noreferrer">Open →</a>' : '';
+            html += '<tr><td>' + escape(title) + '</td><td>' + date + '</td><td>' + link + '</td></tr>';
+          }
+          html += '</tbody></table></div>';
+        }
+        html += '</section>';
+      }
+
+      html += '<div class="who-benefits"><h2>Who benefits</h2><ul><li><strong>Veterinarians and clinics</strong> — Travel and outbreak notices, clinical and vet practice resources.</li><li><strong>Researchers and one-health teams</strong> — Literature and surveillance by condition.</li><li><strong>Public health and NGOs</strong> — Animal health risks and opportunities.</li></ul></div>';
+      html += '<div class="footer"><strong>Security:</strong> This interface is read-only. No credentials, API keys, or PII are exposed. Data is from public sources (PubMed, CDC, curated).</div>';
+
+      main.innerHTML = html;
+
+      document.getElementById('filter').addEventListener('input', function() {
+        var q = this.value.trim().toLowerCase();
+        document.querySelectorAll('.condition-block').forEach(function(block) {
+          var cond = (block.getAttribute('data-condition') || '').toLowerCase();
+          var match = !q || cond.indexOf(q) !== -1;
+          block.classList.toggle('hidden', !match);
+          var section = block.closest('.section');
+          if (section) {
+            var visible = section.querySelectorAll('.condition-block:not(.hidden)').length;
+            section.classList.toggle('hidden', visible === 0);
+          }
+        });
+      });
+    }
+
+    fetch('/api/ingested')
+      .then(function(r) { return r.ok ? r.json() : Promise.reject(r.statusText); })
+      .then(render)
+      .catch(function(err) {
+        document.getElementById('main').innerHTML = '<p class="error">Failed to load data. Ensure the server is running and the database is available.</p>';
+      });
+  </script>
+</body>
+</html>

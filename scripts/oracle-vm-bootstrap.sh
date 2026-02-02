@@ -3,7 +3,8 @@
 # Run on a fresh Ubuntu VM after SSH. Usage: see ORACLE-CLOUD-VM-SETUP.md "Minimal steps".
 set -e
 
-REPO_URL="${REPO_URL:-https://github.com/burrows3/AnimalMind.git}"
+# Set REPO_URL when running if different (e.g. export REPO_URL=https://github.com/YOUR_ORG/AnimalMind.git)
+REPO_URL="${REPO_URL:-https://github.com/YOUR_GITHUB_USERNAME/AnimalMind.git}"
 REPO_DIR="${HOME}/AnimalMind"
 CRON_LOG="${REPO_DIR}/memory/cron.log"
 

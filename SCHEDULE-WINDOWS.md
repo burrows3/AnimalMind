@@ -40,10 +40,10 @@ If you prefer to create the task by hand:
 5. **Actions**
    - New → **Start a program**
    - **Program/script:**  
-     `C:\Users\burro\AnimalMind\AnimalMind\scripts\run-ingest.cmd`  
-     (Use your actual repo path if different.)
+     `YOUR_REPO_ROOT\scripts\run-ingest.cmd`  
+     (Use your actual repo path, e.g. `C:\path\to\AnimalMind\scripts\run-ingest.cmd`.)
    - **Start in (optional but recommended):**  
-     `C:\Users\burro\AnimalMind\AnimalMind`  
+     `YOUR_REPO_ROOT`  
      (Repo root so `node scripts\ingest-data-sources.js` and `memory\` paths work.)
 
 6. **Conditions** (optional)

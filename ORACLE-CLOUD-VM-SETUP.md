@@ -1,9 +1,66 @@
-
 # Set up Animal Research Network on an Oracle Cloud VM
 
-Step-by-step: create an **Always Free** VM, install Node.js, clone the repo, and run **ingest + think + push** every 6 hours so your PC can stay off.
+**Optional.** Oracle Cloud is free but its networking (VCN, security lists, NSGs) can be confusing. If you’d rather not use Oracle: run the **Windows scheduled task** on your PC ([SCHEDULE-WINDOWS.md](./SCHEDULE-WINDOWS.md)), or use a simpler VPS (e.g. [VM-RECOMMENDATIONS.md](./VM-RECOMMENDATIONS.md)).
+
+Step-by-step below: create an **Always Free** VM, install Node.js, clone the repo, and run **ingest + think + push** every 6 hours so your PC can stay off.
 
 **Cost:** The **Always Free** VM (1 vCPU, 1 GB RAM) is **$0/month**. You stay under $10 as long as you don’t add paid resources.
+
+---
+
+## Easiest: 2 steps (VM already Running)
+
+If your instance is **Running** and you have its **Public IP** and your **private key**:
+
+**1. Open the firewall (once)**  
+**Menu (≡)** → **Networking** → **Virtual cloud networks** → click your VCN (e.g. **animalresearchnetwork**) → **Default Security List** → **Add ingress rules**. Add two rules: **Source** `0.0.0.0/0`, **TCP**, **Destination port** `22` → Save. Then same again with port **`3000`** → Save.
+
+**2. Run the setup script (from your PC)**  
+Open PowerShell, go to the repo folder, then run:
+
+```powershell
+.\scripts\run-oracle-vm-setup.ps1
+```
+
+When it asks: enter your **private key path**, your **VM public IP** (e.g. `147.224.216.170`), and your **GitHub username** (e.g. `burrows3`). When the script asks for your **GitHub token**, paste a [Personal Access Token](https://github.com/settings/tokens) (repo scope) and press Enter. For **PM2**, type **y** or **n**. Done.
+
+**Connection timed out?**  
+1. **Compute → Instances** – instance must be **Running**; if **Stopped**, click **Start** and copy the **Public IP** (it can change).  
+2. **Networking → VCN → Security Lists** – default list must have an **Ingress** rule: **Source** `0.0.0.0/0`, **TCP**, **Destination port** `22`. Add it and Save.  
+3. Run the script again with the **current** Public IP (e.g. `-VmIp "NEW_IP"`).
+
+---
+
+## Simplest path: VCN first, then instance (avoids “You must select a public subnet”)
+
+Do these in order so you never see the public-IP warning.
+
+**A. Create a public subnet (once)**
+
+1. **Menu (≡)** → **Networking** → **Virtual cloud networks**.
+2. **Create Virtual Cloud Network**.
+3. **Name:** `vcn-animalmind`. **Compartment:** your compartment (e.g. animalresearchnetwork).
+4. **CIDR:** `10.0.0.0/16`.
+5. **Create virtual cloud network only** – leave **Create public subnet** unchecked (we’ll add the subnet next).
+6. Click **Create VCN**.
+7. Open the new VCN → **Subnets** → **Create Subnet**.
+8. **Name:** `public-subnet`. **Subnet type:** **Regional**, **Public**. **CIDR:** `10.0.0.0/24`. **Compartment:** same as VCN.
+9. Click **Create Subnet**.
+
+**B. Create the VM**
+
+1. **Menu** → **Compute** → **Instances** → **Create instance**.
+2. **Name:** e.g. `animalmind`. **Image:** Ubuntu 22.04. **Shape:** VM.Standard.E2.1.Micro or VM.Standard.A1.Flex (Always Free).
+3. **Networking:** **Select existing virtual cloud network** → choose **vcn-animalmind** → **Select existing subnet** → choose **public-subnet**.
+4. **Public IPv4 address:** **Automatically assign public IPv4 address** (this will work now).
+5. **SSH keys:** **Generate a key pair for me** → **Download private key** and save it.
+6. **Create**. Wait for **Running**, then copy the **Public IP**.
+
+**C. Open firewall and SSH**
+
+1. **Networking** → **Virtual cloud networks** → **vcn-animalmind** → **Default Security List** → **Add ingress rules:** TCP 22, then TCP 3000 (Source: 0.0.0.0/0). Save.
+2. From your PC: `ssh -i "path\to\your-private-key.key" ubuntu@PUBLIC_IP`.
+3. On the VM, run the one-line setup (section below) and paste your GitHub token when asked.
 
 ---
 
@@ -14,11 +71,11 @@ Step-by-step: create an **Always Free** VM, install Node.js, clone the repo, and
 3. **Open ports** – VCN → Default Security List → Add ingress: TCP 22 (SSH), then TCP 3000 (dashboard).
 4. **SSH in** (from Windows PowerShell, use your key path and VM public IP):
    ```powershell
-   ssh -i "C:\Users\burro\Downloads\oracle-animalmind.key" ubuntu@YOUR_VM_PUBLIC_IP
+   ssh -i "PRIVATE_KEY_PATH" ubuntu@YOUR_VM_PUBLIC_IP
    ```
 5. **One command on the VM** (paste your GitHub token when asked):
    ```bash
-   sudo apt-get update -qq && sudo apt-get install -y git curl && git clone https://github.com/burrows3/AnimalMind.git ~/AnimalMind && bash ~/AnimalMind/scripts/oracle-vm-bootstrap.sh
+   sudo apt-get update -qq && sudo apt-get install -y git curl && git clone https://github.com/YOUR_GITHUB_USERNAME/AnimalMind.git ~/AnimalMind && bash ~/AnimalMind/scripts/oracle-vm-bootstrap.sh
    ```
 
 That’s it. Ingest is scheduled every 6 hours; optionally the script starts the dashboard with PM2. Full details below.
@@ -31,11 +88,11 @@ If you're on **Windows** and use **GitHub over HTTPS** (no SSH key for GitHub):
 
 1. **SSH from PowerShell** (use your key path and the VM’s public IP):
    ```powershell
-   ssh -i "C:\Users\burro\Downloads\oracle-animalmind.key" ubuntu@YOUR_VM_PUBLIC_IP
+   ssh -i "PRIVATE_KEY_PATH" ubuntu@YOUR_VM_PUBLIC_IP
    ```
 2. **Git push from the VM:** Use **Option A (HTTPS + token)** in section 6 below. Create a [Personal Access Token](https://github.com/settings/tokens) with `repo` scope, then on the VM set:
    ```bash
-   git remote set-url origin https://YOUR_TOKEN@github.com/burrows3/AnimalMind.git
+   git remote set-url origin https://YOUR_TOKEN@github.com/YOUR_GITHUB_USERNAME/AnimalMind.git
    ```
    When Git asks for a password, use the **token**, not your GitHub password.
 
@@ -94,7 +151,7 @@ ssh -i PRIVATE_KEY_PATH ubuntu@PUBLIC_IP
 Example (Windows, if you have OpenSSH):
 
 ```powershell
-ssh -i C:\Users\burro\Downloads\oracle-animalmind.key ubuntu@123.45.67.89
+ssh -i "PRIVATE_KEY_PATH" ubuntu@YOUR_VM_PUBLIC_IP
 ```
 
 If the key has the wrong permissions (Linux/Mac): `chmod 600 PRIVATE_KEY_PATH`.  
@@ -125,7 +182,7 @@ On the VM:
 
 ```bash
 cd ~
-git clone https://github.com/burrows3/AnimalMind.git
+git clone https://github.com/YOUR_GITHUB_USERNAME/AnimalMind.git
 cd AnimalMind
 npm install
 ```
@@ -138,7 +195,7 @@ So the VM can **push** to GitHub (for ingest → push), use either **HTTPS with 
 2. On the VM, set the remote to use the token (once):
 
 ```bash
-git remote set-url origin https://YOUR_GITHUB_TOKEN@github.com/burrows3/AnimalMind.git
+git remote set-url origin https://YOUR_GITHUB_TOKEN@github.com/YOUR_GITHUB_USERNAME/AnimalMind.git
 ```
 
 Or when you first push, Git will ask for username/password – use your GitHub username and the **token** as the password.
@@ -148,7 +205,7 @@ Or when you first push, Git will ask for username/password – use your GitHub u
 1. On the VM: `ssh-keygen -t ed25519 -C "animalmind-vm" -f ~/.ssh/animalmind -N ""`
 2. `cat ~/.ssh/animalmind.pub` – copy the output.
 3. On GitHub: **Settings** → **SSH and GPG keys** → **New SSH key** → paste, save.
-4. In the repo: `git remote set-url origin git@github.com:burrows3/AnimalMind.git`
+4. In the repo: `git remote set-url origin git@github.com:YOUR_GITHUB_USERNAME/AnimalMind.git`
 5. Test: `ssh -T git@github.com` (first time: type `yes` to accept host key).
 
 ---
@@ -179,15 +236,15 @@ crontab -e
 If asked, choose an editor (e.g. `nano`). Add this line (runs at 00:00, 06:00, 12:00, 18:00):
 
 ```
-0 */6 * * * cd /home/ubuntu/AnimalMind && /usr/bin/node scripts/ingest-data-sources.js && /usr/bin/node scripts/think-autonomous.js && /usr/bin/node scripts/push-ingest-to-github.js >> /home/ubuntu/AnimalMind/memory/cron.log 2>&1
+0 */6 * * * cd ~/AnimalMind && /usr/bin/node scripts/ingest-data-sources.js && /usr/bin/node scripts/think-autonomous.js && /usr/bin/node scripts/push-ingest-to-github.js >> ~/AnimalMind/memory/cron.log 2>&1
 ```
 
-Use `/home/ubuntu` only if your user is `ubuntu`; if you used another user, replace it (e.g. `cd ~/AnimalMind` or the full path you used). Save and exit.
+Replace `~/AnimalMind` with your repo path if different (e.g. `/home/ubuntu/AnimalMind`). Save and exit.
 
 **Alternative (using the shell script):** You can instead run the bundled script so logs go to `memory/ingest.log`:
 
 ```
-0 */6 * * * /home/ubuntu/AnimalMind/scripts/run-ingest.sh >> /home/ubuntu/AnimalMind/memory/cron.log 2>&1
+0 */6 * * * ~/AnimalMind/scripts/run-ingest.sh >> ~/AnimalMind/memory/cron.log 2>&1
 ```
 
 Verify: `crontab -l` should show the line. After 6 hours, check `memory/cron.log` (and `memory/ingest.log` if you use the script) and GitHub for a new commit.

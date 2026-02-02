@@ -20,6 +20,11 @@ function run(cmd, opts = {}) {
   return execSync(cmd, { encoding: 'utf8', cwd: REPO_ROOT, ...opts });
 }
 
+/** Run git with args (no shell interpolation). Use for commit message to avoid injection. */
+function runGit(args, opts = {}) {
+  return execSync('git', args, { encoding: 'utf8', cwd: REPO_ROOT, ...opts });
+}
+
 function hasStagedChanges() {
   try {
     run('git diff --cached --quiet', { stdio: 'ignore' });
@@ -46,7 +51,9 @@ function main() {
         literature: meta.counts.literature || 0,
         cancer: meta.counts.cancer || 0,
         case_data: meta.counts.case_data || 0,
+        clinical: meta.counts.clinical || 0,
         imaging: meta.counts.imaging || 0,
+        vet_practice: meta.counts.vet_practice || 0,
       },
     };
     const docsDir = path.join(REPO_ROOT, 'docs');
@@ -71,7 +78,7 @@ function main() {
     console.warn('Could not write docs/data-summary.json:', e.message);
   }
 
-  run('git add memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md');
+  run('git add memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md memory/agent-outputs/ memory/opportunities.md');
   if (fs.existsSync(DOCS_SUMMARY)) run('git add docs/data-summary.json');
   if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
   if (!hasStagedChanges()) {
@@ -80,7 +87,8 @@ function main() {
   }
 
   const when = new Date().toISOString().replace(/T/, ' ').slice(0, 16);
-  run(`git commit -m "Ingest: ${when}"`);
+  // Use run() for commit so Windows git receives args correctly; when is safe (no quotes)
+  run('git commit -m "Ingest: ' + when + '"');
   run('git push origin main');
   console.log('Pushed ingest to GitHub.');
 }

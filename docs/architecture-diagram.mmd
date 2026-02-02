@@ -1,0 +1,61 @@
+%% AnimalMind system architecture – paste into https://mermaid.live to export PNG/SVG
+flowchart TB
+  subgraph SOURCES["Data sources"]
+    PUBMED[("PubMed\n(literature, cancer, case, clinical, small animal, equine)")]
+    CDC[("CDC Travel Notices\n(surveillance)")]
+    TCIA[("TCIA\n(imaging)")]
+    CURATED[("Curated JSON\n(cancer, imaging, vet_practice)")]
+  end
+
+  subgraph INGEST["Ingest pipeline"]
+    INGEST_SCRIPT[ingest-data-sources.js]
+    INGEST_SCRIPT --> DB[(memory/animalmind.db)]
+    INGEST_SCRIPT --> JSON[memory/data-sources/*.json]
+  end
+
+  subgraph THINK["Think & agents"]
+    THINK_SCRIPT[think-autonomous.js]
+    THINK_SCRIPT --> INSIGHTS[memory/autonomous-insights.md]
+    AG1[agent-surveillance-review.js]
+    AG2[agent-literature-review.js]
+    AG3[agent-synthesize-opportunities.js]
+    AG1 --> OUT1[agent-outputs/surveillance-review.md]
+    AG2 --> OUT2[agent-outputs/literature-review.md]
+    AG3 --> OPPORT[memory/opportunities.md]
+    INSIGHTS --> AG3
+    OUT1 --> AG3
+    OUT2 --> AG3
+  end
+
+  subgraph PUSH["Publish"]
+    PUSH_SCRIPT[push-ingest-to-github.js]
+    PUSH_SCRIPT --> GITHUB[(GitHub repo)]
+  end
+
+  subgraph CONSUME["Consume"]
+    DASH[Express dashboard localhost:3000]
+    PAGES[GitHub Pages landing + data]
+  end
+
+  PUBMED --> INGEST_SCRIPT
+  CDC --> INGEST_SCRIPT
+  TCIA --> INGEST_SCRIPT
+  CURATED --> INGEST_SCRIPT
+
+  DB --> THINK_SCRIPT
+  DB --> AG1
+  DB --> AG2
+
+  THINK_SCRIPT --> AG1
+  AG1 --> AG2
+  AG2 --> AG3
+
+  DB --> PUSH_SCRIPT
+  JSON --> PUSH_SCRIPT
+  INSIGHTS --> PUSH_SCRIPT
+  OUT1 --> PUSH_SCRIPT
+  OUT2 --> PUSH_SCRIPT
+  OPPORT --> PUSH_SCRIPT
+
+  GITHUB --> PAGES
+  DB --> DASH

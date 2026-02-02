@@ -37,7 +37,15 @@ try {
   grouped = {};
 }
 
-const dataTypeLabels = { surveillance: 'Surveillance (CDC Travel Notices)', literature: 'Literature (PubMed)' };
+const dataTypeLabels = {
+  surveillance: 'Surveillance (CDC Travel Notices)',
+  literature: 'Literature (PubMed)',
+  cancer: 'Cancer (animal / veterinary oncology)',
+  case_data: 'Case data (veterinary case reports)',
+  clinical: 'Clinical (practice, small animal, equine)',
+  imaging: 'Imaging & radiographs',
+  vet_practice: 'Vet practice (guidelines, resources)',
+};
 const sections = [];
 
 for (const [dataType, conditions] of Object.entries(grouped)) {

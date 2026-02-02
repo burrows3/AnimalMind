@@ -4,6 +4,109 @@ Agents don't physically "go out" to farms or clinics. They **connect to data** t
 
 ---
 
+## System architecture (visual)
+
+The diagram below renders on **GitHub** (and in any Markdown viewer that supports Mermaid). To export as **PNG or SVG**, copy the contents of [docs/architecture-diagram.mmd](docs/architecture-diagram.mmd) into [Mermaid Live Editor](https://mermaid.live) and use Export.
+
+```mermaid
+flowchart TB
+  subgraph SOURCES["Data sources"]
+    PUBMED[("PubMed\n(literature, cancer, case, clinical, small animal, equine)")]
+    CDC[("CDC Travel Notices\n(surveillance)")]
+    TCIA[("TCIA\n(imaging)")]
+    CURATED[("Curated JSON\n(cancer, imaging, vet_practice)")]
+  end
+
+  subgraph INGEST["Ingest pipeline"]
+    INGEST_SCRIPT[ingest-data-sources.js]
+    INGEST_SCRIPT --> DB[(memory/animalmind.db)]
+    INGEST_SCRIPT --> JSON[memory/data-sources/*.json]
+  end
+
+  subgraph THINK["Think & agents"]
+    THINK_SCRIPT[think-autonomous.js]
+    THINK_SCRIPT --> INSIGHTS[memory/autonomous-insights.md]
+    AG1[agent-surveillance-review.js]
+    AG2[agent-literature-review.js]
+    AG3[agent-synthesize-opportunities.js]
+    AG1 --> OUT1[agent-outputs/surveillance-review.md]
+    AG2 --> OUT2[agent-outputs/literature-review.md]
+    AG3 --> OPPORT[memory/opportunities.md]
+    INSIGHTS --> AG3
+    OUT1 --> AG3
+    OUT2 --> AG3
+  end
+
+  subgraph PUSH["Publish"]
+    PUSH_SCRIPT[push-ingest-to-github.js]
+    PUSH_SCRIPT --> GITHUB[(GitHub repo)]
+  end
+
+  subgraph CONSUME["Consume"]
+    DASH[Express dashboard\nlocalhost:3000]
+    PAGES[GitHub Pages\nlanding + data]
+  end
+
+  PUBMED --> INGEST_SCRIPT
+  CDC --> INGEST_SCRIPT
+  TCIA --> INGEST_SCRIPT
+  CURATED --> INGEST_SCRIPT
+
+  DB --> THINK_SCRIPT
+  DB --> AG1
+  DB --> AG2
+
+  THINK_SCRIPT --> AG1
+  AG1 --> AG2
+  AG2 --> AG3
+
+  DB --> PUSH_SCRIPT
+  JSON --> PUSH_SCRIPT
+  INSIGHTS --> PUSH_SCRIPT
+  OUT1 --> PUSH_SCRIPT
+  OUT2 --> PUSH_SCRIPT
+  OPPORT --> PUSH_SCRIPT
+
+  GITHUB --> PAGES
+  DB --> DASH
+```
+
+**Flow (every 6 hours when scheduled):**  
+Sources → **Ingest** → DB + JSON → **Think** → insights → **Agents** (surveillance → literature → synthesizer) → opportunities → **Push** → GitHub. Dashboard and landing page read from DB or static files.
+
+### Run order (orchestration)
+
+When `run-ingest.cmd` or `run-ingest.sh` runs (e.g. every 6 hours):
+
+```mermaid
+sequenceDiagram
+  participant Scheduler
+  participant Ingest
+  participant Think
+  participant A1 as Surveillance reviewer
+  participant A2 as Literature reviewer
+  participant A3 as Synthesizer
+  participant Push
+
+  Scheduler->>Ingest: run
+  Ingest->>Ingest: fetch PubMed, CDC, TCIA, curated
+  Ingest->>Ingest: write DB + JSON
+  Ingest->>Think: run
+  Think->>Think: write autonomous-insights.md
+  Think->>A1: run
+  A1->>A1: write surveillance-review.md
+  Think->>A2: run
+  A2->>A2: write literature-review.md
+  Think->>A3: run
+  A3->>A3: read reviews + insights
+  A3->>A3: write opportunities.md
+  A3->>Push: run
+  Push->>Push: git add, commit, push
+  Push->>Push: GitHub updated
+```
+
+---
+
 ## VM vs VMS
 
 | Term | Meaning | Role in AnimalMind |
@@ -92,12 +195,16 @@ So "going out" = **integrating with VMS, surveillance feeds, literature APIs, an
 
 ## Data sources we integrate (for testing)
 
-Two data sources are wired up so the VM job can **fetch → store** and agents can **analyze → opportunities**.
+Multiple data types are wired so the VM job can **fetch → store** and the dashboard shows them **organized by data type and condition**.
 
-| # | Source | Type | How we use it | No API key |
-|---|--------|------|----------------|------------|
-| 1 | **PubMed** (NCBI E-utilities) | Literature | Search recent papers by topic (e.g. one health, animal, zoonotic). Stored as `memory/data-sources/pubmed-recent.json`. | Yes |
-| 2 | **CDC Travel Notices** (RSS) | Surveillance | Outbreak/travel health notices (e.g. rabies, Rift Valley Fever, dengue). Stored as `memory/data-sources/cdc-travel-notices.json`. | Yes |
+| # | Source | Data type | How we use it | No API key |
+|---|--------|-----------|----------------|------------|
+| 1 | **PubMed** | Literature | One health, animal. `pubmed-recent.json`. | Yes |
+| 2 | **CDC Travel Notices** (RSS) | Surveillance | Outbreak/travel notices (rabies, dengue, etc.). `cdc-travel-notices.json`. | Yes |
+| 3 | **PubMed** | Cancer | Animal cancer, veterinary oncology. `pubmed-cancer.json`. | Yes |
+| 4 | **PubMed** | Case data | Veterinary case reports. `pubmed-case-reports.json`. | Yes |
+| 5 | **Curated datasets** (JSON) | Cancer, Imaging | ICDC, CATCH, canine radiographs, skull CT. `curated-datasets.json`. | Yes |
+| 6 | **TCIA** (Cancer Imaging Archive) | Imaging | Canine/veterinary imaging collections when available. `tcia-imaging.json`. | Yes |
 
 ### Agent tasks and goals (autonomous pipeline)
 
@@ -105,7 +212,7 @@ Each agent has a task; together they form a pipeline:
 
 | Task | What runs | Goal |
 |------|-----------|------|
-| **Collect data** | Hourly ingest (PubMed + CDC) | Fresh literature and surveillance data in `memory/data-sources/`. |
+| **Collect data** | Hourly ingest (PubMed, CDC, cancer, case reports, curated, TCIA) | Literature, surveillance, cancer, case data, and imaging in `memory/data-sources/` and DB. |
 | **Insights** | Agent (or human) reads ingested data | **Animal health risks** (e.g. new outbreaks, emerging pathogens), **opportunities** (funding, trials, research gaps), **partnerships** (who to collaborate with, who to mention or DM). |
 | **Surface** | Alerts, summaries, posts, DMs | Proposals for human review: “New CDC notice: rabies in Morocco”; “Recent one-health papers”; “Potential partner: @X”. |
 

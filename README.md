@@ -19,7 +19,7 @@ npm run start
 
 Then open **http://localhost:3000** (or the port shown; if 3000 is in use, the server tries 3001, 3002, …). The dashboard is in **`public/`**—run `npm start` from the repo root. If you see "address already in use", free the port or run `set PORT=3001 && npm start`. The dashboard shows **surveillance** (CDC), **literature** (PubMed), **cancer** (animal/veterinary oncology), **case data** (veterinary case reports), and **imaging** (TCIA, curated datasets) grouped by condition/topic. Data is refreshed every 6 hours.
 
-See [ROADMAP.md](./ROADMAP.md) for end goal, improvements, and next steps. **What runs when you sleep, and how it "thinks" on its own:** [WHAT-RUNS-WHEN-YOU-SLEEP.md](./WHAT-RUNS-WHEN-YOU-SLEEP.md).
+See [ROADMAP.md](./ROADMAP.md) for end goal, improvements, and next steps. **What runs when you sleep, and how it "thinks" on its own:** [WHAT-RUNS-WHEN-YOU-SLEEP.md](./WHAT-RUNS-WHEN-YOU-SLEEP.md). **Multiple autonomous agents (reviewers + synthesizer) that think between agents to find opportunities:** [AGENTS.md](./AGENTS.md).
 
 ## Autonomous run every 6 hours (Windows)
 
@@ -27,7 +27,7 @@ Run **once:** `scripts\setup-hourly-task.cmd` — that creates a Windows schedul
 
 ## Compute and funding
 
-Where does compute run, and where does the money come from? See [COMPUTE-AND-FUNDING.md](./COMPUTE-AND-FUNDING.md). **Cost estimates** (12–24 h/day, your PC vs cloud): [COMPUTE-COSTS.md](./COMPUTE-COSTS.md). **Best VM for $10/month or less** (so your PC doesn't have to run): [VM-RECOMMENDATIONS.md](./VM-RECOMMENDATIONS.md). Today: **your PC** (electricity only; no cloud bill). Cloud or ARN-funded compute would be a future setup.
+Where does compute run, and where does the money come from? See [COMPUTE-AND-FUNDING.md](./COMPUTE-AND-FUNDING.md). **Cost estimates** (12–24 h/day, your PC vs cloud): [COMPUTE-COSTS.md](./COMPUTE-COSTS.md). **Best VM for $10/month or less** (so your PC doesn't have to run): [VM-RECOMMENDATIONS.md](./VM-RECOMMENDATIONS.md). **Oracle Cloud** (free VM) is optional: [ORACLE-CLOUD-VM-SETUP.md](./ORACLE-CLOUD-VM-SETUP.md)—networking can be tricky; you can stick with your PC or a simpler VPS. Today: **your PC** (electricity only; no cloud bill). Cloud or ARN-funded compute would be a future setup.
 
 ## Security
 
@@ -40,4 +40,4 @@ To protect from hackers and bad actors: secrets stay in `.env` (never committed)
 
 ## Repo
 
-- [GitHub – burrows3/AnimalMind](https://github.com/burrows3/AnimalMind)
+- [GitHub – YOUR_ORG/AnimalMind](https://github.com/YOUR_ORG/AnimalMind) (replace with your repo)

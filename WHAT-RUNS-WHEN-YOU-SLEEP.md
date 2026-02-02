@@ -4,7 +4,7 @@
 
 | Component | When it runs | What it does |
 |-----------|--------------|--------------|
-| **AnimalMind Ingest** (Windows scheduled task) | **Every 6 hours** (if you ran `scripts\setup-hourly-task.cmd`) | 1) Fetches data (PubMed, CDC, cancer, case reports, TCIA, curated). 2) Writes to DB and JSON. 3) Commits and pushes to GitHub. **No “thinking”** – only data collection and storage. |
+| **AnimalMind Ingest** (Windows scheduled task) | **Every 6 hours** (if you ran `scripts\setup-hourly-task.cmd`) | 1) Fetches data (PubMed, CDC, cancer, case reports, TCIA, curated). 2) Writes to DB and JSON. 3) Think + **agents** (surveillance reviewer, literature reviewer, synthesizer) write insights and **opportunities**. 4) Push to GitHub. See [AGENTS.md](./AGENTS.md). |
 | **Dashboard** (Express server) | **Only when you run `npm start`** and leave it open | Serves the Animal Research Network page at http://localhost:3000. If you close the terminal or the PC restarts, it stops. It is **not** a scheduled task. |
 
 So **when you go to sleep**, the only thing that keeps going (if your PC stays on) is the **ingest task**: every 6 hours it collects new data and pushes it to GitHub. Nothing is reading that data and “thinking” about how to improve animal health – no analysis, no alerts, no suggested next steps.
@@ -33,7 +33,7 @@ To improve animal health on its own while you sleep, the system should:
 2. **Plus:** After each ingest (or on a schedule), **read** the latest data and **write** a short “what matters” summary: new outbreaks, new papers, possible alerts, partnership or research opportunities. So when you wake up, there is not only raw data but a **digest** and **suggested focus** (e.g. “New: Rabies in Morocco, Dengue global. Consider alert.” “15 new cancer papers; consider outreach to X.”).
 3. **Optional later:** Send that digest somewhere (e.g. email, Telegram, or a “daily brief” in the dashboard).
 
-The repo now includes an **autonomous “think” step** that runs after each ingest and writes **`memory/autonomous-insights.md`**. That file is the system “thinking on its own”: it summarizes what was ingested and suggests where to focus for animal health. The hourly task runs ingest → push → **then** this think step, so when you sleep, it keeps collecting **and** updating that insights file.
+The repo now includes an **autonomous “think” step** and **multiple agents** that run after each ingest: think → **surveillance reviewer** → **literature reviewer** → **synthesizer** → push. The synthesizer reads the reviewers’ outputs and writes **`memory/opportunities.md`** (opportunities to improve the field). See [AGENTS.md](./AGENTS.md) for the full agent chain. The task runs ingest → think → agents → push, so when you sleep, it keeps collecting **and** updating insights and opportunities.
 
 ---
 

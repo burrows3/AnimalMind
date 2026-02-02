@@ -24,7 +24,7 @@ You want the **ingest + think step** (and optionally the dashboard) to run **24/
 1. **OS:** Linux (Ubuntu 22.04 LTS is a good default).
 2. **Node.js:** Install Node 20 LTS; clone your repo.
 3. **Cron:** Run the ingest every 6 hours, e.g.  
-   `0 */6 * * * cd /home/ubuntu/AnimalMind && node scripts/ingest-data-sources.js && node scripts/think-autonomous.js && node scripts/push-ingest-to-github.js`
+   `0 */6 * * * cd ~/AnimalMind && node scripts/ingest-data-sources.js && node scripts/think-autonomous.js && node scripts/push-ingest-to-github.js`
 4. **Optional – dashboard 24/7:** Run `npm start` with a process manager (e.g. `pm2`) so the Express server stays up and you can open the dashboard in a browser without your PC.
 5. **Git:** Use a deploy key or token so the VM can push to GitHub (no need to leave your computer on).
 

@@ -1,6 +1,24 @@
 # Security
 
-This document describes how we protect the project from hackers and bad actors, and how to report vulnerabilities.
+This document describes how we protect the project from hackers and bad actors, and how to report vulnerabilities. A **full security audit** (secrets, agent takeover, injection, hardening) is in [SECURITY-AUDIT.md](./SECURITY-AUDIT.md).
+
+---
+
+## Protecting the project (open source is fine; protect credentials and PII)
+
+- **Do not share anything sensitive on GitHub.** Never commit `.env`, API keys, tokens, passwords, or PII. The repo can be public (open source) while you keep secrets in local `.env` and private notes only.
+- **Frontend is read-only.** The dashboard and landing page display data from public sources (PubMed, CDC, curated). No credentials, API keys, or PII are exposed in the UI. External links use `rel="noopener noreferrer"` and only `http://` / `https://` URLs are allowed.
+- **API does not leak internals.** The `/api/ingested` endpoint returns only DB data; errors return a generic message (no stack traces or paths to the client).
+
+---
+
+## Documentation and placeholders
+
+**Do not commit identifying or system-specific details** in markdown or config that could expose your environment:
+
+- **Use placeholders** in setup docs: `YOUR_DOMAIN`, `YOUR_GITHUB_USERNAME`, `YOUR_REPO_ROOT`, `PRIVATE_KEY_PATH`, `YOUR_VM_PUBLIC_IP`. Replace with real values only in local copies or private notes.
+- **Avoid** real Windows/Linux user paths (e.g. `C:\Users\YourName\`), VM IPs, SSH key paths, or org/repo names if the repo is shared. Docs in this repo use generic placeholders so anyone can follow them without leaking your system.
+- **`docs/CNAME`** must contain your real custom domain for GitHub Pages to serve it; that value is public by nature (it’s your site URL). All other domain references in docs should use `YOUR_DOMAIN`.
 
 ---
 
@@ -79,3 +97,4 @@ We will respond and work with you on a fix and disclosure.
 - [ ] **Dependabot** enabled (alerts + security updates). See `.github/dependabot.yml`.
 - [ ] Node and OS kept updated for security patches.
 - [ ] (Optional) Branch protection on `main` requiring status checks or PR review.
+- [ ] Agent-only endpoints use `requireMoltbookAuth`; URLs from ingested data are allowlisted (http/https only) before use in links.

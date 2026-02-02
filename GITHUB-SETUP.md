@@ -1,6 +1,6 @@
 # Push AnimalMind to GitHub
 
-Your repo is already connected to **https://github.com/burrows3/AnimalMind.git** on branch `main`. Files are staged and ready to commit.
+Your repo is connected to **https://github.com/YOUR_GITHUB_USERNAME/AnimalMind.git** (or your org/repo) on branch `main`. Files are staged and ready to commit.
 
 ## 1. Set your Git identity (one-time)
 
@@ -14,7 +14,7 @@ git config --global user.name "Your Name"
 Or for this repo only:
 
 ```bash
-cd C:\Users\burro\AnimalMind\AnimalMind
+cd YOUR_REPO_ROOT
 git config user.email "your-email@example.com"
 git config user.name "Your Name"
 ```
@@ -24,7 +24,7 @@ git config user.name "Your Name"
 From the AnimalMind folder:
 
 ```bash
-cd C:\Users\burro\AnimalMind\AnimalMind
+cd YOUR_REPO_ROOT
 git commit -m "Add Moltbook auth, .env.example, .gitignore, docs"
 git push -u origin main
 ```

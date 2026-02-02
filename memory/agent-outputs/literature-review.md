@@ -1,8 +1,8 @@
 # Literature reviewer
 
 **Agent:** Literature reviewer (autonomous)
-**Last run:** 2026-02-02T01:24:04.294Z
-**Data as of:** 2026-02-02T01:24:04.061Z
+**Last run:** 2026-02-02T01:28:51.435Z
+**Data as of:** 2026-02-02T01:28:07.318Z
 
 ---
 
@@ -33,5 +33,6 @@
 
 ## For other agents
 
-- **Synthesizer:** Use themes above for "opportunities" (e.g. "New cancer papers; consider comparative oncology collaboration").
+- **Synthesizer:** Use themes above for "opportunities" and **for the clinic** (protocols, differentials, CE, client handouts).
+- **Veterinary medicine:** Clinical + case_data + vet_practice support daily practice, guidelines, and client resources.
 - **Imaging:** Curated/TCIA data is in the DB; link to teaching or model development where relevant.
