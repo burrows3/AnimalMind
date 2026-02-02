@@ -86,6 +86,17 @@ function main() {
     }
     lines.push('');
 
+    lines.push('### Reasoning by autonomous-agent topic', '');
+    const reasoningMatch = literatureText.match(/## Reasoning by autonomous-agent topic[\s\S]*?(?=\n## |$)/);
+    if (reasoningMatch && reasoningMatch[0].trim().length > 80) {
+      const reasoningBlock = reasoningMatch[0].replace(/^## Reasoning by autonomous-agent topic\n\n?/, '').trim();
+      lines.push('The literature reviewer reasons over ingested data for each autonomous-agent topic (Clinical-Adjacent and Research & Discovery). Inferred opportunities:', '');
+      lines.push(reasoningBlock.split('\n').filter(Boolean).map((l) => l.trim()).join('\n'), '');
+    } else {
+      lines.push('- Topic-wise reasoning appears after the literature reviewer runs with topic-ingested data.', '');
+    }
+    lines.push('');
+
     lines.push('### From system insights', '');
     if (hasInsights) {
       lines.push('- Surveillance: review new CDC travel notices for alerts.');

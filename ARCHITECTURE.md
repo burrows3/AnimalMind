@@ -109,10 +109,11 @@ sequenceDiagram
 
 We **don’t yet “investigate by topic”** on demand. Ingest uses a **fixed set of search terms and sources**:
 
-- **PubMed:** `one health animal`, `animal cancer veterinary oncology`, `veterinary case reports`, `veterinary clinical practice`, `small animal veterinary medicine`, `equine veterinary medicine` (each with a retmax limit).
+- **PubMed:** `one health animal`, `animal cancer veterinary oncology`, `veterinary case reports`, `veterinary clinical practice`, `small animal veterinary medicine`, `equine veterinary medicine` (each with a retmax limit), plus **20 autonomous-agent topic** queries (5 papers each).
 - **CDC:** Travel notices RSS (all items).
+- **ECDC:** Avian influenza RSS (surveillance; European Centre for Disease Prevention and Control).
 - **TCIA:** API for collections filtered by veterinary/canine.
-- **Curated JSON:** `memory/data-sources/curated-datasets.json` (cancer, imaging, vet_practice links).
+- **Curated JSON:** `memory/data-sources/curated-datasets.json` (cancer, imaging, vet_practice, surveillance links: AAHA, AVMA, VIN, Merck, **IVIS**, **WSAVA**, **WOAH WAHIS**).
 
 Agents run on a schedule, fetch from these, write to the DB and JSON; they do **not** take a user- or agent-supplied “topic” and dynamically query. Building toward **topic-driven investigation** is a future step.
 
@@ -125,6 +126,15 @@ The network ingests literature (PubMed) for **20 topics** each run, in two categ
 - **Research & Discovery:** Topics where mechanisms are unclear, outcomes are surprising, and long-term autonomous exploration may lead to new biology, tools, or therapies. Examples: Unknown Biological Signals, Latent Protective Mechanisms, Pain Modulation Beyond Analgesics, Hidden Costs of Normal Physiology, Environmental Exposure and Sentinel Signals, Species-Specific Health Advantages, Comparative Physiology at Extremes, Genetic Intervention and Biological Integrity, Developmental Programming and Lifelong Health, Unexpected Correlations and Anomalies.
 
 Clinical-adjacent topics inform veterinary care today. Research topics explore biology, mechanisms, and long-term discovery. They’re surfaced on the landing page under **Autonomous-Agent Topics** and in **autonomous-insights.md** after each think step.
+
+### Agent reasoning (data source, then reasoning)
+
+Agents don’t just restate ingested data; they **reason** over it:
+
+- **Literature reviewer:** For each autonomous-agent topic that has ingested literature, the agent writes a short **reasoning** line (e.g. “Prioritize validation of preclinical signals”) and exposes it in `agent-outputs/literature-review.md` under **Reasoning by autonomous-agent topic**.
+- **Synthesizer:** Reads that reasoning and adds a **Reasoning by autonomous-agent topic** section to `memory/opportunities.md`, so opportunities reflect topic-wise inference as well as surveillance and literature themes.
+
+So each run: **data** (ingest) → **reasoning** (literature reviewer by topic, surveillance reviewer, synthesizer).
 
 ---
 

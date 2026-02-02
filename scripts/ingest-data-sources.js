@@ -144,6 +144,24 @@ async function fetchCdcTravelNotices() {
   };
 }
 
+// --- 2b. ECDC Avian influenza RSS (surveillance) ---
+const ECDC_AVIAN_FLU_RSS = 'https://www.ecdc.europa.eu/en/taxonomy/term/323//feed';
+
+async function fetchEcdcAvianFlu() {
+  try {
+    const xml = await fetchRss(ECDC_AVIAN_FLU_RSS);
+    const items = parseRssItems(xml);
+    return {
+      fetchedAt: new Date().toISOString(),
+      source: 'ECDC Avian influenza RSS',
+      url: ECDC_AVIAN_FLU_RSS,
+      items: items.slice(0, 20),
+    };
+  } catch (e) {
+    return { fetchedAt: new Date().toISOString(), source: 'ECDC Avian influenza RSS', url: ECDC_AVIAN_FLU_RSS, items: [] };
+  }
+}
+
 // --- 3. Curated datasets (cancer, imaging) ---
 function loadCuratedDatasets() {
   const p = path.join(MEMORY_DIR, 'curated-datasets.json');
@@ -192,7 +210,7 @@ function fetchTciaCollections() {
 }
 
 // --- Ingest into DB (sorted by data_type, condition_or_topic) ---
-function ingestIntoDb(pubmed, cdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults) {
+function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults) {
   const fetchedAt = new Date().toISOString();
 
   // Literature: PubMed (one health animal)
@@ -210,7 +228,8 @@ function ingestIntoDb(pubmed, cdc, pubmedCancer, pubmedCaseReports, pubmedClinic
   }
 
   // Literature: autonomous-agent topics (frontier topics – each run finds data for these)
-  for (const result of topicResults || []) {
+  const topicList = Array.isArray(topicResults) ? topicResults : [];
+  for (const result of topicList) {
     const topic = result.topic || 'Frontier topic';
     const slug = topic.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').slice(0, 30);
     for (const pmid of (result.idlist || [])) {
@@ -237,6 +256,21 @@ function ingestIntoDb(pubmed, cdc, pubmedCancer, pubmedCaseReports, pubmedClinic
       title: item.title,
       url: item.link,
       external_id: item.link,
+      published_at: item.pubDate || null,
+      fetched_at: fetchedAt,
+    });
+  }
+  // Surveillance: ECDC Avian influenza
+  for (const item of (ecdc && ecdc.items) || []) {
+    const link = item.link || '';
+    if (!link) continue;
+    upsertIngested({
+      data_type: 'surveillance',
+      source: 'ecdc_avian_flu',
+      condition_or_topic: 'Avian influenza',
+      title: (item.title || '').trim() || 'ECDC update',
+      url: link,
+      external_id: link,
       published_at: item.pubDate || null,
       fetched_at: fetchedAt,
     });
@@ -325,9 +359,10 @@ function ingestIntoDb(pubmed, cdc, pubmedCancer, pubmedCaseReports, pubmedClinic
 async function main() {
   console.log('Ingesting data sources...');
   try {
-    const [pubmed, cdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, tcia] = await Promise.all([
+    const [pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, tcia] = await Promise.all([
       fetchPubMed(),
       fetchCdcTravelNotices(),
+      fetchEcdcAvianFlu(),
       fetchPubMedQuery('animal cancer veterinary oncology', 15),
       fetchPubMedQuery('veterinary case reports', 15),
       fetchPubMedQuery('veterinary clinical practice', 12),
@@ -356,7 +391,7 @@ async function main() {
     writeJson('pubmed-equine.json', pubmedEquine);
     writeJson('tcia-imaging.json', tcia);
 
-    ingestIntoDb(pubmed, cdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults);
+    ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults);
     console.log('Ingested into database (literature including autonomous-agent topics, surveillance, cancer, case_data, clinical, imaging, vet_practice).');
     console.log('Done.');
   } catch (err) {
