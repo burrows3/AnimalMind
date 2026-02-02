@@ -6,7 +6,7 @@
 
 const express = require('express');
 const path = require('path');
-const { getIngestedGrouped, getIngestedMeta } = require('./lib/db');
+const { getIngestedGrouped, getIngestedMeta, getIngestedSorted } = require('./lib/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +26,29 @@ app.get('/api/ingested', (req, res) => {
     const meta = getIngestedMeta();
     const data = getIngestedGrouped();
     res.json({ meta, data });
+  } catch (e) {
+    res.status(500).json({ error: 'Service temporarily unavailable.' });
+  }
+});
+
+// API: dashboard payload (summary + flat ingested list) so UI shows live data after ingest.
+const INGESTED_EXPORT_LIMIT = 200;
+app.get('/api/dashboard', (req, res) => {
+  try {
+    const meta = getIngestedMeta();
+    const summary = {
+      lastUpdated: meta.lastFetched || null,
+      counts: meta.counts || {},
+    };
+    const rows = getIngestedSorted()
+      .slice(0, INGESTED_EXPORT_LIMIT)
+      .map((r) => ({
+        data_type: r.data_type,
+        condition_or_topic: r.condition_or_topic || '',
+        title: r.title || '',
+        url: r.url || '',
+      }));
+    res.json({ summary, ingested: rows });
   } catch (e) {
     res.status(500).json({ error: 'Service temporarily unavailable.' });
   }

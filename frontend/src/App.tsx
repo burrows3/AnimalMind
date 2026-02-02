@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   BarChart3,
   BookOpen,
@@ -9,6 +9,7 @@ import {
   FlaskConical,
   Globe,
   Heart,
+  RefreshCw,
   Shield,
   Stethoscope,
 } from "lucide-react";
@@ -99,20 +100,60 @@ function AnimalMindLogo({ className }: { className?: string }) {
   );
 }
 
+const base = typeof document !== "undefined" ? "" : "";
+
+/** Try /api/dashboard first (live from DB when running locally); else use static JSON. */
+async function fetchDashboard(): Promise<{
+  summary: DataSummary | null;
+  ingested: IngestedRow[] | null;
+}> {
+  try {
+    const r = await fetch(`${base}/api/dashboard`, { cache: "no-store" });
+    if (r.ok) {
+      const data = await r.json();
+      return {
+        summary: data.summary ?? null,
+        ingested: Array.isArray(data.ingested) ? data.ingested : null,
+      };
+    }
+  } catch {
+    // e.g. GitHub Pages: no API
+  }
+  const [summaryRes, ingestedRes] = await Promise.all([
+    fetch(`${base}/data-summary.json`, { cache: "no-store" }),
+    fetch(`${base}/data/ingested.json`, { cache: "no-store" }),
+  ]);
+  const summary = summaryRes.ok ? await summaryRes.json() : null;
+  const ingested = ingestedRes.ok && Array.isArray(await ingestedRes.json())
+    ? await ingestedRes.json()
+    : null;
+  return { summary, ingested };
+}
+
 export default function App() {
   const [summary, setSummary] = useState<DataSummary | null>(null);
   const [memory, setMemory] = useState<IngestedRow[] | null>(null);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = useCallback(() => {
+    fetchDashboard().then(({ summary: s, ingested: i }) => {
+      setSummary(s);
+      setMemory(i);
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    const base = typeof document !== "undefined" ? "" : "";
-    fetch(`${base}/data-summary.json`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!cancelled && data) setSummary(data);
+    setLoading(true);
+    fetchDashboard()
+      .then(({ summary: s, ingested: i }) => {
+        if (!cancelled) {
+          setSummary(s);
+          setMemory(i);
+        }
       })
       .catch(() => {})
       .finally(() => {
@@ -125,8 +166,8 @@ export default function App() {
 
   useEffect(() => {
     if (!memoryOpen) return;
+    if (memory !== null) return; // already have from dashboard
     setMemoryLoading(true);
-    const base = typeof document !== "undefined" ? "" : "";
     fetch(`${base}/data/ingested.json`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -134,7 +175,7 @@ export default function App() {
       })
       .catch(() => setMemory(null))
       .finally(() => setMemoryLoading(false));
-  }, [memoryOpen]);
+  }, [memoryOpen, memory]);
 
   const lastUpdated = summary?.lastUpdated
     ? new Date(summary.lastUpdated).toLocaleString()
@@ -401,12 +442,25 @@ export default function App() {
                         );
                       })}
                     </div>
-                    {lastUpdated && (
-                      <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="size-4" aria-hidden />
-                        Last updated: {lastUpdated}
-                      </p>
-                    )}
+                    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                      {lastUpdated && (
+                        <span className="flex items-center gap-2">
+                          <Clock className="size-4" aria-hidden />
+                          Data as of {lastUpdated}
+                        </span>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        disabled={refreshing}
+                        onClick={refreshData}
+                        aria-label="Refresh data"
+                      >
+                        <RefreshCw className={cn("size-4", refreshing && "animate-spin")} aria-hidden />
+                        {refreshing ? "Refreshing…" : "Refresh data"}
+                      </Button>
+                    </div>
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground">
