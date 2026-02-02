@@ -8,7 +8,19 @@
  * 2. CDC Travel Notices (RSS) – surveillance
  * 3. Curated datasets (JSON) – cancer, imaging, vet_practice (guidelines, AVMA, AAHA, etc.)
  * 4. TCIA (Cancer Imaging Archive) – imaging collections (canine/veterinary when available)
+ * 5. Autonomous-agent topics – PubMed queries for frontier topics (animal communication, sentience, welfare, etc.)
  */
+
+/** Frontier topics: each agent run finds literature for these. PubMed search term per topic. */
+const AUTONOMOUS_AGENT_TOPICS = [
+  { topic: 'Understanding how to communicate with animals', query: 'animal communication' },
+  { topic: 'Animal sentience and cognition', query: 'animal sentience cognition' },
+  { topic: 'Cross-species welfare at scale', query: 'animal welfare cross-species' },
+  { topic: 'Decoding animal pain and distress', query: 'animal pain distress' },
+  { topic: 'One-health intelligence (human–animal–environment)', query: 'one health animal environment' },
+  { topic: 'Early detection of disease across species', query: 'early detection disease animal' },
+  { topic: 'Animal minds: what they know and feel', query: 'animal cognition emotion' },
+];
 
 const fs = require('fs');
 const path = require('path');
@@ -165,7 +177,7 @@ function fetchTciaCollections() {
 }
 
 // --- Ingest into DB (sorted by data_type, condition_or_topic) ---
-function ingestIntoDb(pubmed, cdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia) {
+function ingestIntoDb(pubmed, cdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults) {
   const fetchedAt = new Date().toISOString();
 
   // Literature: PubMed (one health animal)
@@ -180,6 +192,24 @@ function ingestIntoDb(pubmed, cdc, pubmedCancer, pubmedCaseReports, pubmedClinic
       published_at: null,
       fetched_at: fetchedAt,
     });
+  }
+
+  // Literature: autonomous-agent topics (frontier topics – each run finds data for these)
+  for (const result of topicResults || []) {
+    const topic = result.topic || 'Frontier topic';
+    const slug = topic.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').slice(0, 30);
+    for (const pmid of (result.idlist || [])) {
+      upsertIngested({
+        data_type: 'literature',
+        source: 'pubmed',
+        condition_or_topic: topic,
+        title: null,
+        url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
+        external_id: `topic-${slug}-${pmid}`,
+        published_at: null,
+        fetched_at: fetchedAt,
+      });
+    }
   }
 
   // Surveillance: CDC Travel Notices
@@ -292,6 +322,16 @@ async function main() {
     ]);
     const curated = loadCuratedDatasets();
 
+    // Autonomous-agent topics: each run finds literature for these frontier topics (retmax 5 per topic)
+    const topicResults = await Promise.all(
+      AUTONOMOUS_AGENT_TOPICS.map(({ topic, query }) =>
+        fetchPubMedQuery(query, 5).then((r) => ({ topic, query: r.query, idlist: r.idlist || [], count: r.count }))
+      )
+    );
+    topicResults.forEach((r, i) => {
+      writeJson(`pubmed-topic-${i}.json`, { topic: AUTONOMOUS_AGENT_TOPICS[i].topic, query: r.query, count: r.count, idlist: r.idlist });
+    });
+
     writeJson('pubmed-recent.json', pubmed);
     writeJson('cdc-travel-notices.json', cdc);
     writeJson('pubmed-cancer.json', pubmedCancer);
@@ -301,8 +341,8 @@ async function main() {
     writeJson('pubmed-equine.json', pubmedEquine);
     writeJson('tcia-imaging.json', tcia);
 
-    ingestIntoDb(pubmed, cdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia);
-    console.log('Ingested into database (literature, surveillance, cancer, case_data, clinical, imaging, vet_practice).');
+    ingestIntoDb(pubmed, cdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults);
+    console.log('Ingested into database (literature including autonomous-agent topics, surveillance, cancer, case_data, clinical, imaging, vet_practice).');
     console.log('Done.');
   } catch (err) {
     console.error('Ingest failed:', err.message);

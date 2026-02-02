@@ -105,6 +105,31 @@ sequenceDiagram
   Push->>Push: GitHub updated
 ```
 
+### How ingest works today (fixed queries, not topic-based)
+
+We **don’t yet “investigate by topic”** on demand. Ingest uses a **fixed set of search terms and sources**:
+
+- **PubMed:** `one health animal`, `animal cancer veterinary oncology`, `veterinary case reports`, `veterinary clinical practice`, `small animal veterinary medicine`, `equine veterinary medicine` (each with a retmax limit).
+- **CDC:** Travel notices RSS (all items).
+- **TCIA:** API for collections filtered by veterinary/canine.
+- **Curated JSON:** `memory/data-sources/curated-datasets.json` (cancer, imaging, vet_practice links).
+
+Agents run on a schedule, fetch from these, write to the DB and JSON; they do **not** take a user- or agent-supplied “topic” and dynamically query. Building toward **topic-driven investigation** is a future step.
+
+### Autonomous-agent topics (frontier / hard questions)
+
+The network is oriented toward **frontier topics**—even when they’re very hard or seem impossible—such as:
+
+- Understanding how to communicate with animals  
+- Animal sentience and cognition  
+- Cross-species welfare at scale  
+- Decoding animal pain and distress  
+- One-health intelligence (human–animal–environment)  
+- Early detection of disease across species  
+- Animal minds: what they know and feel  
+
+These are the kinds of questions agents and the network are built to move evidence and tools toward over time. They’re surfaced on the landing page under **Autonomous-agent topics**.
+
 ---
 
 ## VM vs VMS

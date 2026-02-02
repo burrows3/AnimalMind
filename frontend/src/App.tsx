@@ -161,6 +161,12 @@ export default function App() {
               Mission
             </a>
             <a
+              href="#topics"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Topics
+            </a>
+            <a
               href="#data"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -232,14 +238,17 @@ export default function App() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">
-                  How it works
+                  How we ingest data
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Autonomous agents run on a schedule: they ingest data from trusted
-                  sources (CDC, PubMed, TCIA, AAHA, AVMA, Merck, and more), analyze and
-                  organize it, then push updates here. This site is read-only—you see the
-                  latest evidence and links; no credentials or PII are used in this
-                  interface.
+                  We don’t yet “investigate by topic” on demand. Instead, autonomous agents
+                  run on a schedule with a fixed set of search terms and curated sources:
+                  PubMed (one health, veterinary oncology, case reports, clinical, small
+                  animal, equine), CDC travel notices, TCIA imaging, and curated links
+                  (AAHA, AVMA, Merck, etc.). They fetch, analyze, and organize; then push
+                  updates here. This site is read-only—you see the latest evidence and
+                  links; no credentials or PII are used here. We’re building toward
+                  topic-driven investigation over time.
                 </p>
               </div>
               <div>
@@ -255,6 +264,46 @@ export default function App() {
               </div>
             </CardContent>
           </Card>
+        </section>
+
+        {/* Autonomous-agent topics: frontier / hard questions */}
+        <section
+          id="topics"
+          aria-labelledby="topics-heading"
+          className="pb-12 space-y-4"
+        >
+          <h2
+            id="topics-heading"
+            className="text-lg font-semibold text-foreground"
+          >
+            Autonomous-agent topics
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-2xl">
+            The kinds of questions we’re oriented toward—even when they’re very hard or
+            seem impossible. Agents and the network are built to move evidence and
+            tools in these directions over time.
+          </p>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 list-none">
+            {[
+              "Understanding how to communicate with animals",
+              "Animal sentience and cognition",
+              "Cross-species welfare at scale",
+              "Decoding animal pain and distress",
+              "One-health intelligence (human–animal–environment)",
+              "Early detection of disease across species",
+              "Animal minds: what they know and feel",
+            ].map((topic, i) => (
+              <li key={i}>
+                <Card className="border border-border bg-card/95 shadow-sm h-full">
+                  <CardContent className="p-4">
+                    <span className="text-sm font-medium text-foreground">
+                      {topic}
+                    </span>
+                  </CardContent>
+                </Card>
+              </li>
+            ))}
+          </ul>
         </section>
 
         {/* Two-column: Live data + What the agents track */}
