@@ -115,6 +115,12 @@
     .foot a { color: #2563eb; text-decoration: none; }
     .foot a:hover { text-decoration: underline; }
     .security-note { font-size: 0.75rem; color: #059669; margin-top: 0.5rem; }
+    .hero-icon { width: 80px; height: 80px; margin: 0 auto 1rem; color: #2563eb; }
+    .section-title .icon { width: 1.25rem; height: 1.25rem; margin-right: 0.35rem; vertical-align: -0.25em; color: #2563eb; }
+    .data-card { position: relative; }
+    .data-card .icon-wrap { width: 2rem; height: 2rem; margin: 0 auto 0.5rem; color: #2563eb; }
+    .data-card .num { font-size: 1.75rem; font-weight: 700; color: #111827; }
+    .how-item .icon-wrap { width: 1.5rem; height: 1.5rem; margin-bottom: 0.35rem; color: #2563eb; }
   </style>
 </head>
 <body>
@@ -125,6 +131,10 @@
     </header>
 
     <section class="hero">
+      <svg class="hero-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M32 12c-4 4-8 8-8 14 0 6 4 10 8 10s8-4 8-10c0-6-4-10-8-14z"/><path d="M20 36c-2 2-4 6-4 10 0 6 4 12 16 12s16-6 16-12c0-4-2-8-4-10"/>
+        <circle cx="32" cy="44" r="4"/><path d="M28 44h8M32 40v8"/>
+      </svg>
       <h1>Animal Research Network</h1>
       <p class="tagline">Surveillance, literature, clinical, and vet practice resources for animal health. Collected and updated by autonomous agents.</p>
       <p class="autonomous">Agents run on a schedule: ingest, analyze, push. No credentials or PII in this interface.</p>
@@ -132,7 +142,7 @@
     </section>
 
     <section class="data-section section" aria-labelledby="data-heading">
-      <h2 id="data-heading" class="section-title">Live data (from autonomous ingest)</h2>
+      <h2 id="data-heading" class="section-title"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 9v4M14 7v8M10 11v4M6 13v2"/></svg>Live data (from autonomous ingest)</h2>
       <div id="data-cards" class="data-cards">
         <span class="msg">Loading…</span>
       </div>
@@ -140,15 +150,15 @@
     </section>
 
     <section class="how-section section" aria-labelledby="how-heading">
-      <h2 id="how-heading" class="section-title">What the agents track</h2>
+      <h2 id="how-heading" class="section-title"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>What the agents track</h2>
       <div class="how-grid">
-        <div class="how-item"><strong>Surveillance</strong> — CDC travel notices</div>
-        <div class="how-item"><strong>Literature</strong> — PubMed</div>
-        <div class="how-item"><strong>Cancer</strong> — Veterinary oncology</div>
-        <div class="how-item"><strong>Case data</strong> — Veterinary case reports</div>
-        <div class="how-item"><strong>Clinical</strong> — Practice, small animal, equine</div>
-        <div class="how-item"><strong>Imaging</strong> — TCIA, radiographs</div>
-        <div class="how-item"><strong>Vet practice</strong> — AAHA, AVMA, VIN, Merck</div>
+        <div class="how-item"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0 1 10 10"/><path d="M2 12a10 10 0 0 1 10-10"/><path d="M2 12h20"/></svg></div><strong>Surveillance</strong> — CDC travel notices</div>
+        <div class="how-item"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><strong>Literature</strong> — PubMed</div>
+        <div class="how-item"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M9 9h6v6H9z"/></svg></div><strong>Cancer</strong> — Veterinary oncology</div>
+        <div class="how-item"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></div><strong>Case data</strong> — Veterinary case reports</div>
+        <div class="how-item"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14l6-6 4 4 6-6"/><path d="M4 20h16"/></svg></div><strong>Clinical</strong> — Practice, small animal, equine</div>
+        <div class="how-item"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><strong>Imaging</strong> — TCIA, radiographs</div>
+        <div class="how-item"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><strong>Vet practice</strong> — AAHA, AVMA, VIN, Merck</div>
       </div>
     </section>
 
@@ -161,11 +171,20 @@
 
     <p class="foot">Research engine for veterinarians and partners. Data from public sources only. <span class="security-note">No credentials, API keys, or PII are exposed in this UI.</span></p>
   </div>
-  <script id="data-summary-inline">window.__DATA_SUMMARY__ = {"lastUpdated":null,"counts":{"surveillance":0,"literature":0,"cancer":0,"case_data":0,"clinical":0,"imaging":0,"vet_practice":0}};</script>
+  <script id="data-summary-inline">window.__DATA_SUMMARY__ = {"lastUpdated":"2026-02-02T01:44:03.252Z","counts":{"surveillance":18,"literature":15,"cancer":16,"case_data":15,"clinical":33,"imaging":3,"vet_practice":4}};</script>
   <script>
     (function () {
       var labels = { surveillance: 'Surveillance', literature: 'Literature', cancer: 'Cancer', case_data: 'Case reports', clinical: 'Clinical', imaging: 'Imaging', vet_practice: 'Vet practice' };
       var order = ['surveillance', 'literature', 'cancer', 'case_data', 'clinical', 'imaging', 'vet_practice'];
+      var icons = {
+        surveillance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0 1 10 10"/><path d="M2 12a10 10 0 0 1 10-10"/><path d="M2 12h20"/></svg>',
+        literature: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+        cancer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M9 9h6v6H9z"/></svg>',
+        case_data: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
+        clinical: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14l6-6 4 4 6-6"/><path d="M4 20h16"/></svg>',
+        imaging: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
+        vet_practice: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
+      };
 
       function render(data) {
         var container = document.getElementById('data-cards');
@@ -177,7 +196,8 @@
         container.innerHTML = order.map(function (key) {
           var count = data.counts[key] != null ? data.counts[key] : 0;
           var label = labels[key] || key;
-          return '<div class="data-card"><span class="num">' + count + '</span><span class="label">' + label + '</span></div>';
+          var icon = icons[key] ? '<div class="icon-wrap">' + icons[key] + '</div>' : '';
+          return '<div class="data-card">' + icon + '<span class="num">' + count + '</span><span class="label">' + label + '</span></div>';
         }).join('');
         if (data.lastUpdated) {
           var d = new Date(data.lastUpdated);
@@ -185,16 +205,18 @@
         }
       }
 
-      if (window.__DATA_SUMMARY__) {
-        render(window.__DATA_SUMMARY__);
-        return;
-      }
-
       var url = new URL('data-summary.json', document.location.href).href;
       fetch(url, { cache: 'no-store' })
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (data) { render(data); })
-        .catch(function () { render(null); });
+        .then(function (data) {
+          if (data && data.counts) { render(data); return; }
+          if (window.__DATA_SUMMARY__) render(window.__DATA_SUMMARY__);
+          else render(null);
+        })
+        .catch(function () {
+          if (window.__DATA_SUMMARY__) render(window.__DATA_SUMMARY__);
+          else render(null);
+        });
     })();
 
     (function () {
