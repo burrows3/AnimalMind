@@ -1,8 +1,8 @@
 # Surveillance reviewer
 
 **Agent:** Surveillance reviewer (autonomous)
-**Last run:** 2026-02-02T01:44:12.804Z
-**Data as of:** 2026-02-02T01:44:03.252Z
+**Last run:** 2026-02-02T03:53:13.479Z
+**Data as of:** 2026-02-02T03:53:05.129Z
 
 ---
 
@@ -12,6 +12,9 @@ Conditions currently in CDC travel notices (and similar surveillance):
 
 - **A Strain of Multidrug-Resistant &lt;em&gt;Salmonella&lt;/em&gt; Newport** — Level 1 - A Strain of Multidrug-Resistant &lt;em&gt;Salmonella&lt;/em&gt; Newpor…
   - [Source](https://wwwnc.cdc.gov/travel/notices/level1/salmonella-newport-mexico)
+
+- **Animal disease alerts** — WOAH WAHIS (World Animal Health Information System)
+  - [Source](https://wahis.woah.org/)
 
 - **Chikungunya** — Level 2 - Chikungunya in Cuba
   - [Source](https://wwwnc.cdc.gov/travel/notices/level2/chikungunya-cuba)

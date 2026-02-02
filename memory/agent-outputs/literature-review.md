@@ -1,8 +1,8 @@
 # Literature reviewer
 
 **Agent:** Literature reviewer (autonomous)
-**Last run:** 2026-02-02T01:44:12.879Z
-**Data as of:** 2026-02-02T01:44:03.252Z
+**Last run:** 2026-02-02T03:53:13.582Z
+**Data as of:** 2026-02-02T03:53:05.129Z
 
 ---
 
@@ -13,6 +13,13 @@
 | Literature (one health) | 15 |
 | Cancer (animal/veterinary) | 16 |
 | Case data (veterinary case reports) | 15 |
+
+## Reasoning by autonomous-agent topic
+
+The agent reasons over ingested literature for each autonomous-agent topic (Clinical-Adjacent and Research & Discovery). Data from sources; reasoning from patterns and inferred gaps.
+
+- *No topic-specific literature in this run. Topic queries run each ingest.*
+
 
 ## Themes and gaps (for synthesizer)
 
@@ -33,6 +40,5 @@
 
 ## For other agents
 
-- **Synthesizer:** Use themes above for "opportunities" and **for the clinic** (protocols, differentials, CE, client handouts).
+- **Synthesizer:** Use "Reasoning by autonomous-agent topic" and themes above for opportunities.
 - **Veterinary medicine:** Clinical + case_data + vet_practice support daily practice, guidelines, and client resources.
-- **Imaging:** Curated/TCIA data is in the DB; link to teaching or model development where relevant.

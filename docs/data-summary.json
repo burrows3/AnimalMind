@@ -1,12 +1,12 @@
 {
-  "lastUpdated": "2026-02-02T01:44:03.252Z",
+  "lastUpdated": "2026-02-02T03:53:05.129Z",
   "counts": {
-    "surveillance": 18,
+    "surveillance": 19,
     "literature": 15,
     "cancer": 16,
     "case_data": 15,
     "clinical": 33,
     "imaging": 3,
-    "vet_practice": 4
+    "vet_practice": 6
   }
 }

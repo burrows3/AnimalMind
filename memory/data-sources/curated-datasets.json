@@ -57,6 +57,27 @@
       "data_type": "vet_practice",
       "condition_or_topic": "Reference",
       "description": "Free online reference: species, conditions, therapeutics, diagnostics."
+    },
+    {
+      "title": "IVIS (International Veterinary Information Service)",
+      "url": "https://www.ivis.org/",
+      "data_type": "vet_practice",
+      "condition_or_topic": "Books and resources",
+      "description": "Free veterinary books, proceedings, and educational material (small animal, equine, food animal, exotics)."
+    },
+    {
+      "title": "WSAVA (World Small Animal Veterinary Association)",
+      "url": "https://wsava.org/",
+      "data_type": "vet_practice",
+      "condition_or_topic": "Guidelines and global standards",
+      "description": "Global guidelines, vaccination, nutrition, pain management, and welfare for small animals."
+    },
+    {
+      "title": "WOAH WAHIS (World Animal Health Information System)",
+      "url": "https://wahis.woah.org/",
+      "data_type": "surveillance",
+      "condition_or_topic": "Animal disease alerts",
+      "description": "Official global animal disease alerts and surveillance (terrestrial and aquatic)."
     }
   ]
 }
