@@ -266,44 +266,97 @@ export default function App() {
           </Card>
         </section>
 
-        {/* Autonomous-agent topics: frontier / hard questions */}
+        {/* Autonomous-Agent Topics: Clinical-Adjacent + Research & Discovery */}
         <section
           id="topics"
           aria-labelledby="topics-heading"
-          className="pb-12 space-y-4"
+          className="pb-12 space-y-8"
         >
-          <h2
-            id="topics-heading"
-            className="text-lg font-semibold text-foreground"
-          >
-            Autonomous-agent topics
-          </h2>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            The kinds of questions we’re oriented toward—even when they’re very hard or
-            seem impossible. Agents and the network are built to move evidence and
-            tools in these directions over time.
-          </p>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 list-none">
-            {[
-              "Understanding how to communicate with animals",
-              "Animal sentience and cognition",
-              "Cross-species welfare at scale",
-              "Decoding animal pain and distress",
-              "One-health intelligence (human–animal–environment)",
-              "Early detection of disease across species",
-              "Animal minds: what they know and feel",
-            ].map((topic, i) => (
-              <li key={i}>
-                <Card className="border border-border bg-card/95 shadow-sm h-full">
-                  <CardContent className="p-4">
-                    <span className="text-sm font-medium text-foreground">
-                      {topic}
-                    </span>
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
+          <div>
+            <h2
+              id="topics-heading"
+              className="text-lg font-semibold text-foreground mb-2"
+            >
+              Autonomous-Agent Topics
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Clinical-adjacent topics inform veterinary care today. Research topics explore biology, mechanisms, and long-term discovery.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-base font-semibold text-foreground mb-1">
+                Clinical-Adjacent
+              </h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Topics that directly inform veterinary decision-making, interpretation, and care—without replacing clinical judgment.
+              </p>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 list-none">
+                {[
+                  { title: "Early Detection of Disease Across Species", desc: "Identifying weak, preclinical signals that precede diagnosable disease in companion animals, livestock, wildlife, and sentinel species." },
+                  { title: "Decoding Animal Pain and Distress", desc: "Interpreting pain, discomfort, and stress using behavior, physiology, imaging, and emerging biomarkers—especially in stoic species." },
+                  { title: "Preclinical Disease States", desc: "Tracking subtle biological and behavioral changes that occur before disease becomes clinically apparent." },
+                  { title: "Unexplained Recovery and Resilience", desc: "Studying cases where animals recover faster or more completely than expected to identify protective factors or care patterns." },
+                  { title: "Microbiome–Behavior–Health Coupling", desc: "Understanding how microbial communities influence immunity, pain, appetite, cognition, and disease progression." },
+                  { title: "Biological Timing and Treatment Response", desc: "Exploring how timing (beyond circadian rhythms) affects anesthesia, vaccination, healing, and therapeutic outcomes." },
+                  { title: "Non-Linear Dose and Response Effects", desc: "Identifying threshold and paradoxical responses where small interventions produce large effects—or none at all." },
+                  { title: "Emergent Effects of Complex Care Pathways", desc: "Analyzing how combinations of diagnostics, treatments, environment, and handling influence outcomes beyond any single intervention." },
+                  { title: "Silent or Masked Disease and Distress", desc: "Investigating conditions where symptoms are actively hidden by evolution, limiting detection even with advanced monitoring." },
+                  { title: "Unintended Consequences of Standard Care", desc: "Tracking long-term or population-level effects of widely accepted veterinary practices that were never fully evaluated." },
+                ].map((item, i) => (
+                  <li key={i}>
+                    <Card className="border border-border bg-card/95 shadow-sm h-full">
+                      <CardContent className="p-4">
+                        <CardTitle className="text-sm font-semibold mb-1.5">
+                          {item.title}
+                        </CardTitle>
+                        <CardDescription className="text-xs leading-relaxed">
+                          {item.desc}
+                        </CardDescription>
+                      </CardContent>
+                    </Card>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-base font-semibold text-foreground mb-1">
+                Research & Discovery
+              </h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Topics where mechanisms are unclear, outcomes are surprising, and long-term autonomous exploration may lead to new biology, tools, or therapies.
+              </p>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 list-none">
+                {[
+                  { title: "Unknown Biological Signals", desc: "Uncharacterized molecules, rhythms, or physiological signals that correlate with health or disease but lack clear explanation." },
+                  { title: "Latent Protective Mechanisms", desc: "Natural disease resistance, pain tolerance, or longevity traits observed in certain species, breeds, or individuals." },
+                  { title: "Pain Modulation Beyond Analgesics", desc: "Non-drug biological or neurological mechanisms that suppress pain or distress without traditional analgesia." },
+                  { title: "Hidden Costs of Normal Physiology", desc: "Biological processes (stress, inflammation, metabolism) that cause cumulative damage despite being evolutionarily necessary." },
+                  { title: "Environmental Exposure and Sentinel Signals", desc: "Animal responses to toxins, climate stressors, and ecological change that precede human health impacts." },
+                  { title: "Species-Specific Health Advantages", desc: "Evolutionary adaptations that outperform current medical solutions, such as hypoxia tolerance or infection resistance." },
+                  { title: "Comparative Physiology at Extremes", desc: "How animals survive extreme environments and what this reveals about biological limits and resilience." },
+                  { title: "Genetic Intervention and Biological Integrity", desc: "Health implications of gene editing, selective breeding, and biologic modification." },
+                  { title: "Developmental Programming and Lifelong Health", desc: "How early-life exposures shape disease risk, resilience, and aging across an animal's lifespan." },
+                  { title: "Unexpected Correlations and Anomalies", desc: "Reproducible patterns that do not fit existing biological models but may point to new mechanisms or therapies." },
+                ].map((item, i) => (
+                  <li key={i}>
+                    <Card className="border border-border bg-card/95 shadow-sm h-full">
+                      <CardContent className="p-4">
+                        <CardTitle className="text-sm font-semibold mb-1.5">
+                          {item.title}
+                        </CardTitle>
+                        <CardDescription className="text-xs leading-relaxed">
+                          {item.desc}
+                        </CardDescription>
+                      </CardContent>
+                    </Card>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </section>
 
         {/* Two-column: Live data + What the agents track */}

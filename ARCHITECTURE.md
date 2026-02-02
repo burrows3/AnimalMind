@@ -116,19 +116,15 @@ We **don’t yet “investigate by topic”** on demand. Ingest uses a **fixed s
 
 Agents run on a schedule, fetch from these, write to the DB and JSON; they do **not** take a user- or agent-supplied “topic” and dynamically query. Building toward **topic-driven investigation** is a future step.
 
-### Autonomous-agent topics (frontier / hard questions)
+### Autonomous-Agent Topics (Clinical-Adjacent + Research & Discovery)
 
-The network is oriented toward **frontier topics**—even when they’re very hard or seem impossible—such as:
+The network ingests literature (PubMed) for **20 topics** each run, in two categories:
 
-- Understanding how to communicate with animals  
-- Animal sentience and cognition  
-- Cross-species welfare at scale  
-- Decoding animal pain and distress  
-- One-health intelligence (human–animal–environment)  
-- Early detection of disease across species  
-- Animal minds: what they know and feel  
+- **Clinical-Adjacent:** Topics that directly inform veterinary decision-making, interpretation, and care—without replacing clinical judgment. Examples: Early Detection of Disease Across Species, Decoding Animal Pain and Distress, Preclinical Disease States, Unexplained Recovery and Resilience, Microbiome–Behavior–Health Coupling, Biological Timing and Treatment Response, Non-Linear Dose and Response Effects, Emergent Effects of Complex Care Pathways, Silent or Masked Disease and Distress, Unintended Consequences of Standard Care.
 
-These are the kinds of questions agents and the network are built to move evidence and tools toward over time. They’re surfaced on the landing page under **Autonomous-agent topics**.
+- **Research & Discovery:** Topics where mechanisms are unclear, outcomes are surprising, and long-term autonomous exploration may lead to new biology, tools, or therapies. Examples: Unknown Biological Signals, Latent Protective Mechanisms, Pain Modulation Beyond Analgesics, Hidden Costs of Normal Physiology, Environmental Exposure and Sentinel Signals, Species-Specific Health Advantages, Comparative Physiology at Extremes, Genetic Intervention and Biological Integrity, Developmental Programming and Lifelong Health, Unexpected Correlations and Anomalies.
+
+Clinical-adjacent topics inform veterinary care today. Research topics explore biology, mechanisms, and long-term discovery. They’re surfaced on the landing page under **Autonomous-Agent Topics** and in **autonomous-insights.md** after each think step.
 
 ---
 
