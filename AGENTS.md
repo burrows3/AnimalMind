@@ -21,7 +21,7 @@ The **synthesizer** reads the surveillance and literature reviewers’ outputs (
 
 ## Cost
 
-- **$0 extra** — Same PC or VM, same 6-hour (or hourly) schedule. No LLM or paid API calls; agents use the DB and simple rules/templates.
+- **$0 extra** — Same PC or VM, same 1-hour schedule. No LLM or paid API calls; agents use the DB and simple rules/templates.
 - To add richer “thinking” later (e.g. LLM summaries), you can call a free-tier or low-cost API from one script; the rest stay rule-based.
 
 ---
@@ -38,7 +38,7 @@ Agents “talk” by **writing to shared memory** (`memory/agent-outputs/`, `mem
 
 ## Where agents run
 
-- **Windows:** Scheduled task (e.g. every 6 hours) runs `run-ingest.cmd`, which runs ingest → think → surveillance reviewer → literature reviewer → synthesizer → push.
-- **Linux/VM:** Cron runs `run-ingest.sh` the same way.
+- **Windows:** Scheduled task (every 1 hour) runs `run-ingest.cmd`, which runs ingest → think → surveillance reviewer → literature reviewer → synthesizer → push.
+- **Linux/VM:** Cron runs `run-ingest.sh` every 1 hour the same way.
 
 So as long as that machine is on, the full agent chain runs autonomously and keeps `memory/opportunities.md` (and the repo) up to date.
