@@ -16,12 +16,20 @@
   --color-ring: #1e40af;
 }
 
+/* Prevent mobile "slide around" / rubber-band and horizontal drag */
+html {
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
 body {
   font-family: var(--font-sans);
   background: var(--color-background);
   color: var(--color-foreground);
   line-height: 1.6;
   min-height: 100vh;
+  overscroll-behavior: none;
+  touch-action: pan-y;
+  overflow-x: hidden;
 }
 
 /* Restrained depth: very subtle gradient only (not “kid” wave) */
