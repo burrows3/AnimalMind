@@ -34,6 +34,17 @@ function hasStagedChanges() {
   }
 }
 
+function resolvePushBranch() {
+  if (process.env.INGEST_PUSH_BRANCH) return process.env.INGEST_PUSH_BRANCH;
+  try {
+    const current = run('git branch --show-current').trim();
+    if (current) return current;
+  } catch {
+    // ignore and fall back
+  }
+  return 'main';
+}
+
 function main() {
   if (!fs.existsSync(DB_PATH)) {
     console.log('No database yet; run npm run ingest first.');
@@ -91,7 +102,8 @@ function main() {
   const when = new Date().toISOString().replace(/T/, ' ').slice(0, 16);
   // Use run() for commit so Windows git receives args correctly; when is safe (no quotes)
   run('git commit -m "Ingest: ' + when + '"');
-  run('git push origin main');
+  const pushBranch = resolvePushBranch();
+  run('git push origin ' + pushBranch);
   console.log('Pushed ingest to GitHub.');
 }
 
