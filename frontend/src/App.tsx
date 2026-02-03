@@ -138,11 +138,15 @@ export default function App() {
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadData = useCallback(() => {
-    fetchDashboard().then(({ summary: s, ingested: i }) => {
-      setSummary(s);
-      setMemory(i);
-    });
+  const refreshData = useCallback(() => {
+    setRefreshing(true);
+    fetchDashboard()
+      .then(({ summary: s, ingested: i }) => {
+        setSummary(s);
+        setMemory(i);
+      })
+      .catch(() => {})
+      .finally(() => setRefreshing(false));
   }, []);
 
   useEffect(() => {
