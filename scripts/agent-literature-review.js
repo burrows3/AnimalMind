@@ -11,34 +11,14 @@ const fs = require('fs');
 const path = require('path');
 const { getIngestedGrouped, getIngestedMeta } = require('../lib/db');
 const { chat: nvidiaChat, isEnabled: isNvidiaEnabled } = require('../lib/nvidiaNim');
+const { TOPIC_NAMES } = require('../lib/agentTopics');
 
 const MEMORY_DIR = path.join(__dirname, '..', 'memory');
 const AGENT_OUTPUTS = path.join(MEMORY_DIR, 'agent-outputs');
 const OUT_PATH = path.join(AGENT_OUTPUTS, 'literature-review.md');
 
 /** Same 20 topics as ingest (Clinical-Adjacent + Research & Discovery). Used for reasoning. */
-const AUTONOMOUS_AGENT_TOPICS = [
-  'Early Detection of Disease Across Species',
-  'Decoding Animal Pain and Distress',
-  'Preclinical Disease States',
-  'Unexplained Recovery and Resilience',
-  'Microbiome–Behavior–Health Coupling',
-  'Biological Timing and Treatment Response',
-  'Non-Linear Dose and Response Effects',
-  'Emergent Effects of Complex Care Pathways',
-  'Silent or Masked Disease and Distress',
-  'Unintended Consequences of Standard Care',
-  'Unknown Biological Signals',
-  'Latent Protective Mechanisms',
-  'Pain Modulation Beyond Analgesics',
-  'Hidden Costs of Normal Physiology',
-  'Environmental Exposure and Sentinel Signals',
-  'Species-Specific Health Advantages',
-  'Comparative Physiology at Extremes',
-  'Genetic Intervention and Biological Integrity',
-  'Developmental Programming and Lifelong Health',
-  'Unexpected Correlations and Anomalies',
-];
+const AUTONOMOUS_AGENT_TOPICS = TOPIC_NAMES;
 
 /** One-line inferred opportunity/gap per topic (reasoning). */
 function inferOpportunity(topic) {

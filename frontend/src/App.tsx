@@ -54,6 +54,94 @@ const TRACK_ITEMS: { key: string; title: string; desc: string; tag: string }[] =
   { key: "vet_practice", title: "Vet practice", desc: "AAHA, AVMA, VIN, Merck", tag: "Guidelines" },
 ];
 
+const CLINICAL_TOPICS = [
+  {
+    title: "Early Detection of Disease Across Species",
+    desc: "Identifying weak, preclinical signals that precede diagnosable disease in companion animals, livestock, wildlife, and sentinel species.",
+  },
+  {
+    title: "Decoding Animal Pain and Distress",
+    desc: "Interpreting pain, discomfort, and stress using behavior, physiology, imaging, and emerging biomarkers—especially in stoic species.",
+  },
+  {
+    title: "Preclinical Disease States",
+    desc: "Tracking subtle biological and behavioral changes that occur before disease becomes clinically apparent.",
+  },
+  {
+    title: "Unexplained Recovery and Resilience",
+    desc: "Studying cases where animals recover faster or more completely than expected to identify protective factors or care patterns.",
+  },
+  {
+    title: "Microbiome–Behavior–Health Coupling",
+    desc: "Understanding how microbial communities influence immunity, pain, appetite, cognition, and disease progression.",
+  },
+  {
+    title: "Biological Timing and Treatment Response",
+    desc: "Exploring how timing (beyond circadian rhythms) affects anesthesia, vaccination, healing, and therapeutic outcomes.",
+  },
+  {
+    title: "Non-Linear Dose and Response Effects",
+    desc: "Identifying threshold and paradoxical responses where small interventions produce large effects—or none at all.",
+  },
+  {
+    title: "Emergent Effects of Complex Care Pathways",
+    desc: "Analyzing how combinations of diagnostics, treatments, environment, and handling influence outcomes beyond any single intervention.",
+  },
+  {
+    title: "Silent or Masked Disease and Distress",
+    desc: "Investigating conditions where symptoms are actively hidden by evolution, limiting detection even with advanced monitoring.",
+  },
+  {
+    title: "Unintended Consequences of Standard Care",
+    desc: "Tracking long-term or population-level effects of widely accepted veterinary practices that were never fully evaluated.",
+  },
+];
+
+const RESEARCH_TOPICS = [
+  {
+    title: "Unknown Biological Signals",
+    desc: "Uncharacterized molecules, rhythms, or physiological signals that correlate with health or disease but lack clear explanation.",
+  },
+  {
+    title: "Latent Protective Mechanisms",
+    desc: "Natural disease resistance, pain tolerance, or longevity traits observed in certain species, breeds, or individuals.",
+  },
+  {
+    title: "Pain Modulation Beyond Analgesics",
+    desc: "Non-drug biological or neurological mechanisms that suppress pain or distress without traditional analgesia.",
+  },
+  {
+    title: "Hidden Costs of Normal Physiology",
+    desc: "Biological processes (stress, inflammation, metabolism) that cause cumulative damage despite being evolutionarily necessary.",
+  },
+  {
+    title: "Environmental Exposure and Sentinel Signals",
+    desc: "Animal responses to toxins, climate stressors, and ecological change that precede human health impacts.",
+  },
+  {
+    title: "Species-Specific Health Advantages",
+    desc: "Evolutionary adaptations that outperform current medical solutions, such as hypoxia tolerance or infection resistance.",
+  },
+  {
+    title: "Comparative Physiology at Extremes",
+    desc: "How animals survive extreme environments and what this reveals about biological limits and resilience.",
+  },
+  {
+    title: "Genetic Intervention and Biological Integrity",
+    desc: "Health implications of gene editing, selective breeding, and biologic modification.",
+  },
+  {
+    title: "Developmental Programming and Lifelong Health",
+    desc: "How early-life exposures shape disease risk, resilience, and aging across an animal's lifespan.",
+  },
+  {
+    title: "Unexpected Correlations and Anomalies",
+    desc: "Reproducible patterns that do not fit existing biological models but may point to new mechanisms or therapies.",
+  },
+];
+
+const ALL_TOPICS = [...CLINICAL_TOPICS, ...RESEARCH_TOPICS];
+
 const DATA_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   surveillance: Globe,
   literature: BookOpen,
@@ -86,6 +174,23 @@ type AgentReasoning = {
   surveillance?: ReasoningSection;
   literature?: ReasoningSection;
   synthesis?: ReasoningSection;
+};
+
+type TopicSummaryItem = {
+  topic: string;
+  count: number;
+};
+
+type TopicSummaryTotals = {
+  topicCount?: number;
+  topicsWithItems?: number;
+  totalItems?: number;
+};
+
+type TopicSummary = {
+  updatedAt?: string | null;
+  topics?: TopicSummaryItem[];
+  totals?: TopicSummaryTotals;
 };
 
 function safeHref(url: string | undefined): string {
@@ -126,6 +231,7 @@ async function fetchDashboard(): Promise<{
   summary: DataSummary | null;
   ingested: IngestedRow[] | null;
   reasoning: AgentReasoning | null;
+  topicSummary: TopicSummary | null;
 }> {
   try {
     const r = await fetch(`${base}/api/dashboard`, { cache: "no-store" });
@@ -135,15 +241,17 @@ async function fetchDashboard(): Promise<{
         summary: data.summary ?? null,
         ingested: Array.isArray(data.ingested) ? data.ingested : null,
         reasoning: data.reasoning ?? null,
+        topicSummary: data.topicSummary ?? null,
       };
     }
   } catch {
     // e.g. GitHub Pages: no API
   }
-  const [summaryRes, ingestedRes, reasoningRes] = await Promise.all([
+  const [summaryRes, ingestedRes, reasoningRes, topicRes] = await Promise.all([
     fetch(`${base}/data-summary.json`, { cache: "no-store" }),
     fetch(`${base}/data/ingested.json`, { cache: "no-store" }),
     fetch(`${base}/agent-reasoning.json`, { cache: "no-store" }),
+    fetch(`${base}/topic-summary.json`, { cache: "no-store" }),
   ]);
   const summary = summaryRes.ok ? await summaryRes.json() : null;
   const ingestedData = ingestedRes.ok ? await ingestedRes.json() : null;
@@ -152,13 +260,18 @@ async function fetchDashboard(): Promise<{
   const reasoning = reasoningData && typeof reasoningData === "object"
     ? reasoningData
     : null;
-  return { summary, ingested, reasoning };
+  const topicData = topicRes.ok ? await topicRes.json() : null;
+  const topicSummary = topicData && typeof topicData === "object"
+    ? topicData
+    : null;
+  return { summary, ingested, reasoning, topicSummary };
 }
 
 export default function App() {
   const [summary, setSummary] = useState<DataSummary | null>(null);
   const [memory, setMemory] = useState<IngestedRow[] | null>(null);
   const [reasoning, setReasoning] = useState<AgentReasoning | null>(null);
+  const [topicSummary, setTopicSummary] = useState<TopicSummary | null>(null);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
@@ -167,10 +280,11 @@ export default function App() {
   const refreshData = useCallback(() => {
     setRefreshing(true);
     fetchDashboard()
-      .then(({ summary: s, ingested: i, reasoning: r }) => {
+      .then(({ summary: s, ingested: i, reasoning: r, topicSummary: t }) => {
         setSummary(s);
         setMemory(i);
         setReasoning(r);
+        setTopicSummary(t);
       })
       .catch(() => {})
       .finally(() => setRefreshing(false));
@@ -180,11 +294,12 @@ export default function App() {
     let cancelled = false;
     setLoading(true);
     fetchDashboard()
-      .then(({ summary: s, ingested: i, reasoning: r }) => {
+      .then(({ summary: s, ingested: i, reasoning: r, topicSummary: t }) => {
         if (!cancelled) {
           setSummary(s);
           setMemory(i);
           setReasoning(r);
+          setTopicSummary(t);
         }
       })
       .catch(() => {})
@@ -235,6 +350,20 @@ export default function App() {
   ];
   const hasReasoning = reasoningCards.some((item) => Boolean(item.text));
   const visibleReasoningCards = reasoningCards.filter((item) => item.text);
+  const topicUpdated = formatMaybeDate(topicSummary?.updatedAt ?? null);
+  const topicTotals = topicSummary?.totals ?? {};
+  const topicCounts = new Map(
+    (topicSummary?.topics ?? []).map((item) => [item.topic, item.count]),
+  );
+  const reportHasSurveillance = Boolean(reasoning?.surveillance?.reasoning);
+  const reportHasLiterature = Boolean(reasoning?.literature?.reasoning);
+  const reportHasSynthesis = Boolean(reasoning?.synthesis?.reasoning);
+  const reportStatus = reportHasSurveillance || reportHasLiterature || reportHasSynthesis
+    ? reportHasSurveillance && reportHasLiterature && reportHasSynthesis
+      ? "Complete"
+      : "Partial"
+    : "Pending";
+  const reportStatusDetail = formatMaybeDate(reasoning?.updatedAt ?? null);
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
@@ -389,18 +518,7 @@ export default function App() {
                 Topics that directly inform veterinary decision-making, interpretation, and care—without replacing clinical judgment.
               </p>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 list-none">
-                {[
-                  { title: "Early Detection of Disease Across Species", desc: "Identifying weak, preclinical signals that precede diagnosable disease in companion animals, livestock, wildlife, and sentinel species." },
-                  { title: "Decoding Animal Pain and Distress", desc: "Interpreting pain, discomfort, and stress using behavior, physiology, imaging, and emerging biomarkers—especially in stoic species." },
-                  { title: "Preclinical Disease States", desc: "Tracking subtle biological and behavioral changes that occur before disease becomes clinically apparent." },
-                  { title: "Unexplained Recovery and Resilience", desc: "Studying cases where animals recover faster or more completely than expected to identify protective factors or care patterns." },
-                  { title: "Microbiome–Behavior–Health Coupling", desc: "Understanding how microbial communities influence immunity, pain, appetite, cognition, and disease progression." },
-                  { title: "Biological Timing and Treatment Response", desc: "Exploring how timing (beyond circadian rhythms) affects anesthesia, vaccination, healing, and therapeutic outcomes." },
-                  { title: "Non-Linear Dose and Response Effects", desc: "Identifying threshold and paradoxical responses where small interventions produce large effects—or none at all." },
-                  { title: "Emergent Effects of Complex Care Pathways", desc: "Analyzing how combinations of diagnostics, treatments, environment, and handling influence outcomes beyond any single intervention." },
-                  { title: "Silent or Masked Disease and Distress", desc: "Investigating conditions where symptoms are actively hidden by evolution, limiting detection even with advanced monitoring." },
-                  { title: "Unintended Consequences of Standard Care", desc: "Tracking long-term or population-level effects of widely accepted veterinary practices that were never fully evaluated." },
-                ].map((item, i) => (
+                {CLINICAL_TOPICS.map((item, i) => (
                   <li key={i}>
                     <Card className="border border-border bg-card/95 shadow-sm h-full">
                       <CardContent className="p-4">
@@ -425,18 +543,7 @@ export default function App() {
                 Topics where mechanisms are unclear, outcomes are surprising, and long-term autonomous exploration may lead to new biology, tools, or therapies.
               </p>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 list-none">
-                {[
-                  { title: "Unknown Biological Signals", desc: "Uncharacterized molecules, rhythms, or physiological signals that correlate with health or disease but lack clear explanation." },
-                  { title: "Latent Protective Mechanisms", desc: "Natural disease resistance, pain tolerance, or longevity traits observed in certain species, breeds, or individuals." },
-                  { title: "Pain Modulation Beyond Analgesics", desc: "Non-drug biological or neurological mechanisms that suppress pain or distress without traditional analgesia." },
-                  { title: "Hidden Costs of Normal Physiology", desc: "Biological processes (stress, inflammation, metabolism) that cause cumulative damage despite being evolutionarily necessary." },
-                  { title: "Environmental Exposure and Sentinel Signals", desc: "Animal responses to toxins, climate stressors, and ecological change that precede human health impacts." },
-                  { title: "Species-Specific Health Advantages", desc: "Evolutionary adaptations that outperform current medical solutions, such as hypoxia tolerance or infection resistance." },
-                  { title: "Comparative Physiology at Extremes", desc: "How animals survive extreme environments and what this reveals about biological limits and resilience." },
-                  { title: "Genetic Intervention and Biological Integrity", desc: "Health implications of gene editing, selective breeding, and biologic modification." },
-                  { title: "Developmental Programming and Lifelong Health", desc: "How early-life exposures shape disease risk, resilience, and aging across an animal's lifespan." },
-                  { title: "Unexpected Correlations and Anomalies", desc: "Reproducible patterns that do not fit existing biological models but may point to new mechanisms or therapies." },
-                ].map((item, i) => (
+                {RESEARCH_TOPICS.map((item, i) => (
                   <li key={i}>
                     <Card className="border border-border bg-card/95 shadow-sm h-full">
                       <CardContent className="p-4">
@@ -453,6 +560,77 @@ export default function App() {
               </ul>
             </div>
           </div>
+        </section>
+
+        {/* Topic summary + report status */}
+        <section
+          id="topic-summary"
+          aria-labelledby="topic-summary-heading"
+          className="pb-12 space-y-4"
+        >
+          <h2 id="topic-summary-heading" className="text-lg font-semibold text-foreground">
+            Topic summary
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-2xl">
+            Summary by autonomous-agent topic after each ingest.
+            {topicUpdated ? ` Updated ${topicUpdated}.` : ""}
+          </p>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <Badge variant="secondary" className="text-[10px] font-medium">
+              Report status: {reportStatus}
+            </Badge>
+            {reportStatusDetail && (
+              <span className="text-xs text-muted-foreground">
+                Last report update {reportStatusDetail}
+              </span>
+            )}
+            {topicTotals.topicCount !== undefined && (
+              <Badge variant="secondary" className="text-[10px] font-medium">
+                Topics with data: {topicTotals.topicsWithItems ?? 0}/{topicTotals.topicCount ?? 0}
+              </Badge>
+            )}
+            {topicTotals.totalItems !== undefined && (
+              <Badge variant="secondary" className="text-[10px] font-medium">
+                Total items: {topicTotals.totalItems ?? 0}
+              </Badge>
+            )}
+          </div>
+          <Card className="shadow-sm border-border">
+            <CardContent className="p-6">
+              {loading ? (
+                <p className="text-sm text-muted-foreground">Loading topic summary...</p>
+              ) : topicSummary?.topics?.length ? (
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 list-none">
+                  {ALL_TOPICS.map((item) => {
+                    const count = topicCounts.get(item.title) ?? 0;
+                    return (
+                      <li key={item.title}>
+                        <Card className="border border-border bg-card/95 shadow-sm h-full">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <CardTitle className="text-sm font-semibold">
+                                {item.title}
+                              </CardTitle>
+                              <Badge variant="secondary" className="text-[10px] font-medium shrink-0">
+                                {count}
+                              </Badge>
+                            </div>
+                            <CardDescription className="text-xs leading-relaxed mt-1.5">
+                              {item.desc}
+                            </CardDescription>
+                          </CardContent>
+                        </Card>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Topic summary appears after the next ingest and push.
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </section>
 
         {/* Two-column: Live data + What the agents track */}
