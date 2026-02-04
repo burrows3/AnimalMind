@@ -8,6 +8,7 @@ const express = require('express');
 const path = require('path');
 const { getIngestedGrouped, getIngestedMeta, getIngestedSorted } = require('./lib/db');
 const { getAgentReasoning } = require('./lib/agentReasoning');
+const { getTopicSummary } = require('./lib/topicSummary');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,6 +43,7 @@ app.get('/api/dashboard', (req, res) => {
       counts: meta.counts || {},
     };
     const reasoning = getAgentReasoning();
+    const topicSummary = getTopicSummary();
     const rows = getIngestedSorted()
       .slice(0, INGESTED_EXPORT_LIMIT)
       .map((r) => ({
@@ -50,7 +52,7 @@ app.get('/api/dashboard', (req, res) => {
         title: r.title || '',
         url: r.url || '',
       }));
-    res.json({ summary, ingested: rows, reasoning });
+    res.json({ summary, ingested: rows, reasoning, topicSummary });
   } catch (e) {
     res.status(500).json({ error: 'Service temporarily unavailable.' });
   }
