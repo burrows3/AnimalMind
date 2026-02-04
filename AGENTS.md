@@ -21,8 +21,8 @@ The **synthesizer** reads the surveillance and literature reviewers’ outputs (
 
 ## Cost
 
-- **$0 extra** — Same PC or VM, same 1-hour schedule. No LLM or paid API calls; agents use the DB and simple rules/templates.
-- To add richer “thinking” later (e.g. LLM summaries), you can call a free-tier or low-cost API from one script; the rest stay rule-based.
+- **$0 extra by default** — Same PC or VM, same 1-hour schedule. Agents use the DB and simple rules/templates.
+- **Optional LLM reasoning** — If `NVIDIA_API_KEY` is set, the surveillance reviewer, literature reviewer, and synthesizer add NVIDIA NIM reasoning summaries. This is optional and can be enabled per environment (VM, GitHub Actions).
 
 ---
 

@@ -2,11 +2,14 @@
 /**
  * Agent: Synthesizer. Runs after surveillance and literature reviewers.
  * Reads their outputs + autonomous-insights, writes "opportunities to improve
- * the field" so agents (and humans) can act. Cost: $0 (no API calls).
+ * the field" so agents (and humans) can act. Cost: $0 by default; optional NVIDIA
+ * LLM synthesis when NVIDIA_API_KEY is set.
  */
 
+require('../lib/env');
 const fs = require('fs');
 const path = require('path');
+const { chat: nvidiaChat, isEnabled: isNvidiaEnabled } = require('../lib/nvidiaNim');
 
 const MEMORY_DIR = path.join(__dirname, '..', 'memory');
 const AGENT_OUTPUTS = path.join(MEMORY_DIR, 'agent-outputs');
@@ -26,7 +29,46 @@ function readSafe(p) {
   }
 }
 
-function main() {
+function truncate(text, maxChars) {
+  if (!text) return '';
+  return text.length > maxChars ? `${text.slice(0, maxChars)}…` : text;
+}
+
+async function buildLlmSynthesis({ surveillanceText, literatureText, insightsText }) {
+  if (!isNvidiaEnabled()) return null;
+  const user = [
+    'Synthesize the most actionable opportunities for animal health.',
+    'Use the inputs below (truncated).',
+    '',
+    'Surveillance reviewer:',
+    truncate(surveillanceText, 2000) || '(empty)',
+    '',
+    'Literature reviewer:',
+    truncate(literatureText, 2500) || '(empty)',
+    '',
+    'Autonomous insights:',
+    truncate(insightsText, 1500) || '(empty)',
+    '',
+    'Return 5-8 opportunities as bullet points. Each bullet should include:',
+    '- the opportunity',
+    '- who should act (e.g., clinics, researchers, public health)',
+    '- a short next step',
+    'No extra preamble.',
+  ].join('\n');
+  try {
+    return await nvidiaChat({
+      system: 'You are an autonomous synthesizer for veterinary and one-health opportunities.',
+      user,
+      maxTokens: 520,
+      temperature: 0.2,
+    });
+  } catch (e) {
+    console.warn('agent-synthesize-opportunities: LLM unavailable:', e.message);
+    return null;
+  }
+}
+
+async function main() {
   const surveillanceText = readSafe(FILES.surveillance);
   const literatureText = readSafe(FILES.literature);
   const insightsText = readSafe(FILES.insights);
@@ -51,6 +93,12 @@ function main() {
     '## Opportunities (from agent thinking)',
     '',
   ];
+
+  const llmSynthesis = await buildLlmSynthesis({ surveillanceText, literatureText, insightsText });
+  if (llmSynthesis) {
+    lines.push('### LLM synthesis (NVIDIA)', '');
+    lines.push(llmSynthesis, '');
+  }
 
   const hasSurveillance = surveillanceText.length > 0 && surveillanceText.includes('## What I see');
   const hasLiterature = literatureText.length > 0 && literatureText.includes('## Themes');
@@ -122,4 +170,7 @@ function main() {
   console.log('agent-synthesize-opportunities: wrote', OUT_PATH);
 }
 
-main();
+main().catch((err) => {
+  console.error('agent-synthesize-opportunities: failed', err.message);
+  process.exit(1);
+});
