@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-04T13:25:36.837Z",
+  "updatedAt": "2026-02-04T14:14:58.484Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
@@ -27,7 +27,7 @@
     },
     {
       "topic": "Non-Linear Dose and Response Effects",
-      "count": 0
+      "count": 5
     },
     {
       "topic": "Emergent Effects of Complex Care Pathways",
@@ -39,7 +39,7 @@
     },
     {
       "topic": "Unintended Consequences of Standard Care",
-      "count": 0
+      "count": 5
     },
     {
       "topic": "Unknown Biological Signals",
@@ -51,7 +51,7 @@
     },
     {
       "topic": "Pain Modulation Beyond Analgesics",
-      "count": 0
+      "count": 5
     },
     {
       "topic": "Hidden Costs of Normal Physiology",
@@ -84,7 +84,7 @@
   ],
   "totals": {
     "topicCount": 20,
-    "topicsWithItems": 10,
-    "totalItems": 51
+    "topicsWithItems": 13,
+    "totalItems": 66
   }
 }
