@@ -1,0 +1,90 @@
+{
+  "updatedAt": "2026-02-04T06:13:32.300Z",
+  "topics": [
+    {
+      "topic": "Early Detection of Disease Across Species",
+      "count": 10
+    },
+    {
+      "topic": "Decoding Animal Pain and Distress",
+      "count": 5
+    },
+    {
+      "topic": "Preclinical Disease States",
+      "count": 5
+    },
+    {
+      "topic": "Unexplained Recovery and Resilience",
+      "count": 5
+    },
+    {
+      "topic": "Microbiome–Behavior–Health Coupling",
+      "count": 5
+    },
+    {
+      "topic": "Biological Timing and Treatment Response",
+      "count": 1
+    },
+    {
+      "topic": "Non-Linear Dose and Response Effects",
+      "count": 0
+    },
+    {
+      "topic": "Emergent Effects of Complex Care Pathways",
+      "count": 0
+    },
+    {
+      "topic": "Silent or Masked Disease and Distress",
+      "count": 0
+    },
+    {
+      "topic": "Unintended Consequences of Standard Care",
+      "count": 0
+    },
+    {
+      "topic": "Unknown Biological Signals",
+      "count": 0
+    },
+    {
+      "topic": "Latent Protective Mechanisms",
+      "count": 5
+    },
+    {
+      "topic": "Pain Modulation Beyond Analgesics",
+      "count": 0
+    },
+    {
+      "topic": "Hidden Costs of Normal Physiology",
+      "count": 5
+    },
+    {
+      "topic": "Environmental Exposure and Sentinel Signals",
+      "count": 0
+    },
+    {
+      "topic": "Species-Specific Health Advantages",
+      "count": 0
+    },
+    {
+      "topic": "Comparative Physiology at Extremes",
+      "count": 0
+    },
+    {
+      "topic": "Genetic Intervention and Biological Integrity",
+      "count": 5
+    },
+    {
+      "topic": "Developmental Programming and Lifelong Health",
+      "count": 0
+    },
+    {
+      "topic": "Unexpected Correlations and Anomalies",
+      "count": 5
+    }
+  ],
+  "totals": {
+    "topicCount": 20,
+    "topicsWithItems": 10,
+    "totalItems": 51
+  }
+}
