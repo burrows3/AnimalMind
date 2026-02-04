@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-04T18:12:29.364Z",
+  "updatedAt": "2026-02-04T19:15:24.266Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
@@ -31,7 +31,7 @@
     },
     {
       "topic": "Emergent Effects of Complex Care Pathways",
-      "count": 0
+      "count": 5
     },
     {
       "topic": "Silent or Masked Disease and Distress",
@@ -84,7 +84,7 @@
   ],
   "totals": {
     "topicCount": 20,
-    "topicsWithItems": 13,
-    "totalItems": 67
+    "topicsWithItems": 14,
+    "totalItems": 72
   }
 }
