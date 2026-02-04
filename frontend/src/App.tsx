@@ -76,11 +76,30 @@ type IngestedRow = {
   url?: string;
 };
 
+type ReasoningSection = {
+  lastRun?: string | null;
+  reasoning?: string | null;
+};
+
+type AgentReasoning = {
+  updatedAt?: string | null;
+  surveillance?: ReasoningSection;
+  literature?: ReasoningSection;
+  synthesis?: ReasoningSection;
+};
+
 function safeHref(url: string | undefined): string {
   if (!url || typeof url !== "string") return "#";
   const u = String(url).trim();
   if (u.startsWith("http://") || u.startsWith("https://")) return u;
   return "#";
+}
+
+function formatMaybeDate(value?: string | null): string | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return value;
+  return new Date(parsed).toLocaleString();
 }
 
 /** Animal Mind logo: animal head (profile) + mind dot. Same as favicon. */
@@ -106,6 +125,7 @@ const base = typeof document !== "undefined" ? "" : "";
 async function fetchDashboard(): Promise<{
   summary: DataSummary | null;
   ingested: IngestedRow[] | null;
+  reasoning: AgentReasoning | null;
 }> {
   try {
     const r = await fetch(`${base}/api/dashboard`, { cache: "no-store" });
@@ -114,25 +134,31 @@ async function fetchDashboard(): Promise<{
       return {
         summary: data.summary ?? null,
         ingested: Array.isArray(data.ingested) ? data.ingested : null,
+        reasoning: data.reasoning ?? null,
       };
     }
   } catch {
     // e.g. GitHub Pages: no API
   }
-  const [summaryRes, ingestedRes] = await Promise.all([
+  const [summaryRes, ingestedRes, reasoningRes] = await Promise.all([
     fetch(`${base}/data-summary.json`, { cache: "no-store" }),
     fetch(`${base}/data/ingested.json`, { cache: "no-store" }),
+    fetch(`${base}/agent-reasoning.json`, { cache: "no-store" }),
   ]);
   const summary = summaryRes.ok ? await summaryRes.json() : null;
-  const ingested = ingestedRes.ok && Array.isArray(await ingestedRes.json())
-    ? await ingestedRes.json()
+  const ingestedData = ingestedRes.ok ? await ingestedRes.json() : null;
+  const ingested = Array.isArray(ingestedData) ? ingestedData : null;
+  const reasoningData = reasoningRes.ok ? await reasoningRes.json() : null;
+  const reasoning = reasoningData && typeof reasoningData === "object"
+    ? reasoningData
     : null;
-  return { summary, ingested };
+  return { summary, ingested, reasoning };
 }
 
 export default function App() {
   const [summary, setSummary] = useState<DataSummary | null>(null);
   const [memory, setMemory] = useState<IngestedRow[] | null>(null);
+  const [reasoning, setReasoning] = useState<AgentReasoning | null>(null);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
@@ -141,9 +167,10 @@ export default function App() {
   const refreshData = useCallback(() => {
     setRefreshing(true);
     fetchDashboard()
-      .then(({ summary: s, ingested: i }) => {
+      .then(({ summary: s, ingested: i, reasoning: r }) => {
         setSummary(s);
         setMemory(i);
+        setReasoning(r);
       })
       .catch(() => {})
       .finally(() => setRefreshing(false));
@@ -153,10 +180,11 @@ export default function App() {
     let cancelled = false;
     setLoading(true);
     fetchDashboard()
-      .then(({ summary: s, ingested: i }) => {
+      .then(({ summary: s, ingested: i, reasoning: r }) => {
         if (!cancelled) {
           setSummary(s);
           setMemory(i);
+          setReasoning(r);
         }
       })
       .catch(() => {})
@@ -184,6 +212,29 @@ export default function App() {
   const lastUpdated = summary?.lastUpdated
     ? new Date(summary.lastUpdated).toLocaleString()
     : null;
+  const reasoningUpdated = formatMaybeDate(reasoning?.updatedAt ?? null);
+  const reasoningCards = [
+    {
+      key: "surveillance",
+      title: "Surveillance reasoning",
+      text: reasoning?.surveillance?.reasoning ?? null,
+      lastRun: formatMaybeDate(reasoning?.surveillance?.lastRun ?? null),
+    },
+    {
+      key: "literature",
+      title: "Literature reasoning",
+      text: reasoning?.literature?.reasoning ?? null,
+      lastRun: formatMaybeDate(reasoning?.literature?.lastRun ?? null),
+    },
+    {
+      key: "synthesis",
+      title: "Opportunities synthesis",
+      text: reasoning?.synthesis?.reasoning ?? null,
+      lastRun: formatMaybeDate(reasoning?.synthesis?.lastRun ?? null),
+    },
+  ];
+  const hasReasoning = reasoningCards.some((item) => Boolean(item.text));
+  const visibleReasoningCards = reasoningCards.filter((item) => item.text);
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
@@ -511,6 +562,61 @@ export default function App() {
             </div>
           </section>
         </div>
+
+        {/* Agent reasoning */}
+        <section
+          id="reasoning"
+          aria-labelledby="reasoning-heading"
+          className="mt-12 space-y-4"
+        >
+          <h2 id="reasoning-heading" className="text-lg font-semibold text-foreground">
+            Agent reasoning
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Summaries generated by autonomous agents. These appear when NVIDIA reasoning
+            is enabled during ingest.
+            {reasoningUpdated ? ` Updated ${reasoningUpdated}.` : ""}
+          </p>
+          <Card className="shadow-sm border-border">
+            <CardContent className="p-6">
+              {loading ? (
+                <p className="text-sm text-muted-foreground">Loading reasoning...</p>
+              ) : hasReasoning ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {visibleReasoningCards.map((card) => (
+                    <Card
+                      key={card.key}
+                      className="border border-border bg-card/95 shadow-sm h-full"
+                    >
+                      <CardHeader className="p-4 pb-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <CardTitle className="text-sm font-semibold">
+                            {card.title}
+                          </CardTitle>
+                          {card.lastRun && (
+                            <Badge variant="secondary" className="text-[10px] font-medium">
+                              {card.lastRun}
+                            </Badge>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0">
+                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                          {card.text}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Reasoning appears after the NVIDIA LLM runs. Set NVIDIA_API_KEY
+                  in the VM or GitHub Actions secrets and wait for the next ingest.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
 
         {/* Browse data (agent memory) */}
         <section
