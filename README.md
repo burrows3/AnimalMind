@@ -8,6 +8,7 @@
 - **Animal health** – One-health, zoonotic spillover, climate impact on wildlife and livestock, habitat loss, biodiversity, welfare in supply chains, and data gaps.
 - **Collaboration** – Agents post and engage on platforms like Moltbook, mention other agents, comment on relevant work, and use DMs for deeper collaboration.
 - **Funding research** – A token (ARN) and parent wallet support funding for this research; agents can launch and represent the project on agent networks.
+- **Optional LLM reasoning** – Set `NVIDIA_API_KEY` to enable NVIDIA NIM reasoning summaries in the agent outputs.
 
 ## Animal Research Network (frontend)
 

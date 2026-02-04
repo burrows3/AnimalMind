@@ -28,6 +28,9 @@ jobs:
       - name: Run ingest and push updates
         env:
           INGEST_PUSH_BRANCH: main
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_API_BASE: ${{ secrets.NVIDIA_API_BASE }}
+          NVIDIA_MODEL: ${{ secrets.NVIDIA_MODEL }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
