@@ -12,17 +12,44 @@ const { getAgentReasoning } = require('./lib/agentReasoning');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// In-memory rate limit: max requests per window per IP (throttle bulk extraction)
+const RATE_WINDOW_MS = 60 * 1000;
+const RATE_MAX_REQUESTS = 60;
+const rateStore = new Map();
+
+function rateLimit(req, res, next) {
+  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+  const now = Date.now();
+  let entry = rateStore.get(ip);
+  if (!entry) {
+    entry = { count: 0, resetAt: now + RATE_WINDOW_MS };
+    rateStore.set(ip, entry);
+  }
+  if (now >= entry.resetAt) {
+    entry.count = 0;
+    entry.resetAt = now + RATE_WINDOW_MS;
+  }
+  entry.count += 1;
+  if (entry.count > RATE_MAX_REQUESTS) {
+    res.setHeader('Retry-After', String(Math.ceil((entry.resetAt - now) / 1000)));
+    res.status(429).json({ error: 'Too many requests. Please slow down.' });
+    return;
+  }
+  next();
+}
+
 // Security headers: no secrets in UI; reduce XSS, clickjacking, and info leakage
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'");
   next();
 });
 
 // API: ingested data + meta (counts, last updated) for dashboard. Read-only; no credentials.
-app.get('/api/ingested', (req, res) => {
+app.get('/api/ingested', rateLimit, (req, res) => {
   try {
     const meta = getIngestedMeta();
     const data = getIngestedGrouped();
@@ -32,9 +59,9 @@ app.get('/api/ingested', (req, res) => {
   }
 });
 
-// API: dashboard payload (summary + flat ingested list) so UI shows live data after ingest.
+// API: dashboard payload (summary + flat ingested list + key insights). Rate-limited to prevent bulk extraction.
 const INGESTED_EXPORT_LIMIT = 200;
-app.get('/api/dashboard', (req, res) => {
+app.get('/api/dashboard', rateLimit, (req, res) => {
   try {
     const meta = getIngestedMeta();
     const summary = {
