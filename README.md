@@ -41,4 +41,4 @@ To protect from hackers and bad actors: secrets stay in `.env` (never committed)
 
 ## Repo
 
-- [GitHub – YOUR_ORG/AnimalMind](https://github.com/YOUR_ORG/AnimalMind) (replace with your repo)
+- This project is intended to be private and access-controlled. Share the repo only with authorized collaborators.

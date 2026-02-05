@@ -15,10 +15,10 @@ This document summarizes a full security audit of the AnimalMind project: secret
 | API keys / tokens | ✅ | Moltbook key in env; GitHub token/SSH used by system Git, not stored in repo. |
 | Docs placeholders | ✅ | Setup docs use `YOUR_DOMAIN`, `YOUR_GITHUB_USERNAME`, `PRIVATE_KEY_PATH`, etc. |
 | `docs/CNAME` | ✅ | Contains real domain (`animalmind.co`) by design for GitHub Pages; public. |
-| `docs/index.html` | ⚠️ | Contains real GitHub link (`burrows3/AnimalMind`) for live site. If you fork, change this. |
+| `docs/index.html` | ✅ | No public source link in the live site header. |
 | Oracle script default | ✅ Fixed | Default GitHub username removed; script now requires explicit `-GhUser` or prompt so forks don’t leak a real username. |
 
-**Recommendation:** When forking, replace the GitHub link in `docs/index.html` and ensure no real IPs, key paths, or usernames remain in committed files.
+**Recommendation:** Ensure no real IPs, key paths, or usernames remain in committed files.
 
 ---
 
@@ -88,12 +88,12 @@ This document summarizes a full security audit of the AnimalMind project: secret
 
 ## 8. Checklist for maintainers
 
-- [ ] No secrets in repo; `.env` not committed; assume history is public.
+- [ ] No secrets in repo; `.env` not committed; assume history is visible to collaborators.
 - [ ] Run `npm run audit` and fix high/critical; CI runs this on push/PR.
 - [ ] GitHub 2FA; PAT/SSH with minimal scope for push.
 - [ ] Dependabot enabled (alerts + security updates).
 - [ ] Agent-only endpoints use `requireMoltbookAuth`; URLs from ingested data allowlisted (http/https only) in links.
-- [ ] When forking, replace real GitHub link in `docs/index.html` and any other identifying placeholders.
+- [ ] Ensure identifying placeholders are still generic before sharing or exporting.
 
 ---
 
