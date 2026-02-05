@@ -410,7 +410,7 @@ export default function App() {
               Sources
             </a>
             <Badge variant="secondary" className="text-[10px] font-medium rounded-full px-2.5">
-              Private
+              Free access
             </Badge>
           </div>
         </nav>
@@ -424,14 +424,14 @@ export default function App() {
             className="rounded-full px-3 py-1 text-xs font-medium gap-1.5"
           >
             <Shield className="size-3.5" aria-hidden />
-            Autonomous · Private · Read-only
+            Autonomous · Fair-use · Read-only
           </Badge>
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
             Autonomous research intelligence for animal health
           </h1>
           <p className="text-lg text-foreground max-w-2xl mx-auto font-medium leading-relaxed">
-            A private platform that ingests global signals and synthesizes evidence for
-            research leaders, biotech teams, and investors.
+            A free platform built on public sources that ingests global signals and
+            synthesizes evidence for research leaders, biotech teams, and investors.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <a
@@ -455,7 +455,7 @@ export default function App() {
               Evidence linked
             </Badge>
             <Badge variant="secondary" className="text-[10px] font-medium">
-              By invitation
+              Free access
             </Badge>
           </div>
         </section>
@@ -477,7 +477,7 @@ export default function App() {
                     What it is
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    A private research engine that continuously ingests surveillance,
+                    A free research engine that continuously ingests surveillance,
                     literature, clinical, and imaging signals for animal health.
                   </p>
                 </div>
@@ -489,7 +489,7 @@ export default function App() {
                     <li>Ranked signals by topic and domain</li>
                     <li>Agent reasoning and synthesis outputs</li>
                     <li>Report status with timestamps</li>
-                    <li>Exportable JSON for internal workflows</li>
+                    <li>Exportable JSON for analysis workflows</li>
                   </ul>
                 </div>
                 <div className="rounded-xl border border-border bg-muted/40 p-4">
@@ -505,8 +505,9 @@ export default function App() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                This is a private, read-only research surface. No credentials or PII are
-                exposed in the UI. Access is by invitation for research partners.
+                This is a free, read-only research surface built on public sources under
+                fair use. The UI links to original evidence and does not expose
+                credentials or PII.
               </p>
             </CardContent>
           </Card>
@@ -524,7 +525,8 @@ export default function App() {
             </h2>
             <p className="text-sm text-muted-foreground max-w-2xl">
               Built for research teams and decision-makers who need a continuously updated
-              view of animal health evidence and opportunity.
+              view of animal health evidence and opportunity. Free to access and open to
+              anyone.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
