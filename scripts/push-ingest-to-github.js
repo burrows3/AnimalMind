@@ -15,6 +15,7 @@ const DOCS_SUMMARY = path.join(REPO_ROOT, 'docs', 'data-summary.json');
 const DOCS_DATA_DIR = path.join(REPO_ROOT, 'docs', 'data');
 const DOCS_INGESTED_JSON = path.join(DOCS_DATA_DIR, 'ingested.json');
 const DOCS_REASONING_JSON = path.join(REPO_ROOT, 'docs', 'agent-reasoning.json');
+const DOCS_TOPIC_SUMMARY = path.join(REPO_ROOT, 'docs', 'topic-summary.json');
 const INGESTED_EXPORT_LIMIT = 200;
 
 function run(cmd, opts = {}) {
@@ -56,6 +57,7 @@ function main() {
   try {
     const { getIngestedMeta, getIngestedSorted } = require(path.join(REPO_ROOT, 'lib', 'db.js'));
     const { getAgentReasoning } = require(path.join(REPO_ROOT, 'lib', 'agentReasoning.js'));
+    const { getTopicSummary } = require(path.join(REPO_ROOT, 'lib', 'topicSummary.js'));
     const meta = getIngestedMeta();
     const summary = {
       lastUpdated: meta.lastFetched || null,
@@ -80,6 +82,8 @@ function main() {
     fs.writeFileSync(DOCS_INGESTED_JSON, JSON.stringify(rows), 'utf8');
     const reasoning = getAgentReasoning();
     fs.writeFileSync(DOCS_REASONING_JSON, JSON.stringify(reasoning, null, 2), 'utf8');
+    const topicSummary = getTopicSummary();
+    fs.writeFileSync(DOCS_TOPIC_SUMMARY, JSON.stringify(topicSummary, null, 2), 'utf8');
     // Inline fallback in index.html so data shows even if fetch path fails
     const indexPath = path.join(REPO_ROOT, 'docs', 'index.html');
     if (fs.existsSync(indexPath)) {
@@ -98,6 +102,7 @@ function main() {
   if (fs.existsSync(DOCS_SUMMARY)) run('git add docs/data-summary.json');
   if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
   if (fs.existsSync(DOCS_REASONING_JSON)) run('git add docs/agent-reasoning.json');
+  if (fs.existsSync(DOCS_TOPIC_SUMMARY)) run('git add docs/topic-summary.json');
   if (fs.existsSync(path.join(REPO_ROOT, 'docs', 'index.html'))) run('git add docs/index.html');
   if (!hasStagedChanges()) {
     console.log('No ingest changes to commit.');
