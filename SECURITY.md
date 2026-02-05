@@ -4,9 +4,9 @@ This document describes how we protect the project from hackers and bad actors, 
 
 ---
 
-## Protecting the project (open source is fine; protect credentials and PII)
+## Protecting the project (private by default)
 
-- **Do not share anything sensitive on GitHub.** Never commit `.env`, API keys, tokens, passwords, or PII. The repo can be public (open source) while you keep secrets in local `.env` and private notes only.
+- **Do not share anything sensitive on GitHub.** Never commit `.env`, API keys, tokens, passwords, or PII. This repo is intended to be private. Keep secrets in local `.env` and private notes only.
 - **Frontend is read-only.** The dashboard and landing page display data from public sources (PubMed, CDC, curated). No credentials, API keys, or PII are exposed in the UI. External links use `rel="noopener noreferrer"` and only `http://` / `https://` URLs are allowed.
 - **API does not leak internals.** The `/api/ingested` endpoint returns only DB data; errors return a generic message (no stack traces or paths to the client).
 
@@ -22,15 +22,15 @@ This document describes how we protect the project from hackers and bad actors, 
 
 ---
 
-## Public repository
+## Private repository
 
-This repo is **public**. Assume that:
+This repo is **private**. Assume that:
 
-- **All current and past commits are visible.** Never commit secrets, API keys, or tokens—even “temporarily.” If something was committed by mistake, treat it as compromised; rotate the secret and consider rewriting history to remove it.
-- **Anyone can clone and run the code.** Use `.env` for local secrets; `.env.example` has placeholders only. Ingested data in the repo (PubMed, CDC) is from public sources; no PII.
+- **All current and past commits are visible to collaborators.** Never commit secrets, API keys, or tokens even temporarily. If something was committed by mistake, treat it as compromised; rotate the secret and consider rewriting history to remove it.
+- **Access should be limited.** Only approved collaborators should have access to the repo and data. Use `.env` for local secrets; `.env.example` has placeholders only.
 - **Vulnerabilities must be reported privately.** Do not disclose security issues in public issues or PRs; use the process below.
 
-**Recommended for public repos (GitHub Settings):**
+**Recommended for private repos (GitHub Settings):**
 
 - **Security → Code security and analysis:** Enable **Dependabot alerts** and **Dependabot security updates** (or use the `.github/dependabot.yml` in this repo).
 - **Branches → Branch protection (main):** Consider requiring status checks (e.g. the Security audit workflow) and/or PR reviews before merging.
@@ -91,7 +91,7 @@ We will respond and work with you on a fix and disclosure.
 
 ## Quick checklist (maintainers)
 
-- [ ] No secrets in repo (only `.env.example` with placeholders). Assume all history is public.
+- [ ] No secrets in repo (only `.env.example` with placeholders). Assume all history is visible to collaborators.
 - [ ] Run `npm run audit` and fix high/critical. CI runs this on push/PR.
 - [ ] GitHub 2FA enabled; PAT/SSH with minimal scope for push.
 - [ ] **Dependabot** enabled (alerts + security updates). See `.github/dependabot.yml`.

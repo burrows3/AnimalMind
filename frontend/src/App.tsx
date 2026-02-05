@@ -490,14 +490,9 @@ export default function App() {
             >
               Sources
             </a>
-            <a
-              href="https://github.com/burrows3/AnimalMind"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(buttonVariants({ size: "sm" }), "rounded-lg")}
-            >
-              View source
-            </a>
+            <Badge variant="secondary" className="text-[10px] font-medium rounded-full px-2.5">
+              Private
+            </Badge>
           </div>
         </nav>
       </header>
@@ -510,7 +505,7 @@ export default function App() {
             className="rounded-full px-3 py-1 text-xs font-medium gap-1.5"
           >
             <Shield className="size-3.5" aria-hidden />
-            Autonomous · Secure · Read-only
+            Autonomous · Private · Read-only
           </Badge>
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
             Animal Research Network
