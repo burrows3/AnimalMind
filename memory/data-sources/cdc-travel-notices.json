@@ -1,8 +1,18 @@
 {
-  "fetchedAt": "2026-02-05T18:14:45.567Z",
+  "fetchedAt": "2026-02-05T19:14:54.386Z",
   "source": "CDC Travel Notices RSS",
   "url": "https://wwwnc.cdc.gov/travel/rss/notices.xml",
   "items": [
+    {
+      "title": "Level 2 - Chikungunya in Suriname",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/chikungunya-suriname",
+      "pubDate": "Thu, 05 Feb 2026 05:00:00 GMT"
+    },
+    {
+      "title": "Level 2 - Chikungunya in Seychelles",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/chikungunya-seychelles",
+      "pubDate": "Thu, 05 Feb 2026 05:00:00 GMT"
+    },
     {
       "title": "Level 2 - Clade II Monkeypox in Ghana and Liberia",
       "link": "https://wwwnc.cdc.gov/travel/notices/level2/monkeypox-western-africa",
@@ -14,13 +24,13 @@
       "pubDate": "Thu, 22 Jan 2026 05:00:00 GMT"
     },
     {
-      "title": "Level 1 - Rabies in Morocco",
-      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rabies-morocco",
+      "title": "Level 1 - Rocky Mountain Spotted Fever in Mexico",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rmsf-mexico",
       "pubDate": "Tue, 23 Dec 2025 05:00:00 GMT"
     },
     {
-      "title": "Level 1 - Rocky Mountain Spotted Fever in Mexico",
-      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rmsf-mexico",
+      "title": "Level 1 - Rabies in Morocco",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rabies-morocco",
       "pubDate": "Tue, 23 Dec 2025 05:00:00 GMT"
     },
     {
@@ -34,13 +44,13 @@
       "pubDate": "Fri, 05 Dec 2025 05:00:00 GMT"
     },
     {
-      "title": "Level 2 - Global Polio",
-      "link": "https://wwwnc.cdc.gov/travel/notices/level2/global-polio",
+      "title": "Level 1 - Rabies in India",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rabies-india",
       "pubDate": "Tue, 25 Nov 2025 05:00:00 GMT"
     },
     {
-      "title": "Level 1 - Rabies in India",
-      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rabies-india",
+      "title": "Level 2 - Global Polio",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/global-polio",
       "pubDate": "Tue, 25 Nov 2025 05:00:00 GMT"
     },
     {
