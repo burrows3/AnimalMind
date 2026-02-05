@@ -11,6 +11,7 @@ import {
   Heart,
   RefreshCw,
   Shield,
+  Sparkles,
   Stethoscope,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -205,6 +206,86 @@ function formatMaybeDate(value?: string | null): string | null {
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) return value;
   return new Date(parsed).toLocaleString();
+}
+
+/** Decode common HTML entities in agent text so they display correctly. */
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+/** Render a line with **bold** as React nodes. */
+function renderBoldLine(line: string) {
+  const parts = line.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, k) =>
+    /^\*\*[^*]+\*\*$/.test(part) ? (
+      <strong key={k} className="font-medium text-foreground">{part.slice(2, -2)}</strong>
+    ) : (
+      part
+    )
+  );
+}
+
+/** Render insight block with simple markdown: paragraphs, **bold**, ### subheadings, bullets. */
+function InsightContent({ text, className }: { text: string; className?: string }) {
+  const decoded = decodeHtmlEntities(text);
+  const blocks = decoded.split(/\n\n+/).filter(Boolean);
+  return (
+    <div className={cn("space-y-3 text-sm leading-relaxed", className)}>
+      {blocks.map((block, i) => {
+        const trimmed = block.trim();
+        if (!trimmed) return null;
+        const lines = trimmed.split(/\n/);
+        const firstLine = lines[0] ?? "";
+        const isH3 = /^###\s+/.test(firstLine);
+        const allBullets = lines.every(
+          (l) => /^[•\-]\s+/.test(l.trim()) || /^\*\s+/.test(l.trim())
+        );
+        if (isH3) {
+          const heading = firstLine.replace(/^###\s+/, "").trim();
+          const rest = lines.slice(1).join("\n").trim();
+          return (
+            <div key={i}>
+              <h4 className="font-semibold text-foreground mt-4 mb-1.5 first:mt-0 text-xs uppercase tracking-wide text-muted-foreground">
+                {renderBoldLine(heading)}
+              </h4>
+              {rest ? (
+                <div className="text-muted-foreground space-y-1">
+                  {rest.split(/\n/).map((line, j) => (
+                    <p key={j}>{renderBoldLine(line)}</p>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          );
+        }
+        if (allBullets && lines.length > 0) {
+          return (
+            <ul key={i} className="list-disc list-inside space-y-1 text-muted-foreground">
+              {lines.map((line, j) => {
+                const content = line.replace(/^[•\-*\s]+/, "").trim();
+                return <li key={j}>{renderBoldLine(content)}</li>;
+              })}
+            </ul>
+          );
+        }
+        return (
+          <p key={i} className="text-muted-foreground">
+            {lines.map((line, j) => (
+              <span key={j}>
+                {renderBoldLine(line)}
+                {j < lines.length - 1 && <br />}
+              </span>
+            ))}
+          </p>
+        );
+      })}
+    </div>
+  );
 }
 
 /** Animal Mind logo: animal head (profile) + mind dot. Same as favicon. */
@@ -751,61 +832,89 @@ export default function App() {
         <section
           id="insights"
           aria-labelledby="insights-heading"
-          className="mt-12 space-y-4"
+          className="mt-16 space-y-5"
         >
-          <h2 id="insights-heading" className="text-lg font-semibold text-foreground">
-            Key insights
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Research insights by autonomous agents. Summaries appear when NVIDIA reasoning
-            is enabled during ingest.
-            {reasoningUpdated ? ` Updated ${reasoningUpdated}.` : ""}
-          </p>
-          <Card className="shadow-sm border-border">
-            <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <div>
+              <h2
+                id="insights-heading"
+                className="text-xl font-semibold text-foreground tracking-tight flex items-center gap-2"
+              >
+                <Sparkles className="size-5 text-primary shrink-0" aria-hidden />
+                Key insights
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Research insights by autonomous agents.
+                {reasoningUpdated ? (
+                  <span className="ml-1">Updated {reasoningUpdated}.</span>
+                ) : null}
+              </p>
+            </div>
+            <span
+              className="text-[11px] text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md shrink-0 w-fit"
+              aria-label="Usage notice"
+            >
+              For personal use only. Do not copy or redistribute in bulk.
+            </span>
+          </div>
+          <Card className="overflow-hidden border-border bg-card shadow-md rounded-xl">
+            <CardContent className="p-0">
               {loading ? (
-                <p className="text-sm text-muted-foreground">Loading insights...</p>
+                <div className="p-8 text-center">
+                  <p className="text-sm text-muted-foreground">Loading insights…</p>
+                </div>
               ) : hasReasoning ? (
-                <>
-                  <p className="text-xs text-muted-foreground mb-4 border-b border-border pb-2">
-                    For personal use only. Do not copy or redistribute in bulk.
-                  </p>
-                  <div
-                    className="grid grid-cols-1 md:grid-cols-3 gap-4 select-none"
-                    style={{ userSelect: "none" }}
-                    onContextMenu={(e) => e.preventDefault()}
-                  >
-                    {visibleReasoningCards.map((card) => (
-                      <Card
+                <div
+                  className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border select-none"
+                  style={{ userSelect: "none" }}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  {visibleReasoningCards.map((card) => {
+                    const Icon =
+                      card.key === "surveillance"
+                        ? Globe
+                        : card.key === "literature"
+                          ? BookOpen
+                          : Sparkles;
+                    return (
+                      <div
                         key={card.key}
-                        className="border border-border bg-card/95 shadow-sm h-full"
+                        className="flex flex-col min-h-0 bg-card hover:bg-muted/30 transition-colors"
                       >
-                        <CardHeader className="p-4 pb-2">
+                        <div className="p-4 pb-2 shrink-0 border-b border-border/60">
                           <div className="flex items-start justify-between gap-2">
-                            <CardTitle className="text-sm font-semibold">
-                              {card.title}
-                            </CardTitle>
-                            {card.lastRun && (
-                              <Badge variant="secondary" className="text-[10px] font-medium">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="flex items-center justify-center size-8 rounded-lg bg-primary/10 shrink-0">
+                                <Icon className="size-4 text-primary" aria-hidden />
+                              </div>
+                              <CardTitle className="text-sm font-semibold text-foreground truncate">
+                                {card.title}
+                              </CardTitle>
+                            </div>
+                            {card.lastRun ? (
+                              <time
+                                className="text-[11px] text-muted-foreground shrink-0 tabular-nums"
+                                dateTime={card.lastRun}
+                              >
                                 {card.lastRun}
-                              </Badge>
-                            )}
+                              </time>
+                            ) : null}
                           </div>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0">
-                          <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                            {card.text}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </>
+                        </div>
+                        <div className="flex-1 min-h-0 overflow-y-auto p-4 pt-3 max-h-[320px] overscroll-contain">
+                          <InsightContent text={card.text} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  Insights appear after the NVIDIA LLM runs. Set NVIDIA_API_KEY
-                  in the VM or GitHub Actions secrets and wait for the next ingest.
-                </p>
+                <div className="p-8 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Insights appear after the NVIDIA LLM runs. Set NVIDIA_API_KEY
+                    in the VM or GitHub Actions secrets and wait for the next ingest.
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>
