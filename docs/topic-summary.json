@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-02-05T12:07:10.146Z",
+  "updatedAt": "2026-02-05T13:26:30.484Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
-      "count": 11
+      "count": 13
     },
     {
       "topic": "Decoding Animal Pain and Distress",
@@ -71,7 +71,7 @@
     },
     {
       "topic": "Genetic Intervention and Biological Integrity",
-      "count": 5
+      "count": 10
     },
     {
       "topic": "Developmental Programming and Lifelong Health",
@@ -85,6 +85,6 @@
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 14,
-    "totalItems": 73
+    "totalItems": 80
   }
 }
