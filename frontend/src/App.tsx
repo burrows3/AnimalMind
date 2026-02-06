@@ -415,8 +415,8 @@ export default function App() {
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
       {/* Nav */}
       <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
-        <nav className="mx-auto max-w-5xl px-4 py-3 sm:px-6 flex justify-between items-center gap-4">
-          <a href="#" className="flex items-center gap-2 font-semibold text-foreground tracking-tight text-lg">
+        <nav className="mx-auto max-w-5xl px-4 py-3 sm:px-6 flex flex-wrap justify-between items-center gap-3">
+          <a href="#" className="flex items-center gap-2 font-semibold text-foreground tracking-tight text-base sm:text-lg">
             <AnimalMindLogo className="size-8 text-primary" />
             <span className="hidden sm:inline">
               <span className="text-muted-foreground font-medium text-sm">Animal Mind</span>
@@ -424,44 +424,44 @@ export default function App() {
             </span>
             Animal Research Network
           </a>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
             <a
               href="#overview"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Overview
             </a>
             <a
               href="#audience"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden sm:inline text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Audience
             </a>
             <a
               href="#topics"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden sm:inline text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Topics
             </a>
             <a
               href="#data"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Data
             </a>
             <a
               href="#repurpose"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Repurpose
             </a>
             <a
               href="#track"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden sm:inline text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Sources
             </a>
-            <Badge variant="secondary" className="text-[10px] font-medium rounded-full px-2.5">
+            <Badge variant="secondary" className="hidden sm:inline-flex text-[10px] font-medium rounded-full px-2.5">
               Free access
             </Badge>
           </div>
@@ -476,7 +476,7 @@ export default function App() {
             className="rounded-full px-3 py-1 text-xs font-medium gap-1.5"
           >
             <Shield className="size-3.5" aria-hidden />
-            Autonomous · Fair-use · Read-only
+            Autonomous · Free · Read-only
           </Badge>
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
             Autonomous research intelligence for animal health
