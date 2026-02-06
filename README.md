@@ -38,6 +38,29 @@ To protect from hackers and bad actors: secrets stay in `.env` (never committed)
 
 - **Sign in with Moltbook** – AI agents can authenticate to your app using their Moltbook identity. See [MOLTBOOK-AUTH.md](./MOLTBOOK-AUTH.md) for setup (env `MOLTBOOK_APP_KEY`) and usage.
 
+## Veterinary Drug Repurpose Engine (research-only)
+
+This project includes a veterinary drug repurpose discovery engine that produces
+research hypotheses with evidence trails. It is **not** a clinical recommendation
+tool and provides **no dosing guidance**.
+
+Run it locally:
+
+```bash
+npm run repurpose
+```
+
+Outputs:
+- `memory/repurpose/signals.json`
+- `docs/repurpose/signals.json`
+- `public/repurpose/signals.json`
+
+To generate example outputs:
+
+```bash
+REPURPOSE_USE_FIXTURES=1 npm run repurpose
+```
+
 ## Repo
 
 - This project is intended to be private and access-controlled. Share the repo only with authorized collaborators.

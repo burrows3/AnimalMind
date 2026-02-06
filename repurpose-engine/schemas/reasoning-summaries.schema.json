@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ReasoningSummaries",
+  "type": "object",
+  "required": [
+    "executive_summary",
+    "failure_summary",
+    "species_benefit_summary",
+    "evidence_summary",
+    "risk_summary",
+    "next_steps_summary"
+  ],
+  "properties": {
+    "executive_summary": { "type": "array", "items": { "type": "string" } },
+    "failure_summary": { "type": "string" },
+    "species_benefit_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["species", "summary"],
+        "properties": {
+          "species": { "type": "string" },
+          "summary": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence_summary": { "type": "string" },
+    "risk_summary": { "type": "string" },
+    "next_steps_summary": { "type": "string" }
+  },
+  "additionalProperties": false
+}

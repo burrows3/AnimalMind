@@ -6,12 +6,39 @@
 
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const { getIngestedGrouped, getIngestedMeta, getIngestedSorted } = require('./lib/db');
 const { getAgentReasoning } = require('./lib/agentReasoning');
 const { getTopicSummary } = require('./lib/topicSummary');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// In-memory rate limit: max requests per window per IP
+const RATE_WINDOW_MS = 60 * 1000;
+const RATE_MAX_REQUESTS = 60;
+const rateStore = new Map();
+
+function rateLimit(req, res, next) {
+  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+  const now = Date.now();
+  let entry = rateStore.get(ip);
+  if (!entry) {
+    entry = { count: 0, resetAt: now + RATE_WINDOW_MS };
+    rateStore.set(ip, entry);
+  }
+  if (now >= entry.resetAt) {
+    entry.count = 0;
+    entry.resetAt = now + RATE_WINDOW_MS;
+  }
+  entry.count += 1;
+  if (entry.count > RATE_MAX_REQUESTS) {
+    res.setHeader('Retry-After', String(Math.ceil((entry.resetAt - now) / 1000)));
+    res.status(429).json({ error: 'Too many requests. Please slow down.' });
+    return;
+  }
+  next();
+}
 
 // Security headers: no secrets in UI; reduce XSS, clickjacking, and info leakage
 app.use((req, res, next) => {
@@ -56,6 +83,43 @@ app.get('/api/dashboard', (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'Service temporarily unavailable.' });
   }
+});
+
+function readJsonSafe(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+app.get('/api/repurpose/signals', rateLimit, (req, res) => {
+  const indexPath = path.join(__dirname, 'memory', 'repurpose', 'signals.json');
+  const data = readJsonSafe(indexPath);
+  if (!data) {
+    return res.status(404).json({ error: 'Repurpose signals not available.' });
+  }
+  return res.json(data);
+});
+
+app.get('/api/repurpose/signals/:id', rateLimit, (req, res) => {
+  const fileName = `${req.params.id}.json`;
+  const filePath = path.join(__dirname, 'memory', 'repurpose', 'signals', fileName);
+  const data = readJsonSafe(filePath);
+  if (!data) {
+    return res.status(404).json({ error: 'Repurpose signal not found.' });
+  }
+  return res.json(data);
+});
+
+app.get('/api/repurpose/documents', rateLimit, (req, res) => {
+  const docsPath = path.join(__dirname, 'memory', 'repurpose', 'documents.json');
+  const data = readJsonSafe(docsPath);
+  if (!data) {
+    return res.status(404).json({ error: 'Repurpose documents not available.' });
+  }
+  return res.json(data);
 });
 
 // Static frontend
