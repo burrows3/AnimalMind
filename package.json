@@ -15,7 +15,7 @@
     "repurpose:fixtures": "REPURPOSE_USE_FIXTURES=1 node scripts/repurpose-run.js"
   },
   "dependencies": {
-    "better-sqlite3": "^11.6.0",
+    "better-sqlite3": "^12.6.2",
     "express": "^4.21.0"
   }
 }
