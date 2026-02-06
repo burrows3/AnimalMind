@@ -1,0 +1,150 @@
+{
+  "updated_at": "2026-02-06T02:53:14.548Z",
+  "total": 6,
+  "documents": [
+    {
+      "id": "ctgov:EXAMPLE-OA-001",
+      "source": "clinicaltrials",
+      "url": "https://clinicaltrials.gov/study/NCT00000001",
+      "title": "Example OA trial (illustrative)",
+      "authors": "",
+      "date": "2025-01-10",
+      "abstract_or_snippet": "Illustrative terminated trial for OA endpoints.",
+      "doc_type": "trial",
+      "entities": {
+        "drugs": [
+          "Compound AX-17 (example)"
+        ],
+        "species": [
+          "human"
+        ],
+        "conditions": [
+          "Osteoarthritis"
+        ],
+        "mechanisms": [
+          "Inflammatory pathway modulation"
+        ]
+      }
+    },
+    {
+      "id": "ctgov:EXAMPLE-CKD-002",
+      "source": "clinicaltrials",
+      "url": "https://clinicaltrials.gov/study/NCT00000002",
+      "title": "Example CKD trial (illustrative)",
+      "authors": "",
+      "date": "2024-08-05",
+      "abstract_or_snippet": "Illustrative PK limitation summary for CKD trial.",
+      "doc_type": "trial",
+      "entities": {
+        "drugs": [
+          "Compound RN-44 (example)"
+        ],
+        "species": [
+          "human"
+        ],
+        "conditions": [
+          "Chronic kidney disease"
+        ],
+        "mechanisms": [
+          "Anti-fibrotic signaling"
+        ]
+      }
+    },
+    {
+      "id": "ctgov:EXAMPLE-LAM-003",
+      "source": "clinicaltrials",
+      "url": "https://clinicaltrials.gov/study/NCT00000003",
+      "title": "Example vascular trial (illustrative)",
+      "authors": "",
+      "date": "2023-11-12",
+      "abstract_or_snippet": "Illustrative trial design mismatch summary.",
+      "doc_type": "trial",
+      "entities": {
+        "drugs": [
+          "Compound LM-12 (example)"
+        ],
+        "species": [
+          "human"
+        ],
+        "conditions": [
+          "Peripheral vascular disease"
+        ],
+        "mechanisms": [
+          "Microvascular perfusion support"
+        ]
+      }
+    },
+    {
+      "id": "pmid:EXAMPLE-VET-101",
+      "source": "pubmed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/00000001/",
+      "title": "Example canine OA case report (illustrative)",
+      "authors": "",
+      "date": "2024-05-01",
+      "abstract_or_snippet": "Illustrative veterinary case report.",
+      "doc_type": "case_report",
+      "entities": {
+        "drugs": [
+          "Compound AX-17 (example)"
+        ],
+        "species": [
+          "canine"
+        ],
+        "conditions": [
+          "Osteoarthritis"
+        ],
+        "mechanisms": [
+          "Inflammatory pathway modulation"
+        ]
+      }
+    },
+    {
+      "id": "pmid:EXAMPLE-VET-202",
+      "source": "pubmed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/00000002/",
+      "title": "Example feline CKD retrospective note (illustrative)",
+      "authors": "",
+      "date": "2024-03-18",
+      "abstract_or_snippet": "Illustrative retrospective signal.",
+      "doc_type": "review",
+      "entities": {
+        "drugs": [
+          "Compound RN-44 (example)"
+        ],
+        "species": [
+          "feline"
+        ],
+        "conditions": [
+          "Chronic kidney disease"
+        ],
+        "mechanisms": [
+          "Anti-fibrotic signaling"
+        ]
+      }
+    },
+    {
+      "id": "pmid:EXAMPLE-VET-303",
+      "source": "pubmed",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/00000003/",
+      "title": "Example equine laminitis mechanistic note (illustrative)",
+      "authors": "",
+      "date": "2023-12-09",
+      "abstract_or_snippet": "Illustrative mechanistic note for perfusion.",
+      "doc_type": "review",
+      "entities": {
+        "drugs": [
+          "Compound LM-12 (example)"
+        ],
+        "species": [
+          "equine"
+        ],
+        "conditions": [
+          "Laminitis"
+        ],
+        "mechanisms": [
+          "Microvascular perfusion support"
+        ]
+      }
+    }
+  ]
+}
