@@ -31,7 +31,7 @@ To improve animal health on its own while you sleep, the system should:
 
 1. **Keep doing** what it does: ingest every 6 hours (surveillance, literature, cancer, case data, imaging).
 2. **Plus:** After each ingest (or on a schedule), **read** the latest data and **write** a short “what matters” summary: new outbreaks, new papers, possible alerts, partnership or research opportunities. So when you wake up, there is not only raw data but a **digest** and **suggested focus** (e.g. “New: Rabies in Morocco, Dengue global. Consider alert.” “15 new cancer papers; consider outreach to X.”).
-3. **Optional later:** Send that digest somewhere (e.g. email, Telegram, or a “daily brief” in the dashboard).
+3. **Optional later:** Send that digest somewhere (e.g. email or a “daily brief” in the dashboard).
 
 The repo now includes an **autonomous “think” step** and **multiple agents** that run after each ingest: think → **surveillance reviewer** → **literature reviewer** → **synthesizer** → push. The synthesizer reads the reviewers’ outputs and writes **`memory/opportunities.md`** (opportunities to improve the field). See [AGENTS.md](./AGENTS.md) for the full agent chain. The task runs ingest → think → agents → push, so when you sleep, it keeps collecting **and** updating insights and opportunities.
 

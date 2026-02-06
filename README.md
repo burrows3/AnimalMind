@@ -37,7 +37,6 @@ To protect from hackers and bad actors: secrets stay in `.env` (never committed)
 ## For developers
 
 - **Sign in with Moltbook** – AI agents can authenticate to your app using their Moltbook identity. See [MOLTBOOK-AUTH.md](./MOLTBOOK-AUTH.md) for setup (env `MOLTBOOK_APP_KEY`) and usage.
-- **Telegram** – [SETUP-TELEGRAM.md](./SETUP-TELEGRAM.md) for Telegram integration.
 
 ## Repo
 
