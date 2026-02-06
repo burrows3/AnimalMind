@@ -2,7 +2,7 @@
 
 **Optional.** Oracle Cloud is free but its networking (VCN, security lists, NSGs) can be confusing. If you’d rather not use Oracle: run the **Windows scheduled task** on your PC ([SCHEDULE-WINDOWS.md](./SCHEDULE-WINDOWS.md)), or use a simpler VPS (e.g. [VM-RECOMMENDATIONS.md](./VM-RECOMMENDATIONS.md)).
 
-Step-by-step below: create an **Always Free** VM, install Node.js, clone the repo, and run **ingest + think + push** every 6 hours so your PC can stay off.
+Step-by-step below: create an **Always Free** VM, install Node.js, clone the repo, and run **ingest + think + push** every 3 hours so your PC can stay off.
 
 **Cost:** The **Always Free** VM (1 vCPU, 1 GB RAM) is **$0/month**. You stay under $10 as long as you don’t add paid resources.
 
@@ -78,7 +78,7 @@ Do these in order so you never see the public-IP warning.
    sudo apt-get update -qq && sudo apt-get install -y git curl && git clone https://github.com/YOUR_GITHUB_USERNAME/AnimalMind.git ~/AnimalMind && bash ~/AnimalMind/scripts/oracle-vm-bootstrap.sh
    ```
 
-That’s it. Ingest is scheduled every 6 hours; optionally the script starts the dashboard with PM2. Full details below.
+That’s it. Ingest is scheduled every 3 hours; optionally the script starts the dashboard with PM2. Full details below.
 
 ---
 
@@ -225,7 +225,7 @@ If push asks for credentials, use Option A or B above. Check GitHub – you shou
 
 ---
 
-## 8. Schedule ingest every 6 hours (cron)
+## 8. Schedule ingest every 3 hours (cron)
 
 On the VM:
 
@@ -247,7 +247,7 @@ Replace `~/AnimalMind` with your repo path if different (e.g. `/home/ubuntu/Anim
 0 */6 * * * ~/AnimalMind/scripts/run-ingest.sh >> ~/AnimalMind/memory/cron.log 2>&1
 ```
 
-Verify: `crontab -l` should show the line. After 6 hours, check `memory/cron.log` (and `memory/ingest.log` if you use the script) and GitHub for a new commit.
+Verify: `crontab -l` should show the line. After 3 hours, check `memory/cron.log` (and `memory/ingest.log` if you use the script) and GitHub for a new commit.
 
 ---
 
@@ -287,10 +287,10 @@ Useful PM2 commands:
 | 5 | Installed Node.js 20 LTS |
 | 6 | Cloned AnimalMind repo and set up Git push (token or SSH) |
 | 7 | Ran ingest + think + push once to verify |
-| 8 | Added a cron job to run ingest + think + push every 6 hours |
+| 8 | Added a cron job to run ingest + think + push every 3 hours |
 | 9 | (Optional) Started the dashboard with PM2 on port 3000 |
 
-After this, **your PC can stay off**. The Oracle VM runs ingest + think + push every 6 hours and can serve the dashboard at **http://YOUR_VM_PUBLIC_IP:3000**.
+After this, **your PC can stay off**. The Oracle VM runs ingest + think + push every 3 hours and can serve the dashboard at **http://YOUR_VM_PUBLIC_IP:3000**.
 
 ---
 

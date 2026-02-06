@@ -4,7 +4,7 @@
 
 Right now, **compute is your Windows PC**:
 
-- The **hourly ingest** runs as a Windows scheduled task on your machine. No cloud VM, no separate server.
+- The **scheduled ingest** runs every 3 hours as a Windows scheduled task on your machine. No cloud VM, no separate server.
 - **Cost:** Your own electricity and hardware. No extra billing; no "compute money" from a third party.
 - **Source/system:** There is no external funding system for compute yet—it’s **your machine, your cost** (implicit in your existing electric bill and hardware).
 

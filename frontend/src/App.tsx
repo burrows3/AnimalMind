@@ -193,6 +193,25 @@ type TopicSummary = {
   totals?: TopicSummaryTotals;
 };
 
+type RepurposeSignalSummary = {
+  signal_id: string;
+  compound: string;
+  proposed_species: string[];
+  proposed_condition: string;
+  confidence_score: number;
+  risk_overall?: number | null;
+  summary_hypothesis?: string;
+  executive_summary?: string[];
+  disclaimer?: string;
+};
+
+type RepurposeSignalIndex = {
+  run_id?: string;
+  updated_at?: string;
+  total?: number;
+  signals?: RepurposeSignalSummary[];
+};
+
 function safeHref(url: string | undefined): string {
   if (!url || typeof url !== "string") return "#";
   const u = String(url).trim();
@@ -267,11 +286,30 @@ async function fetchDashboard(): Promise<{
   return { summary, ingested, reasoning, topicSummary };
 }
 
+async function fetchRepurposeSignals(): Promise<RepurposeSignalIndex | null> {
+  try {
+    const api = await fetch(`${base}/api/repurpose/signals`, { cache: "no-store" });
+    if (api.ok) {
+      return await api.json();
+    }
+  } catch {
+    // fall back to static docs
+  }
+  try {
+    const staticRes = await fetch(`${base}/repurpose/signals.json`, { cache: "no-store" });
+    if (staticRes.ok) return await staticRes.json();
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 export default function App() {
   const [summary, setSummary] = useState<DataSummary | null>(null);
   const [memory, setMemory] = useState<IngestedRow[] | null>(null);
   const [reasoning, setReasoning] = useState<AgentReasoning | null>(null);
   const [topicSummary, setTopicSummary] = useState<TopicSummary | null>(null);
+  const [repurposeSignals, setRepurposeSignals] = useState<RepurposeSignalIndex | null>(null);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
@@ -288,6 +326,7 @@ export default function App() {
       })
       .catch(() => {})
       .finally(() => setRefreshing(false));
+    fetchRepurposeSignals().then(setRepurposeSignals).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -306,6 +345,11 @@ export default function App() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+    fetchRepurposeSignals()
+      .then((data) => {
+        if (!cancelled) setRepurposeSignals(data);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -364,6 +408,8 @@ export default function App() {
       : "Partial"
     : "Pending";
   const reportStatusDetail = formatMaybeDate(reasoning?.updatedAt ?? null);
+  const repurposeUpdated = formatMaybeDate(repurposeSignals?.updated_at ?? null);
+  const repurposeItems = repurposeSignals?.signals ?? [];
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
@@ -402,6 +448,12 @@ export default function App() {
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Data
+            </a>
+            <a
+              href="#repurpose"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Repurpose
             </a>
             <a
               href="#track"
@@ -449,7 +501,7 @@ export default function App() {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
             <Badge variant="secondary" className="text-[10px] font-medium">
-              Updated hourly
+              Updated every 3 hours
             </Badge>
             <Badge variant="secondary" className="text-[10px] font-medium">
               Evidence linked
@@ -497,7 +549,7 @@ export default function App() {
                     How it works
                   </h3>
                   <ol className="text-sm text-muted-foreground leading-relaxed list-decimal pl-4 space-y-1">
-                    <li>Ingest global sources hourly</li>
+                    <li>Ingest global sources every 3 hours</li>
                     <li>Agents reason over new data</li>
                     <li>Synthesize opportunities and risks</li>
                     <li>Publish read-only updates</li>
@@ -698,6 +750,85 @@ export default function App() {
               ) : (
                 <p className="text-sm text-muted-foreground">
                   Topic summary appears after the next ingest and push.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Repurpose signals */}
+        <section
+          id="repurpose"
+          aria-labelledby="repurpose-heading"
+          className="pb-12 space-y-4"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 id="repurpose-heading" className="text-lg font-semibold text-foreground">
+                Veterinary drug repurpose signals
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-2xl">
+                Research hypotheses only. No dosing guidance. Evidence is linked to public
+                sources and summarized for research triage.
+                {repurposeUpdated ? ` Updated ${repurposeUpdated}.` : ""}
+              </p>
+            </div>
+            <Badge variant="secondary" className="text-[10px] font-medium">
+              Research only
+            </Badge>
+          </div>
+          <Card className="shadow-sm border-border">
+            <CardContent className="p-6">
+              {loading ? (
+                <p className="text-sm text-muted-foreground">Loading repurpose signals...</p>
+              ) : repurposeItems.length ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {repurposeItems.slice(0, 6).map((signal) => (
+                    <Card key={signal.signal_id} className="border border-border bg-card/95 shadow-sm">
+                      <CardHeader className="p-4 pb-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <CardTitle className="text-sm font-semibold">
+                            {signal.compound}
+                          </CardTitle>
+                          <Badge variant="secondary" className="text-[10px] font-medium">
+                            {signal.confidence_score ?? 0} / 100
+                          </Badge>
+                        </div>
+                        <CardDescription className="text-xs">
+                          {signal.proposed_condition} · {signal.proposed_species?.join(", ") || "Multi-species"}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-0 space-y-3">
+                        {signal.executive_summary?.length ? (
+                          <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+                            {signal.executive_summary.slice(0, 3).map((line, idx) => (
+                              <li key={idx}>{line}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            Executive summary pending. Run the repurpose engine to populate.
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+                          <Badge variant="secondary" className="text-[10px] font-medium">
+                            Risk {signal.risk_overall ?? "—"}
+                          </Badge>
+                          <a
+                            href={`/repurpose/signals/${signal.signal_id}.json`}
+                            className="text-primary hover:underline"
+                          >
+                            View JSON
+                          </a>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No repurpose signals yet. Run <code>npm run repurpose</code> to generate
+                  the first batch.
                 </p>
               )}
             </CardContent>

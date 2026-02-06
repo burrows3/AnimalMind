@@ -11,7 +11,7 @@
 | **Data ingest** (PubMed + CDC) | **Every hour** (Windows Task Scheduler) | Keeps the DB and GitHub up to date with latest literature and surveillance. |
 | **Dependabot** (dependency updates) | **Weekly** (GitHub) | Opens PRs for npm and GitHub Actions updates; no secrets needed. |
 
-So: **ingest = hourly**; **Dependabot = weekly**. The research engine's data is refreshed every hour.
+So: **ingest = every 3 hours**; **Dependabot = weekly**. The research engine's data is refreshed multiple times per day.
 
 ---
 

@@ -66,13 +66,13 @@ else
   echo "First run had issues (e.g. push needs token). Fix and re-run: node scripts/push-ingest-to-github.js"
 fi
 
-# Cron: every 1 hour
-CRON_LINE="0 * * * * ${REPO_DIR}/scripts/run-ingest.sh >> ${CRON_LOG} 2>&1"
+# Cron: every 3 hours
+CRON_LINE="0 */3 * * * ${REPO_DIR}/scripts/run-ingest.sh >> ${CRON_LOG} 2>&1"
 if crontab -l 2>/dev/null | grep -q "run-ingest.sh"; then
-  echo "Cron already has ingest (every 1h)."
+  echo "Cron already has ingest (every 3h)."
 else
   (crontab -l 2>/dev/null; echo "$CRON_LINE") | crontab -
-  echo "Added cron every 1 hour. Verify: crontab -l"
+  echo "Added cron every 3 hours. Verify: crontab -l"
 fi
 
 # Optional PM2 for dashboard
@@ -93,4 +93,4 @@ else
 fi
 
 echo ""
-echo "=== Done. Ingest is scheduled every 1 hour. ==="
+echo "=== Done. Ingest is scheduled every 3 hours. ==="

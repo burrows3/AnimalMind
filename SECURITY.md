@@ -57,7 +57,7 @@ We will respond and work with you on a fix and disclosure.
 - **Never commit** `.env`, API keys, passwords, or tokens to the repo. They are in `.gitignore` (`.env`, `.env.local`, `.env.*.local`).
 - **Use only** `.env.example` as a template; put real values in `.env` locally and keep `.env` out of version control.
 - **Moltbook / app keys:** Store in environment variables (e.g. `MOLTBOOK_APP_KEY`). Never hardcode in source.
-- **GitHub push:** The hourly ingest pushes to GitHub using your system Git credentials (HTTPS or SSH). Use a **personal access token (PAT)** or SSH key with minimal scope; enable **2FA** on your GitHub account.
+- **GitHub push:** The scheduled ingest (every 3 hours) pushes to GitHub using your system Git credentials (HTTPS or SSH). Use a **personal access token (PAT)** or SSH key with minimal scope; enable **2FA** on your GitHub account.
 
 ### 2. Dependencies
 

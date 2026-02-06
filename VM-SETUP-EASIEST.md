@@ -51,7 +51,7 @@ Use the SSH command printed by the script (or add your SSH key in the DigitalOce
 sudo apt-get update -qq && sudo apt-get install -y git curl && git clone https://github.com/YOUR_GITHUB_USERNAME/AnimalMind.git ~/AnimalMind && bash ~/AnimalMind/scripts/oracle-vm-bootstrap.sh
 ```
 
-When prompted, paste your **GitHub Personal Access Token** ([github.com/settings/tokens](https://github.com/settings/tokens), `repo` scope). Ingest will be scheduled every 1 hour; optionally start the dashboard with PM2.
+When prompted, paste your **GitHub Personal Access Token** ([github.com/settings/tokens](https://github.com/settings/tokens), `repo` scope). Ingest will be scheduled every 3 hours; optionally start the dashboard with PM2.
 
 **4. Open the dashboard (optional)**
 
@@ -85,7 +85,7 @@ Replace `YOUR_GITHUB_USERNAME` with your GitHub username:
 sudo apt-get update -qq && sudo apt-get install -y git curl && git clone https://github.com/YOUR_GITHUB_USERNAME/AnimalMind.git ~/AnimalMind && bash ~/AnimalMind/scripts/oracle-vm-bootstrap.sh
 ```
 
-Paste your **GitHub token** when asked. Ingest runs every 1 hour; say **y** to PM2 if you want the dashboard at `http://YOUR_DROPLET_IP:3000`. Open port **3000** in DigitalOcean **Firewall** if you want to access it from the web.
+Paste your **GitHub token** when asked. Ingest runs every 3 hours; say **y** to PM2 if you want the dashboard at `http://YOUR_DROPLET_IP:3000`. Open port **3000** in DigitalOcean **Firewall** if you want to access it from the web.
 
 ---
 
@@ -97,7 +97,7 @@ See **[ORACLE-CLOUD-VM-SETUP.md](./ORACLE-CLOUD-VM-SETUP.md)** for the full step
 
 ## After the VM is running
 
-- **Ingest:** Runs every 1 hour via cron (ingest → think → agents → push to GitHub).
+- **Ingest:** Runs every 3 hours via cron (ingest → think → agents → push to GitHub).
 - **Dashboard:** If you started PM2, open `http://YOUR_VM_IP:3000` (and open port 3000 in the cloud firewall).
 - **Logs:** On the VM, `crontab -l` shows the schedule; `~/AnimalMind/memory/ingest.log` and `~/AnimalMind/memory/cron.log` show runs.
 

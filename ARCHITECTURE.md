@@ -71,12 +71,12 @@ flowchart TB
   DB --> DASH
 ```
 
-**Flow (every 6 hours when scheduled):**  
+**Flow (every 3 hours when scheduled):**  
 Sources → **Ingest** → DB + JSON → **Think** → insights → **Agents** (surveillance → literature → synthesizer) → opportunities → **Push** → GitHub. Dashboard and landing page read from DB or static files.
 
 ### Run order (orchestration)
 
-When `run-ingest.cmd` or `run-ingest.sh` runs (e.g. every 6 hours):
+When `run-ingest.cmd` or `run-ingest.sh` runs (e.g. every 3 hours):
 
 ```mermaid
 sequenceDiagram
@@ -243,16 +243,16 @@ Each agent has a task; together they form a pipeline:
 
 | Task | What runs | Goal |
 |------|-----------|------|
-| **Collect data** | Hourly ingest (PubMed, CDC, cancer, case reports, curated, TCIA) | Literature, surveillance, cancer, case data, and imaging in `memory/data-sources/` and DB. |
+| **Collect data** | Ingest every 3 hours (PubMed, CDC, cancer, case reports, curated, TCIA) | Literature, surveillance, cancer, case data, and imaging in `memory/data-sources/` and DB. |
 | **Insights** | Agent (or human) reads ingested data | **Animal health risks** (e.g. new outbreaks, emerging pathogens), **opportunities** (funding, trials, research gaps), **partnerships** (who to collaborate with, who to mention or DM). |
 | **Surface** | Alerts, summaries, posts, DMs | Proposals for human review: “New CDC notice: rabies in Morocco”; “Recent one-health papers”; “Potential partner: @X”. |
 
-The goal is to run **autonomously**: data collection on a schedule (e.g. every 1 hour on Windows via Task Scheduler), then agents (or you) use that data for insights into risks, opportunities, and partnerships.
+The goal is to run **autonomously**: data collection on a schedule (e.g. every 3 hours on Windows via Task Scheduler), then agents (or you) use that data for insights into risks, opportunities, and partnerships.
 
 ### How to run the ingest (VM job)
 
 - **Manual:** `npm install` then `npm run ingest`.
-- **Windows, every 1 hour (autonomous):** Use Task Scheduler; see [SCHEDULE-WINDOWS.md](./SCHEDULE-WINDOWS.md).
+- **Windows, every 3 hours (autonomous):** Use Task Scheduler; see [SCHEDULE-WINDOWS.md](./SCHEDULE-WINDOWS.md).
 - **Linux/macOS:** Use cron (e.g. `0 * * * * cd /path/to/AnimalMind && node scripts/ingest-data-sources.js`).
 
 The script fetches from PubMed and CDC Travel Notices RSS, writes JSON under `memory/data-sources/`, and **ingests into SQLite** at `memory/animalmind.db`. Rows are **sorted by data type** (literature | surveillance) and **condition or topic** (e.g. Rabies, Dengue, one health animal). The report and agents read from this DB to spot opportunities (new papers, new outbreak notices) and draft alerts or posts.

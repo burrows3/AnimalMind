@@ -8,7 +8,7 @@ Rough estimates for running Animal Research Network (ingest + DB + optional fron
 
 | Component | Usage | Notes |
 |-----------|--------|------|
-| **Hourly ingest** | ~5–15 s every hour | PubMed, CDC, cancer, case reports, TCIA, curated JSON. Light CPU/network. |
+| **Scheduled ingest** | ~5–15 s every 3 hours | PubMed, CDC, cancer, case reports, TCIA, curated JSON. Light CPU/network. |
 | **SQLite DB** | On disk, MB scale | No separate DB service. |
 | **Frontend (Express)** | Low traffic | Optional; only if you serve the dashboard 24/7. |
 
@@ -31,7 +31,7 @@ So total compute need is **small**: a single small VM or your PC is enough.
 
 ## Scenario 2: Cloud VM, 24 hours/day
 
-Single small Linux VM runs: cron (hourly ingest) + Node (optional frontend) + SQLite.
+Single small Linux VM runs: cron (ingest every 3 hours) + Node (optional frontend) + SQLite.
 
 | Provider | Example plan | Monthly (approx) | Per day |
 |----------|----------------|-------------------|---------|
@@ -85,7 +85,7 @@ If the VM only needs to run **12 hours per day** (e.g. 8:00–20:00):
 ## Notes
 
 - **Free tiers:** GCP e2-micro, Oracle Cloud free tier, and Vercel (frontend only) can keep **24 h** cost at **$0** or very low.
-- **Ingest-only on cloud:** If only the **hourly ingest** runs in the cloud (e.g. GitHub Actions cron or a tiny serverless function), cost is often **$0** (free tier) or **&lt; $1/month**.
+- **Ingest-only on cloud:** If only the **scheduled ingest** runs in the cloud (e.g. GitHub Actions cron or a tiny serverless function), cost is often **$0** (free tier) or **&lt; $1/month**.
 - **Your PC + cloud frontend:** Run ingest on your PC (current setup); host only the **dashboard** on Vercel/Railway free tier → **~$0/month**.
 - All figures are **estimates**; check current pricing and data transfer rules for your region and provider.
 

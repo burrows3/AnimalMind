@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run data ingest from repo root. Use with cron for hourly autonomous runs on Linux/VM.
+# Run data ingest from repo root. Use with cron for 3-hour autonomous runs on Linux/VM.
 set -e
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
