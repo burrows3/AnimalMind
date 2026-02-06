@@ -237,14 +237,29 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&#39;/g, "'");
 }
 
+function stripInlineMarkup(text: string): string {
+  return text
+    .replace(/<[^>]+>/g, "")
+    .replace(/\*\*\*/g, "")
+    .replace(/\*\*/g, "")
+    .replace(/__+/g, "")
+    .replace(/`+/g, "")
+    .replace(/~~/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 /** Render a line with **bold** as React nodes. */
 function renderBoldLine(line: string) {
-  const parts = line.split(/(\*\*[^*]+\*\*)/g);
+  const sanitized = line.replace(/<[^>]+>/g, "");
+  const parts = sanitized.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, k) =>
     /^\*\*[^*]+\*\*$/.test(part) ? (
-      <strong key={k} className="font-medium text-foreground">{part.slice(2, -2)}</strong>
+      <strong key={k} className="font-medium text-foreground">
+        {stripInlineMarkup(part.slice(2, -2))}
+      </strong>
     ) : (
-      part
+      stripInlineMarkup(part)
     )
   );
 }
@@ -496,16 +511,17 @@ export default function App() {
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
       {/* Nav */}
       <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
-        <nav className="mx-auto max-w-5xl px-4 py-3 sm:px-6 flex flex-wrap justify-between items-center gap-3">
+        <nav className="mx-auto max-w-5xl px-4 py-3 sm:px-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
           <a href="#" className="flex items-center gap-2 font-semibold text-foreground tracking-tight text-base sm:text-lg">
             <AnimalMindLogo className="size-8 text-primary" />
             <span className="hidden sm:inline">
               <span className="text-muted-foreground font-medium text-sm">Animal Mind</span>
               <span className="mx-1.5 text-border">/</span>
             </span>
-            Animal Research Network
+            <span className="sm:hidden">AnimalMind</span>
+            <span className="hidden sm:inline">Animal Research Network</span>
           </a>
-          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+          <div className="flex w-full flex-wrap items-center gap-2 text-xs sm:text-sm sm:w-auto">
             <a
               href="#overview"
               className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
