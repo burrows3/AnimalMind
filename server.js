@@ -6,6 +6,7 @@
 
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const { getIngestedGrouped, getIngestedMeta, getIngestedSorted } = require('./lib/db');
 const { getAgentReasoning } = require('./lib/agentReasoning');
 const { getTopicSummary } = require('./lib/topicSummary');
@@ -83,6 +84,43 @@ app.get('/api/dashboard', rateLimit, (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'Service temporarily unavailable.' });
   }
+});
+
+function readJsonSafe(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+app.get('/api/repurpose/signals', rateLimit, (req, res) => {
+  const indexPath = path.join(__dirname, 'memory', 'repurpose', 'signals.json');
+  const data = readJsonSafe(indexPath);
+  if (!data) {
+    return res.status(404).json({ error: 'Repurpose signals not available.' });
+  }
+  return res.json(data);
+});
+
+app.get('/api/repurpose/signals/:id', rateLimit, (req, res) => {
+  const fileName = `${req.params.id}.json`;
+  const filePath = path.join(__dirname, 'memory', 'repurpose', 'signals', fileName);
+  const data = readJsonSafe(filePath);
+  if (!data) {
+    return res.status(404).json({ error: 'Repurpose signal not found.' });
+  }
+  return res.json(data);
+});
+
+app.get('/api/repurpose/documents', rateLimit, (req, res) => {
+  const docsPath = path.join(__dirname, 'memory', 'repurpose', 'documents.json');
+  const data = readJsonSafe(docsPath);
+  if (!data) {
+    return res.status(404).json({ error: 'Repurpose documents not available.' });
+  }
+  return res.json(data);
 });
 
 // Static frontend

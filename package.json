@@ -10,7 +10,9 @@
     "audit": "npm audit",
     "start": "node server.js",
     "build:ui": "cd frontend && npm run build",
-    "deploy:ui": "npm run build:ui && node scripts/copy-build.js"
+    "deploy:ui": "npm run build:ui && node scripts/copy-build.js",
+    "repurpose": "node scripts/repurpose-run.js",
+    "repurpose:fixtures": "REPURPOSE_USE_FIXTURES=1 node scripts/repurpose-run.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.6.0",

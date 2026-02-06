@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FailureReasonBundle",
+  "type": "object",
+  "required": ["compound", "original_indication", "failure_type", "key_reasons"],
+  "properties": {
+    "compound": { "type": "string" },
+    "original_indication": { "type": "string" },
+    "failure_type": {
+      "type": "string",
+      "enum": ["efficacy", "toxicity", "pk", "trial_design", "strategy", "unknown"]
+    },
+    "key_reasons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["reason", "evidence_doc_ids", "confidence"],
+        "properties": {
+          "reason": { "type": "string" },
+          "evidence_doc_ids": { "type": "array", "items": { "type": "string" } },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "trial_metadata": {
+      "type": "object",
+      "properties": {
+        "phase": { "type": "string" },
+        "endpoint": { "type": "string" },
+        "population": { "type": "string" },
+        "dose_range": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
