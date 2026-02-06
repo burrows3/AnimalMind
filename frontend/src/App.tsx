@@ -226,6 +226,101 @@ function formatMaybeDate(value?: string | null): string | null {
   return new Date(parsed).toLocaleString();
 }
 
+/** Decode common HTML entities in agent text so they display correctly. */
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function stripInlineMarkup(text: string): string {
+  return text
+    .replace(/<[^>]+>/g, "")
+    .replace(/\*\*\*/g, "")
+    .replace(/\*\*/g, "")
+    .replace(/__+/g, "")
+    .replace(/`+/g, "")
+    .replace(/~~/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+/** Render a line with **bold** as React nodes. */
+function renderBoldLine(line: string) {
+  const sanitized = line.replace(/<[^>]+>/g, "");
+  const parts = sanitized.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, k) =>
+    /^\*\*[^*]+\*\*$/.test(part) ? (
+      <strong key={k} className="font-medium text-foreground">
+        {stripInlineMarkup(part.slice(2, -2))}
+      </strong>
+    ) : (
+      stripInlineMarkup(part)
+    )
+  );
+}
+
+/** Render insight block with simple markdown: paragraphs, **bold**, ### subheadings, bullets. */
+function InsightContent({ text, className }: { text: string; className?: string }) {
+  const decoded = decodeHtmlEntities(text);
+  const blocks = decoded.split(/\n\n+/).filter(Boolean);
+  return (
+    <div className={cn("space-y-3 text-sm leading-relaxed", className)}>
+      {blocks.map((block, i) => {
+        const trimmed = block.trim();
+        if (!trimmed) return null;
+        const lines = trimmed.split(/\n/);
+        const firstLine = lines[0] ?? "";
+        const isH3 = /^###\s+/.test(firstLine);
+        const allBullets = lines.every(
+          (l) => /^[•\-]\s+/.test(l.trim()) || /^\*\s+/.test(l.trim())
+        );
+        if (isH3) {
+          const heading = firstLine.replace(/^###\s+/, "").trim();
+          const rest = lines.slice(1).join("\n").trim();
+          return (
+            <div key={i}>
+              <h4 className="font-semibold text-foreground mt-4 mb-1.5 first:mt-0 text-xs uppercase tracking-wide text-muted-foreground">
+                {renderBoldLine(heading)}
+              </h4>
+              {rest ? (
+                <div className="text-muted-foreground space-y-1">
+                  {rest.split(/\n/).map((line, j) => (
+                    <p key={j}>{renderBoldLine(line)}</p>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          );
+        }
+        if (allBullets && lines.length > 0) {
+          return (
+            <ul key={i} className="list-disc list-inside space-y-1 text-muted-foreground">
+              {lines.map((line, j) => {
+                const content = line.replace(/^[•\-*\s]+/, "").trim();
+                return <li key={j}>{renderBoldLine(content)}</li>;
+              })}
+            </ul>
+          );
+        }
+        return (
+          <p key={i} className="text-muted-foreground">
+            {lines.map((line, j) => (
+              <span key={j}>
+                {renderBoldLine(line)}
+                {j < lines.length - 1 && <br />}
+              </span>
+            ))}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Animal Mind logo: animal head (profile) + mind dot. Same as favicon. */
 function AnimalMindLogo({ className }: { className?: string }) {
   return (
@@ -415,16 +510,17 @@ export default function App() {
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
       {/* Nav */}
       <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
-        <nav className="mx-auto max-w-5xl px-4 py-3 sm:px-6 flex flex-wrap justify-between items-center gap-3">
+        <nav className="mx-auto max-w-5xl px-4 py-3 sm:px-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
           <a href="#" className="flex items-center gap-2 font-semibold text-foreground tracking-tight text-base sm:text-lg">
             <AnimalMindLogo className="size-8 text-primary" />
             <span className="hidden sm:inline">
               <span className="text-muted-foreground font-medium text-sm">Animal Mind</span>
               <span className="mx-1.5 text-border">/</span>
             </span>
-            Animal Research Network
+            <span className="sm:hidden">AnimalMind</span>
+            <span className="hidden sm:inline">Animal Research Network</span>
           </a>
-          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+          <div className="flex w-full flex-wrap items-center gap-2 text-xs sm:text-sm sm:w-auto">
             <a
               href="#overview"
               className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
