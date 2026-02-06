@@ -38,7 +38,7 @@ Agents “talk” by **writing to shared memory** (`memory/agent-outputs/`, `mem
 
 ## Where agents run
 
-- **Windows:** Scheduled task (every 1 hour) runs `run-ingest.cmd`, which runs ingest → think → surveillance reviewer → literature reviewer → synthesizer → push.
-- **Linux/VM:** Cron runs `run-ingest.sh` every 1 hour the same way.
+- **Windows:** Scheduled task (every 3 hours) runs `run-ingest.cmd`, which runs ingest → think → surveillance reviewer → literature reviewer → synthesizer → push.
+- **Linux/VM:** Cron runs `run-ingest.sh` every 3 hours the same way.
 
 So as long as that machine is on, the full agent chain runs autonomously and keeps `memory/opportunities.md` (and the repo) up to date.
