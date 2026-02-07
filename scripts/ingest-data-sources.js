@@ -46,6 +46,11 @@ function buildPubMedUrl(term, retmax = 15) {
   return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${q}&retmax=${retmax}&sort=date&retmode=json`;
 }
 
+function buildPubMedSummaryUrl(ids) {
+  const q = encodeURIComponent(ids.join(','));
+  return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${q}&retmode=json`;
+}
+
 const ANIMAL_DOMAIN_FILTER =
   '(Animals[MeSH Terms] OR "Veterinary Medicine"[MeSH Terms] OR "Animal Diseases"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR "animal health"[Title/Abstract] OR "one health"[Title/Abstract])';
 
@@ -80,6 +85,49 @@ function fetchPubMedQuery(term, retmax = 15) {
       })
       .on('error', reject);
   });
+}
+
+function fetchPubMedSummary(ids) {
+  return new Promise((resolve, reject) => {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      resolve({});
+      return;
+    }
+    https
+      .get(buildPubMedSummaryUrl(ids), (res) => {
+        let body = '';
+        res.on('data', (chunk) => (body += chunk));
+        res.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            const result = data?.result || {};
+            const uids = Array.isArray(result.uids) ? result.uids : [];
+            const map = {};
+            for (const id of uids) {
+              const key = String(id);
+              const title = (result[key]?.title || '').trim();
+              if (title) map[key] = title;
+            }
+            resolve(map);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      })
+      .on('error', reject);
+  });
+}
+
+async function fetchPubMedSummaries(ids) {
+  const unique = Array.from(new Set((ids || []).map((id) => String(id)).filter(Boolean)));
+  const titleMap = {};
+  const batchSize = 200;
+  for (let i = 0; i < unique.length; i += batchSize) {
+    const batch = unique.slice(i, i + batchSize);
+    const batchMap = await fetchPubMedSummary(batch);
+    Object.assign(titleMap, batchMap);
+  }
+  return titleMap;
 }
 
 async function fetchPubMedTopicWithFallback(topicItem, retmax = 8, globalFallback) {
@@ -236,7 +284,12 @@ function fetchTciaCollections() {
 }
 
 // --- Ingest into DB (sorted by data_type, condition_or_topic) ---
-function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults) {
+function resolvePubMedTitle(pmid, titleMap) {
+  if (!pmid || !titleMap) return null;
+  return titleMap[String(pmid)] || null;
+}
+
+function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults, pubmedTitles) {
   const fetchedAt = new Date().toISOString();
 
   // Literature: PubMed (one health animal)
@@ -245,7 +298,7 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
       data_type: 'literature',
       source: 'pubmed',
       condition_or_topic: 'one health animal',
-      title: null,
+      title: resolvePubMedTitle(pmid, pubmedTitles),
       url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
       external_id: pmid,
       published_at: null,
@@ -263,7 +316,7 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
         data_type: 'literature',
         source: 'pubmed',
         condition_or_topic: topic,
-        title: null,
+        title: resolvePubMedTitle(pmid, pubmedTitles),
         url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
         external_id: `topic-${slug}-${pmid}`,
         published_at: null,
@@ -308,7 +361,7 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
       data_type: 'cancer',
       source: 'pubmed',
       condition_or_topic: 'animal cancer',
-      title: null,
+      title: resolvePubMedTitle(pmid, pubmedTitles),
       url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
       external_id: `cancer-${pmid}`,
       published_at: null,
@@ -322,7 +375,7 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
       data_type: 'case_data',
       source: 'pubmed',
       condition_or_topic: 'case report',
-      title: null,
+      title: resolvePubMedTitle(pmid, pubmedTitles),
       url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
       external_id: `case-${pmid}`,
       published_at: null,
@@ -341,7 +394,7 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
         data_type: 'clinical',
         source: 'pubmed',
         condition_or_topic: condition,
-        title: null,
+        title: resolvePubMedTitle(pmid, pubmedTitles),
         url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
         external_id: `clinical-${pmid}`,
         published_at: null,
@@ -422,7 +475,31 @@ async function main() {
     writeJson('pubmed-equine.json', pubmedEquine);
     writeJson('tcia-imaging.json', tcia);
 
-    ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults);
+    const pubmedIds = new Set([
+      ...((pubmed && pubmed.idlist) || []),
+      ...((pubmedCancer && pubmedCancer.idlist) || []),
+      ...((pubmedCaseReports && pubmedCaseReports.idlist) || []),
+      ...((pubmedClinical && pubmedClinical.idlist) || []),
+      ...((pubmedSmallAnimal && pubmedSmallAnimal.idlist) || []),
+      ...((pubmedEquine && pubmedEquine.idlist) || []),
+      ...topicResults.flatMap((result) => result.idlist || []),
+    ]);
+    const pubmedTitles = await fetchPubMedSummaries(Array.from(pubmedIds));
+
+    ingestIntoDb(
+      pubmed,
+      cdc,
+      ecdc,
+      pubmedCancer,
+      pubmedCaseReports,
+      pubmedClinical,
+      pubmedSmallAnimal,
+      pubmedEquine,
+      curated,
+      tcia,
+      topicResults,
+      pubmedTitles
+    );
     console.log('Ingested into database (literature including autonomous-agent topics, surveillance, cancer, case_data, clinical, imaging, vet_practice).');
     console.log('Done.');
   } catch (err) {

@@ -1186,10 +1186,10 @@ export default function App() {
                                       rel="noopener noreferrer"
                                       className="text-primary hover:underline"
                                     >
-                                      {item.title || "Untitled"}
+                                      {item.title || item.condition_or_topic || "Untitled"}
                                     </a>
                                   ) : (
-                                    <span>{item.title || "Untitled"}</span>
+                                    <span>{item.title || item.condition_or_topic || "Untitled"}</span>
                                   )}
                                   {item.condition_or_topic && (
                                     <div className="text-xs text-muted-foreground mt-0.5">
