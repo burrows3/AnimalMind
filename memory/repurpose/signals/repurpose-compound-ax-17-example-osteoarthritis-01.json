@@ -1,0 +1,83 @@
+{
+  "signal_id": "repurpose-compound-ax-17-example-osteoarthritis-01",
+  "compound": "Compound AX-17 (example)",
+  "proposed_species": [
+    "canine"
+  ],
+  "proposed_condition": "Osteoarthritis",
+  "summary_hypothesis": "Research hypothesis: Compound AX-17 (example) may warrant evaluation for Osteoarthritis in canine.",
+  "why_failed_originally": {
+    "summary": "Primary endpoint did not reach statistical significance in target population. Enrollment skewed toward late-stage disease, limiting responsiveness.",
+    "failure_type": "efficacy",
+    "key_points": [
+      "Primary endpoint did not reach statistical significance in target population.",
+      "Enrollment skewed toward late-stage disease, limiting responsiveness."
+    ]
+  },
+  "why_it_might_work_in_animals": {
+    "summary": "Canine inflammatory response may be more responsive to short-term modulation.",
+    "key_points": [
+      "Canine inflammatory response may be more responsive to short-term modulation."
+    ]
+  },
+  "evidence": {
+    "vet_strength": "weak",
+    "key_docs": [
+      "pmid:EXAMPLE-VET-101",
+      "ctgov:EXAMPLE-OA-001"
+    ],
+    "notes": "Evidence is research-only and requires validation."
+  },
+  "risk": {
+    "overall_risk": 35,
+    "key_flags": [
+      "GI intolerance risk (severity 2)"
+    ]
+  },
+  "novelty_vectors": [
+    "new_species",
+    "new_indication"
+  ],
+  "confidence_score": 28,
+  "addressability_score": 70,
+  "translation_risk": 30,
+  "score_breakdown": {
+    "vet_evidence": 12,
+    "species_rationale": 14,
+    "addressability": 14,
+    "recency_volume": 2,
+    "risk_penalty": 14
+  },
+  "recommended_next_steps": [
+    "retrospective_review",
+    "in_vitro",
+    "pilot_study"
+  ],
+  "provenance": {
+    "agent_run_ids": [
+      "repurpose-2026-02-07T23-13-17-120Z"
+    ],
+    "timestamps": [
+      "2026-02-07T23:13:17.122Z"
+    ]
+  },
+  "reasoning_summaries": {
+    "executive_summary": [
+      "Compound AX-17 (example): Primary endpoint did not reach statistical significance in target population. Enrollment skewed toward late-stage disease, limiting responsiveness.",
+      "Canine inflammatory response may be more responsive to short-term modulation.",
+      "Veterinary evidence is weak with 1 cited item(s). Evidence remains limited.",
+      "Risk profile is moderate (35/100) with flagged contraindications requiring review."
+    ],
+    "failure_summary": "Primary endpoint did not reach statistical significance in target population. Enrollment skewed toward late-stage disease, limiting responsiveness. Failure type: efficacy.",
+    "species_benefit_summary": [
+      {
+        "species": "canine",
+        "summary": "Canine inflammatory response may be more responsive to short-term modulation."
+      }
+    ],
+    "evidence_summary": "Veterinary evidence is weak with 1 cited item(s). Evidence remains limited.",
+    "risk_summary": "Risk profile is moderate (35/100) with flagged contraindications requiring review.",
+    "next_steps_summary": "Next steps: retrospective_review, in_vitro, pilot_study (research-only)."
+  },
+  "disclaimer": "Research hypothesis only; not medical advice."
+}

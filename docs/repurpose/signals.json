@@ -1,59 +1,59 @@
 {
-  "run_id": "repurpose-2026-02-06T02-53-14-548Z",
-  "updated_at": "2026-02-06T02:53:14.549Z",
+  "run_id": "repurpose-2026-02-07T23-13-17-120Z",
+  "updated_at": "2026-02-07T23:13:17.122Z",
   "total": 3,
   "signals": [
     {
-      "signal_id": "repurpose-ax-17-01",
+      "signal_id": "repurpose-compound-ax-17-example-osteoarthritis-01",
       "compound": "Compound AX-17 (example)",
       "proposed_species": [
         "canine"
       ],
       "proposed_condition": "Osteoarthritis",
-      "confidence_score": 46,
+      "confidence_score": 28,
       "risk_overall": 35,
-      "summary_hypothesis": "Research hypothesis: Compound AX-17 may warrant evaluation for osteoarthritis in canine populations.",
+      "summary_hypothesis": "Research hypothesis: Compound AX-17 (example) may warrant evaluation for Osteoarthritis in canine.",
       "executive_summary": [
-        "Compound AX-17: human OA trial did not meet efficacy endpoints; late-stage enrollment likely reduced responsiveness.",
-        "Canine inflammatory profiles and mobility-focused endpoints may create a different response window.",
-        "Veterinary evidence is weak and limited to a single illustrative case report.",
-        "Risk profile is moderate with GI intolerance considerations."
+        "Compound AX-17 (example): Primary endpoint did not reach statistical significance in target population. Enrollment skewed toward late-stage disease, limiting responsiveness.",
+        "Canine inflammatory response may be more responsive to short-term modulation.",
+        "Veterinary evidence is weak with 1 cited item(s). Evidence remains limited.",
+        "Risk profile is moderate (35/100) with flagged contraindications requiring review."
       ],
       "disclaimer": "Research hypothesis only; not medical advice."
     },
     {
-      "signal_id": "repurpose-lm-12-01",
-      "compound": "Compound LM-12 (example)",
-      "proposed_species": [
-        "equine"
-      ],
-      "proposed_condition": "Laminitis",
-      "confidence_score": 24,
-      "risk_overall": 72,
-      "summary_hypothesis": "Research hypothesis: Compound LM-12 may warrant evaluation for equine laminitis support pathways.",
-      "executive_summary": [
-        "Compound LM-12: human trial focused on short-term perfusion endpoints that may not translate to chronic outcomes.",
-        "Equine laminitis endpoints differ and could align with perfusion support hypotheses.",
-        "Veterinary evidence is weak and mechanistic only.",
-        "Risk profile is high; not recommended for further pursuit."
-      ],
-      "disclaimer": "Research hypothesis only; not medical advice."
-    },
-    {
-      "signal_id": "repurpose-rn-44-01",
+      "signal_id": "repurpose-compound-rn-44-example-chronic-kidney-disease-02",
       "compound": "Compound RN-44 (example)",
       "proposed_species": [
         "feline"
       ],
       "proposed_condition": "Chronic kidney disease",
-      "confidence_score": 50,
+      "confidence_score": 27,
       "risk_overall": 55,
-      "summary_hypothesis": "Research hypothesis: Compound RN-44 may warrant evaluation for feline CKD fibrosis pathways.",
+      "summary_hypothesis": "Research hypothesis: Compound RN-44 (example) may warrant evaluation for Chronic kidney disease in feline.",
       "executive_summary": [
-        "Compound RN-44: human CKD trial limited by PK/bioavailability.",
-        "Feline CKD progression windows may allow alternative research dosing strategies.",
-        "Veterinary evidence is moderate but limited to retrospective signals.",
-        "Risk profile is moderate and requires renal safety review."
+        "Compound RN-44 (example): Insufficient bioavailability at planned dosing window.",
+        "Feline CKD progression windows may allow earlier intervention.",
+        "Veterinary evidence is moderate with 1 cited item(s). Evidence remains limited.",
+        "Risk profile is moderate (55/100) with flagged contraindications requiring review."
+      ],
+      "disclaimer": "Research hypothesis only; not medical advice."
+    },
+    {
+      "signal_id": "repurpose-compound-lm-12-example-laminitis-03",
+      "compound": "Compound LM-12 (example)",
+      "proposed_species": [
+        "equine"
+      ],
+      "proposed_condition": "Laminitis",
+      "confidence_score": 12,
+      "risk_overall": 72,
+      "summary_hypothesis": "Research hypothesis: Compound LM-12 (example) may warrant evaluation for Laminitis in equine.",
+      "executive_summary": [
+        "Compound LM-12 (example): Trial endpoints focused on short-term perfusion and missed chronic outcomes.",
+        "Equine laminitis endpoints differ from human perfusion metrics.",
+        "Veterinary evidence is weak with 1 cited item(s). Evidence remains limited.",
+        "Risk profile is high. Not recommended for further pursuit."
       ],
       "disclaimer": "Research hypothesis only; not medical advice."
     }

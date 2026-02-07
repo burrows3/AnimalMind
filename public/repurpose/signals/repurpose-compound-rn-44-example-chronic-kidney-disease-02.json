@@ -1,0 +1,82 @@
+{
+  "signal_id": "repurpose-compound-rn-44-example-chronic-kidney-disease-02",
+  "compound": "Compound RN-44 (example)",
+  "proposed_species": [
+    "feline"
+  ],
+  "proposed_condition": "Chronic kidney disease",
+  "summary_hypothesis": "Research hypothesis: Compound RN-44 (example) may warrant evaluation for Chronic kidney disease in feline.",
+  "why_failed_originally": {
+    "summary": "Insufficient bioavailability at planned dosing window.",
+    "failure_type": "pk",
+    "key_points": [
+      "Insufficient bioavailability at planned dosing window."
+    ]
+  },
+  "why_it_might_work_in_animals": {
+    "summary": "Feline CKD progression windows may allow earlier intervention.",
+    "key_points": [
+      "Feline CKD progression windows may allow earlier intervention."
+    ]
+  },
+  "evidence": {
+    "vet_strength": "moderate",
+    "key_docs": [
+      "pmid:EXAMPLE-VET-202",
+      "ctgov:EXAMPLE-CKD-002"
+    ],
+    "notes": "Evidence is research-only and requires validation."
+  },
+  "risk": {
+    "overall_risk": 55,
+    "key_flags": [
+      "Renal clearance uncertainty (severity 3)"
+    ]
+  },
+  "novelty_vectors": [
+    "new_species",
+    "new_indication"
+  ],
+  "confidence_score": 27,
+  "addressability_score": 60,
+  "translation_risk": 40,
+  "score_breakdown": {
+    "vet_evidence": 22,
+    "species_rationale": 13,
+    "addressability": 12,
+    "recency_volume": 2,
+    "risk_penalty": 22
+  },
+  "recommended_next_steps": [
+    "retrospective_review",
+    "in_vitro",
+    "pilot_study"
+  ],
+  "provenance": {
+    "agent_run_ids": [
+      "repurpose-2026-02-07T23-13-17-120Z"
+    ],
+    "timestamps": [
+      "2026-02-07T23:13:17.122Z"
+    ]
+  },
+  "reasoning_summaries": {
+    "executive_summary": [
+      "Compound RN-44 (example): Insufficient bioavailability at planned dosing window.",
+      "Feline CKD progression windows may allow earlier intervention.",
+      "Veterinary evidence is moderate with 1 cited item(s). Evidence remains limited.",
+      "Risk profile is moderate (55/100) with flagged contraindications requiring review."
+    ],
+    "failure_summary": "Insufficient bioavailability at planned dosing window. Failure type: pk.",
+    "species_benefit_summary": [
+      {
+        "species": "feline",
+        "summary": "Feline CKD progression windows may allow earlier intervention."
+      }
+    ],
+    "evidence_summary": "Veterinary evidence is moderate with 1 cited item(s). Evidence remains limited.",
+    "risk_summary": "Risk profile is moderate (55/100) with flagged contraindications requiring review.",
+    "next_steps_summary": "Next steps: retrospective_review, in_vitro, pilot_study (research-only)."
+  },
+  "disclaimer": "Research hypothesis only; not medical advice."
+}

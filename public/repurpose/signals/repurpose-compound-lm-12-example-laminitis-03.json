@@ -1,0 +1,80 @@
+{
+  "signal_id": "repurpose-compound-lm-12-example-laminitis-03",
+  "compound": "Compound LM-12 (example)",
+  "proposed_species": [
+    "equine"
+  ],
+  "proposed_condition": "Laminitis",
+  "summary_hypothesis": "Research hypothesis: Compound LM-12 (example) may warrant evaluation for Laminitis in equine.",
+  "why_failed_originally": {
+    "summary": "Trial endpoints focused on short-term perfusion and missed chronic outcomes.",
+    "failure_type": "trial_design",
+    "key_points": [
+      "Trial endpoints focused on short-term perfusion and missed chronic outcomes."
+    ]
+  },
+  "why_it_might_work_in_animals": {
+    "summary": "Equine laminitis endpoints differ from human perfusion metrics.",
+    "key_points": [
+      "Equine laminitis endpoints differ from human perfusion metrics."
+    ]
+  },
+  "evidence": {
+    "vet_strength": "weak",
+    "key_docs": [
+      "pmid:EXAMPLE-VET-303",
+      "ctgov:EXAMPLE-LAM-003"
+    ],
+    "notes": "Evidence is research-only and requires validation."
+  },
+  "risk": {
+    "overall_risk": 72,
+    "key_flags": [
+      "Cardiovascular risk profile unclear (severity 4)"
+    ]
+  },
+  "novelty_vectors": [
+    "new_species",
+    "new_indication"
+  ],
+  "confidence_score": 12,
+  "addressability_score": 70,
+  "translation_risk": 30,
+  "score_breakdown": {
+    "vet_evidence": 12,
+    "species_rationale": 13,
+    "addressability": 14,
+    "recency_volume": 2,
+    "risk_penalty": 29
+  },
+  "recommended_next_steps": [
+    "do_not_pursue"
+  ],
+  "provenance": {
+    "agent_run_ids": [
+      "repurpose-2026-02-07T23-13-17-120Z"
+    ],
+    "timestamps": [
+      "2026-02-07T23:13:17.122Z"
+    ]
+  },
+  "reasoning_summaries": {
+    "executive_summary": [
+      "Compound LM-12 (example): Trial endpoints focused on short-term perfusion and missed chronic outcomes.",
+      "Equine laminitis endpoints differ from human perfusion metrics.",
+      "Veterinary evidence is weak with 1 cited item(s). Evidence remains limited.",
+      "Risk profile is high. Not recommended for further pursuit."
+    ],
+    "failure_summary": "Trial endpoints focused on short-term perfusion and missed chronic outcomes. Failure type: trial_design.",
+    "species_benefit_summary": [
+      {
+        "species": "equine",
+        "summary": "Equine laminitis endpoints differ from human perfusion metrics."
+      }
+    ],
+    "evidence_summary": "Veterinary evidence is weak with 1 cited item(s). Evidence remains limited.",
+    "risk_summary": "Risk profile is high. Not recommended for further pursuit.",
+    "next_steps_summary": "Next steps: do_not_pursue (research-only)."
+  },
+  "disclaimer": "Research hypothesis only; not medical advice."
+}
