@@ -1,17 +1,17 @@
 {
   "topic": "Unintended Consequences of Standard Care",
   "baseQuery": "(\"adverse effect\" OR iatrogenic OR \"unintended consequence\" OR \"long term outcome\")",
-  "query": "((\"adverse effect\" OR iatrogenic OR \"unintended consequence\" OR \"long term outcome\")) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
-  "fallback": null,
-  "count": "108697",
+  "query": "one health animal",
+  "fallback": "global-fallback",
+  "count": "15",
   "idlist": [
-    "41651541",
-    "41650101",
-    "41648782",
-    "41646846",
-    "41644194",
-    "41643652",
-    "41642350",
-    "41642099"
+    "41653104",
+    "41653103",
+    "41653100",
+    "41652992",
+    "41652929",
+    "41652482",
+    "41652151",
+    "41651888"
   ]
 }

@@ -1,17 +1,17 @@
 {
   "topic": "Unexpected Correlations and Anomalies",
   "baseQuery": "(\"unexpected correlation\" OR anomaly OR outlier OR paradoxical)",
-  "query": "((\"unexpected correlation\" OR anomaly OR outlier OR paradoxical)) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
-  "fallback": null,
-  "count": "767899",
+  "query": "one health animal",
+  "fallback": "global-fallback",
+  "count": "15",
   "idlist": [
-    "41653015",
-    "41652850",
-    "41651542",
-    "41650469",
-    "41650358",
-    "41650133",
-    "41650112",
-    "41650102"
+    "41653104",
+    "41653103",
+    "41653100",
+    "41652992",
+    "41652929",
+    "41652482",
+    "41652151",
+    "41651888"
   ]
 }

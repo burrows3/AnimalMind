@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-07T23:12:51.342Z",
+  "updatedAt": "2026-02-07T23:19:57.145Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
@@ -35,11 +35,11 @@
     },
     {
       "topic": "Silent or Masked Disease and Distress",
-      "count": 8
+      "count": 16
     },
     {
       "topic": "Unintended Consequences of Standard Care",
-      "count": 13
+      "count": 21
     },
     {
       "topic": "Unknown Biological Signals",
@@ -67,7 +67,7 @@
     },
     {
       "topic": "Comparative Physiology at Extremes",
-      "count": 8
+      "count": 16
     },
     {
       "topic": "Genetic Intervention and Biological Integrity",
@@ -75,16 +75,16 @@
     },
     {
       "topic": "Developmental Programming and Lifelong Health",
-      "count": 8
+      "count": 16
     },
     {
       "topic": "Unexpected Correlations and Anomalies",
-      "count": 13
+      "count": 21
     }
   ],
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 20,
-    "totalItems": 320
+    "totalItems": 360
   }
 }
