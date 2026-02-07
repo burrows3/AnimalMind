@@ -1,6 +1,17 @@
 {
   "topic": "Early Detection of Disease Across Species",
-  "query": "early detection disease animal veterinary",
-  "count": 0,
-  "idlist": []
+  "baseQuery": "(\"early detection\" OR screening OR biomarker OR preclinical)",
+  "query": "((\"early detection\" OR screening OR biomarker OR preclinical)) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": null,
+  "count": "6933022",
+  "idlist": [
+    "41653403",
+    "41653400",
+    "41653365",
+    "41653357",
+    "41653339",
+    "41653332",
+    "41653330",
+    "41653289"
+  ]
 }

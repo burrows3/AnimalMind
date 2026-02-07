@@ -1,6 +1,17 @@
 {
   "topic": "Microbiome–Behavior–Health Coupling",
-  "query": "microbiome animal behavior health",
-  "count": 0,
-  "idlist": []
+  "baseQuery": "(\"microbiome\" OR \"gut microbiota\") AND (behavior OR behaviour OR \"stress response\")",
+  "query": "((\"microbiome\" OR \"gut microbiota\") AND (behavior OR behaviour OR \"stress response\")) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": null,
+  "count": "16564",
+  "idlist": [
+    "41650035",
+    "41645277",
+    "41643274",
+    "41642392",
+    "41642241",
+    "41640872",
+    "41635177",
+    "41633513"
+  ]
 }

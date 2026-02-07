@@ -1,6 +1,17 @@
 {
   "topic": "Biological Timing and Treatment Response",
-  "query": "chronobiology veterinary anesthesia vaccination",
-  "count": 0,
-  "idlist": []
+  "baseQuery": "(\"chronobiology\" OR circadian OR \"time of day\") AND (treatment OR anesthesia OR vaccination)",
+  "query": "one health animal",
+  "fallback": "global-fallback",
+  "count": "15",
+  "idlist": [
+    "41653104",
+    "41653103",
+    "41653100",
+    "41652992",
+    "41652929",
+    "41652482",
+    "41652151",
+    "41651888"
+  ]
 }

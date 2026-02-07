@@ -1,6 +1,17 @@
 {
   "topic": "Non-Linear Dose and Response Effects",
-  "query": "dose response veterinary non-linear",
-  "count": 0,
-  "idlist": []
+  "baseQuery": "(\"dose response\" OR hormesis OR nonlinear OR \"non linear\")",
+  "query": "((\"dose response\" OR hormesis OR nonlinear OR \"non linear\")) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": null,
+  "count": "587230",
+  "idlist": [
+    "41653375",
+    "41652823",
+    "41651634",
+    "41650172",
+    "41650134",
+    "41650132",
+    "41650110",
+    "41650096"
+  ]
 }

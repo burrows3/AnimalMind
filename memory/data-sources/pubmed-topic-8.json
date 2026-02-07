@@ -1,6 +1,17 @@
 {
   "topic": "Silent or Masked Disease and Distress",
-  "query": "masked pain disease animal stoic",
-  "count": 0,
-  "idlist": []
+  "baseQuery": "(\"subclinical\" OR masked OR \"silent disease\" OR occult OR stoic)",
+  "query": "((\"subclinical\" OR masked OR \"silent disease\" OR occult OR stoic)) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": null,
+  "count": "161380",
+  "idlist": [
+    "41652728",
+    "41651641",
+    "41651634",
+    "41651556",
+    "41650178",
+    "41650172",
+    "41649994",
+    "41649336"
+  ]
 }
