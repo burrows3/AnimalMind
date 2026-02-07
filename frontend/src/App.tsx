@@ -726,6 +726,7 @@ export default function App() {
             </h2>
             <p className="text-sm text-muted-foreground max-w-2xl">
               Clinical-adjacent topics inform veterinary care today. Research topics explore biology, mechanisms, and long-term discovery.
+              Topic queries are scoped to animal, veterinary, and animal health sources with automatic backfill when signals are sparse.
             </p>
           </div>
 
@@ -792,7 +793,8 @@ export default function App() {
             Topic summary
           </h2>
           <p className="text-sm text-muted-foreground max-w-2xl">
-            Summary by autonomous-agent topic after each ingest.
+            Summary by autonomous-agent topic after each ingest. Topics are filtered to animal and veterinary domains and
+            auto-expanded to prevent empty coverage.
             {topicUpdated ? ` Updated ${topicUpdated}.` : ""}
           </p>
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
