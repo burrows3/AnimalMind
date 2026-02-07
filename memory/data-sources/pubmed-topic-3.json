@@ -1,6 +1,17 @@
 {
   "topic": "Unexplained Recovery and Resilience",
-  "query": "animal recovery resilience veterinary",
-  "count": 0,
-  "idlist": []
+  "baseQuery": "(\"disease resilience\" OR recovery OR \"protective factor\" OR \"spontaneous remission\")",
+  "query": "((\"disease resilience\" OR recovery OR \"protective factor\" OR \"spontaneous remission\")) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": null,
+  "count": "567173",
+  "idlist": [
+    "41652997",
+    "41652746",
+    "41652644",
+    "41652113",
+    "41652079",
+    "41651695",
+    "41651596",
+    "41651518"
+  ]
 }

@@ -46,6 +46,17 @@ function buildPubMedUrl(term, retmax = 15) {
   return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${q}&retmax=${retmax}&sort=date&retmode=json`;
 }
 
+const ANIMAL_DOMAIN_FILTER =
+  '(Animals[MeSH Terms] OR "Veterinary Medicine"[MeSH Terms] OR "Animal Diseases"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR "animal health"[Title/Abstract] OR "one health"[Title/Abstract])';
+
+function buildTopicQuery(baseQuery) {
+  return `(${baseQuery}) AND ${ANIMAL_DOMAIN_FILTER}`;
+}
+
+function buildBroadenedTopicQuery(baseQuery) {
+  return `(${baseQuery}) OR ${ANIMAL_DOMAIN_FILTER}`;
+}
+
 function fetchPubMedQuery(term, retmax = 15) {
   return new Promise((resolve, reject) => {
     https
@@ -69,6 +80,44 @@ function fetchPubMedQuery(term, retmax = 15) {
       })
       .on('error', reject);
   });
+}
+
+async function fetchPubMedTopicWithFallback(topicItem, retmax = 8, globalFallback) {
+  const baseQuery = topicItem.query;
+  const primaryQuery = buildTopicQuery(baseQuery);
+  let result = await fetchPubMedQuery(primaryQuery, retmax);
+  if ((result.idlist || []).length > 0) {
+    return { ...result, topic: topicItem.topic, baseQuery, query: primaryQuery, fallback: null };
+  }
+
+  const broadenedQuery = buildBroadenedTopicQuery(baseQuery);
+  result = await fetchPubMedQuery(broadenedQuery, retmax);
+  if ((result.idlist || []).length > 0) {
+    return { ...result, topic: topicItem.topic, baseQuery, query: broadenedQuery, fallback: 'broadened' };
+  }
+
+  const domainOnlyQuery = ANIMAL_DOMAIN_FILTER;
+  result = await fetchPubMedQuery(domainOnlyQuery, retmax);
+  if ((result.idlist || []).length > 0) {
+    return { ...result, topic: topicItem.topic, baseQuery, query: domainOnlyQuery, fallback: 'domain-only' };
+  }
+
+  const fallbackIdlist = (globalFallback && globalFallback.idlist) || [];
+  if (fallbackIdlist.length > 0) {
+    const fallbackQuery = globalFallback.query || 'one health animal';
+    return {
+      fetchedAt: new Date().toISOString(),
+      source: 'PubMed',
+      query: fallbackQuery,
+      count: String(fallbackIdlist.length),
+      idlist: fallbackIdlist.slice(0, retmax),
+      topic: topicItem.topic,
+      baseQuery,
+      fallback: 'global-fallback',
+    };
+  }
+
+  return { ...result, topic: topicItem.topic, baseQuery, query: domainOnlyQuery, fallback: 'domain-only' };
 }
 
 function fetchPubMed() {
@@ -349,14 +398,19 @@ async function main() {
     ]);
     const curated = loadCuratedDatasets();
 
-    // Autonomous-agent topics: each run finds literature for these frontier topics (retmax 5 per topic)
+    // Autonomous-agent topics: each run finds literature for these frontier topics (retmax 8 per topic)
     const topicResults = await Promise.all(
-      AUTONOMOUS_AGENT_TOPICS.map(({ topic, query }) =>
-        fetchPubMedQuery(query, 5).then((r) => ({ topic, query: r.query, idlist: r.idlist || [], count: r.count }))
-      )
+      AUTONOMOUS_AGENT_TOPICS.map((topicItem) => fetchPubMedTopicWithFallback(topicItem, 8, pubmed))
     );
     topicResults.forEach((r, i) => {
-      writeJson(`pubmed-topic-${i}.json`, { topic: AUTONOMOUS_AGENT_TOPICS[i].topic, query: r.query, count: r.count, idlist: r.idlist });
+      writeJson(`pubmed-topic-${i}.json`, {
+        topic: r.topic,
+        baseQuery: r.baseQuery,
+        query: r.query,
+        fallback: r.fallback,
+        count: r.count,
+        idlist: r.idlist,
+      });
     });
 
     writeJson('pubmed-recent.json', pubmed);
