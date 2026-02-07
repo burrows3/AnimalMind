@@ -5,6 +5,7 @@
  */
 
 const { execSync } = require('child_process');
+const https = require('https');
 const path = require('path');
 const fs = require('fs');
 
@@ -47,7 +48,61 @@ function resolvePushBranch() {
   return 'main';
 }
 
-function main() {
+function buildPubMedSummaryUrl(ids) {
+  const q = encodeURIComponent(ids.join(','));
+  return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${q}&retmode=json`;
+}
+
+function fetchPubMedSummary(ids) {
+  return new Promise((resolve, reject) => {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      resolve({});
+      return;
+    }
+    https
+      .get(buildPubMedSummaryUrl(ids), (res) => {
+        let body = '';
+        res.on('data', (chunk) => (body += chunk));
+        res.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            const result = data?.result || {};
+            const uids = Array.isArray(result.uids) ? result.uids : [];
+            const map = {};
+            for (const id of uids) {
+              const key = String(id);
+              const title = (result[key]?.title || '').trim();
+              if (title) map[key] = title;
+            }
+            resolve(map);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      })
+      .on('error', reject);
+  });
+}
+
+async function fetchPubMedTitles(ids) {
+  const unique = Array.from(new Set((ids || []).map((id) => String(id)).filter(Boolean)));
+  const titleMap = {};
+  const batchSize = 200;
+  for (let i = 0; i < unique.length; i += batchSize) {
+    const batch = unique.slice(i, i + batchSize);
+    const batchMap = await fetchPubMedSummary(batch);
+    Object.assign(titleMap, batchMap);
+  }
+  return titleMap;
+}
+
+function extractPubMedId(url) {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)\//i);
+  return match ? match[1] : null;
+}
+
+async function main() {
   if (!fs.existsSync(DB_PATH)) {
     console.log('No database yet; run npm run ingest first.');
     return;
@@ -75,11 +130,30 @@ function main() {
     if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
     fs.writeFileSync(DOCS_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
     // Export ingested rows for landing page "Browse data" (embed memory)
-    const rows = getIngestedSorted()
-      .slice(0, INGESTED_EXPORT_LIMIT)
-      .map((r) => ({ data_type: r.data_type, condition_or_topic: r.condition_or_topic, title: r.title || '', url: r.url || '' }));
+    const rows = getIngestedSorted().slice(0, INGESTED_EXPORT_LIMIT);
+    const missingPubMedIds = new Set();
+    for (const row of rows) {
+      if (row.title) continue;
+      const pmid = extractPubMedId(row.url);
+      if (pmid) missingPubMedIds.add(pmid);
+    }
+    const pubmedTitleMap = await fetchPubMedTitles(Array.from(missingPubMedIds));
+    const mappedRows = rows.map((r) => {
+      const pmid = extractPubMedId(r.url);
+      const fallbackTitle =
+        (pmid && pubmedTitleMap[pmid]) ||
+        r.condition_or_topic ||
+        r.external_id ||
+        '';
+      return {
+        data_type: r.data_type,
+        condition_or_topic: r.condition_or_topic,
+        title: r.title || fallbackTitle,
+        url: r.url || '',
+      };
+    });
     if (!fs.existsSync(DOCS_DATA_DIR)) fs.mkdirSync(DOCS_DATA_DIR, { recursive: true });
-    fs.writeFileSync(DOCS_INGESTED_JSON, JSON.stringify(rows), 'utf8');
+    fs.writeFileSync(DOCS_INGESTED_JSON, JSON.stringify(mappedRows), 'utf8');
     const reasoning = getAgentReasoning();
     fs.writeFileSync(DOCS_REASONING_JSON, JSON.stringify(reasoning, null, 2), 'utf8');
     const topicSummary = getTopicSummary();
@@ -117,4 +191,7 @@ function main() {
   console.log('Pushed ingest to GitHub.');
 }
 
-main();
+main().catch((err) => {
+  console.error('push-ingest-to-github failed:', err.message);
+  process.exit(1);
+});
