@@ -1,12 +1,6 @@
 {
   "topic": "Unknown Biological Signals",
   "query": "biomarker animal health uncharacterized",
-  "count": "81",
-  "idlist": [
-    "41620756",
-    "41597776",
-    "41501454",
-    "41241370",
-    "41219790"
-  ]
+  "count": 0,
+  "idlist": []
 }
