@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-07T22:33:21.817Z",
+  "updatedAt": "2026-02-07T23:12:51.342Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
@@ -7,11 +7,11 @@
     },
     {
       "topic": "Decoding Animal Pain and Distress",
-      "count": 13
+      "count": 21
     },
     {
       "topic": "Preclinical Disease States",
-      "count": 13
+      "count": 21
     },
     {
       "topic": "Unexplained Recovery and Resilience",
@@ -23,11 +23,11 @@
     },
     {
       "topic": "Biological Timing and Treatment Response",
-      "count": 9
+      "count": 17
     },
     {
       "topic": "Non-Linear Dose and Response Effects",
-      "count": 13
+      "count": 21
     },
     {
       "topic": "Emergent Effects of Complex Care Pathways",
@@ -43,19 +43,19 @@
     },
     {
       "topic": "Unknown Biological Signals",
-      "count": 13
+      "count": 21
     },
     {
       "topic": "Latent Protective Mechanisms",
-      "count": 14
+      "count": 22
     },
     {
       "topic": "Pain Modulation Beyond Analgesics",
-      "count": 13
+      "count": 21
     },
     {
       "topic": "Hidden Costs of Normal Physiology",
-      "count": 14
+      "count": 22
     },
     {
       "topic": "Environmental Exposure and Sentinel Signals",
@@ -63,7 +63,7 @@
     },
     {
       "topic": "Species-Specific Health Advantages",
-      "count": 8
+      "count": 16
     },
     {
       "topic": "Comparative Physiology at Extremes",
@@ -85,6 +85,6 @@
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 20,
-    "totalItems": 248
+    "totalItems": 320
   }
 }

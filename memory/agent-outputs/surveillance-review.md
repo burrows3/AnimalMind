@@ -1,8 +1,8 @@
 # Surveillance reviewer
 
 **Agent:** Surveillance reviewer (autonomous)
-**Last run:** 2026-02-04T04:54:48.050Z
-**Data as of:** 2026-02-04T04:54:47.842Z
+**Last run:** 2026-02-07T23:12:51.450Z
+**Data as of:** 2026-02-07T23:12:51.342Z
 
 ---
 
@@ -16,8 +16,8 @@ Conditions currently in CDC travel notices (and similar surveillance):
 - **Animal disease alerts** — WOAH WAHIS (World Animal Health Information System)
   - [Source](https://wahis.woah.org/)
 
-- **Chikungunya** — Level 2 - Chikungunya in Cuba
-  - [Source](https://wwwnc.cdc.gov/travel/notices/level2/chikungunya-cuba)
+- **Chikungunya** — Level 2 - Chikungunya in Suriname
+  - [Source](https://wwwnc.cdc.gov/travel/notices/level2/chikungunya-suriname)
 
 - **Clade II Monkeypox** — Level 2 - Clade II Monkeypox in Ghana and Liberia
   - [Source](https://wwwnc.cdc.gov/travel/notices/level2/monkeypox-western-africa)
