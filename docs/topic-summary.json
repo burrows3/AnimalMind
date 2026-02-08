@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-08T09:11:54.924Z",
+  "updatedAt": "2026-02-08T12:14:28.933Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
@@ -15,7 +15,7 @@
     },
     {
       "topic": "Unexplained Recovery and Resilience",
-      "count": 35
+      "count": 39
     },
     {
       "topic": "Microbiome–Behavior–Health Coupling",
@@ -63,7 +63,7 @@
     },
     {
       "topic": "Species-Specific Health Advantages",
-      "count": 23
+      "count": 24
     },
     {
       "topic": "Comparative Physiology at Extremes",
@@ -71,7 +71,7 @@
     },
     {
       "topic": "Genetic Intervention and Biological Integrity",
-      "count": 33
+      "count": 34
     },
     {
       "topic": "Developmental Programming and Lifelong Health",
@@ -79,12 +79,12 @@
     },
     {
       "topic": "Unexpected Correlations and Anomalies",
-      "count": 28
+      "count": 31
     }
   ],
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 20,
-    "totalItems": 553
+    "totalItems": 562
   }
 }
