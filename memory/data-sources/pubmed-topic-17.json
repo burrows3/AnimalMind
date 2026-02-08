@@ -1,17 +1,17 @@
 {
   "topic": "Genetic Intervention and Biological Integrity",
   "baseQuery": "(\"gene editing\" OR CRISPR OR \"genetic intervention\" OR germline)",
-  "query": "((\"gene editing\" OR CRISPR OR \"genetic intervention\" OR germline)) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
-  "fallback": null,
-  "count": "89665",
+  "query": "one health animal",
+  "fallback": "global-fallback",
+  "count": "15",
   "idlist": [
-    "41652841",
-    "41652090",
-    "41651998",
-    "41651578",
-    "41650939",
-    "41650933",
-    "41650932",
-    "41650254"
+    "41653104",
+    "41653103",
+    "41653100",
+    "41652992",
+    "41652929",
+    "41652482",
+    "41652151",
+    "41651888"
   ]
 }

@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-02-07T23:19:57.145Z",
+  "updatedAt": "2026-02-08T00:49:25.617Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
-      "count": 23
+      "count": 31
     },
     {
       "topic": "Decoding Animal Pain and Distress",
@@ -15,11 +15,11 @@
     },
     {
       "topic": "Unexplained Recovery and Resilience",
-      "count": 13
+      "count": 21
     },
     {
       "topic": "Microbiome–Behavior–Health Coupling",
-      "count": 13
+      "count": 21
     },
     {
       "topic": "Biological Timing and Treatment Response",
@@ -71,7 +71,7 @@
     },
     {
       "topic": "Genetic Intervention and Biological Integrity",
-      "count": 18
+      "count": 26
     },
     {
       "topic": "Developmental Programming and Lifelong Health",
@@ -85,6 +85,6 @@
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 20,
-    "totalItems": 360
+    "totalItems": 392
   }
 }

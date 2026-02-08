@@ -1,17 +1,17 @@
 {
   "topic": "Pain Modulation Beyond Analgesics",
   "baseQuery": "(\"pain modulation\" OR \"non pharmacologic\" OR \"non drug\" OR \"behavioral therapy\")",
-  "query": "((\"pain modulation\" OR \"non pharmacologic\" OR \"non drug\" OR \"behavioral therapy\")) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
-  "fallback": null,
-  "count": "48689",
+  "query": "one health animal",
+  "fallback": "global-fallback",
+  "count": "15",
   "idlist": [
-    "41652081",
-    "41649340",
-    "41647740",
-    "41645892",
-    "41639390",
-    "41637734",
-    "41637261",
-    "41635041"
+    "41653104",
+    "41653103",
+    "41653100",
+    "41652992",
+    "41652929",
+    "41652482",
+    "41652151",
+    "41651888"
   ]
 }
