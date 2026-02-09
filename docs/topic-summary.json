@@ -1,90 +1,90 @@
 {
-  "updatedAt": "2026-02-09T15:25:03.527Z",
+  "updatedAt": "2026-02-09T18:24:48.842Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
-      "count": 61
+      "count": 69
     },
     {
       "topic": "Decoding Animal Pain and Distress",
-      "count": 45
+      "count": 53
     },
     {
       "topic": "Preclinical Disease States",
-      "count": 42
+      "count": 50
     },
     {
       "topic": "Unexplained Recovery and Resilience",
-      "count": 51
+      "count": 59
     },
     {
       "topic": "Microbiome–Behavior–Health Coupling",
-      "count": 35
+      "count": 43
     },
     {
       "topic": "Biological Timing and Treatment Response",
-      "count": 31
+      "count": 39
     },
     {
       "topic": "Non-Linear Dose and Response Effects",
-      "count": 35
+      "count": 43
     },
     {
       "topic": "Emergent Effects of Complex Care Pathways",
-      "count": 27
+      "count": 35
     },
     {
       "topic": "Silent or Masked Disease and Distress",
-      "count": 30
+      "count": 38
     },
     {
       "topic": "Unintended Consequences of Standard Care",
-      "count": 35
+      "count": 43
     },
     {
       "topic": "Unknown Biological Signals",
-      "count": 35
+      "count": 43
     },
     {
       "topic": "Latent Protective Mechanisms",
-      "count": 36
+      "count": 44
     },
     {
       "topic": "Pain Modulation Beyond Analgesics",
-      "count": 35
+      "count": 43
     },
     {
       "topic": "Hidden Costs of Normal Physiology",
-      "count": 36
+      "count": 44
     },
     {
       "topic": "Environmental Exposure and Sentinel Signals",
-      "count": 22
+      "count": 30
     },
     {
       "topic": "Species-Specific Health Advantages",
-      "count": 31
+      "count": 39
     },
     {
       "topic": "Comparative Physiology at Extremes",
-      "count": 30
+      "count": 38
     },
     {
       "topic": "Genetic Intervention and Biological Integrity",
-      "count": 41
+      "count": 49
     },
     {
       "topic": "Developmental Programming and Lifelong Health",
-      "count": 30
+      "count": 38
     },
     {
       "topic": "Unexpected Correlations and Anomalies",
-      "count": 38
+      "count": 46
     }
   ],
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 20,
-    "totalItems": 726
+    "totalItems": 886
   }
 }
