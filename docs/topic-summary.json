@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-09T18:24:48.842Z",
+  "updatedAt": "2026-02-09T21:17:10.351Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
@@ -11,11 +11,11 @@
     },
     {
       "topic": "Preclinical Disease States",
-      "count": 50
+      "count": 57
     },
     {
       "topic": "Unexplained Recovery and Resilience",
-      "count": 59
+      "count": 67
     },
     {
       "topic": "Microbiome–Behavior–Health Coupling",
@@ -35,7 +35,7 @@
     },
     {
       "topic": "Silent or Masked Disease and Distress",
-      "count": 38
+      "count": 46
     },
     {
       "topic": "Unintended Consequences of Standard Care",
@@ -85,6 +85,6 @@
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 20,
-    "totalItems": 886
+    "totalItems": 909
   }
 }
