@@ -1,13 +1,13 @@
 {
-  "updatedAt": "2026-02-08T21:10:20.612Z",
+  "updatedAt": "2026-02-09T00:41:06.637Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
-      "count": 47
+      "count": 55
     },
     {
       "topic": "Decoding Animal Pain and Distress",
-      "count": 36
+      "count": 39
     },
     {
       "topic": "Preclinical Disease States",
@@ -15,7 +15,7 @@
     },
     {
       "topic": "Unexplained Recovery and Resilience",
-      "count": 40
+      "count": 45
     },
     {
       "topic": "Microbiome–Behavior–Health Coupling",
@@ -85,6 +85,6 @@
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 20,
-    "totalItems": 590
+    "totalItems": 606
   }
 }
