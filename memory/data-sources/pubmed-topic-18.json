@@ -1,17 +1,17 @@
 {
   "topic": "Developmental Programming and Lifelong Health",
   "baseQuery": "(\"developmental programming\" OR \"early life\" OR \"in utero\" OR maternal)",
-  "query": "one health animal",
-  "fallback": "global-fallback",
-  "count": "15",
+  "query": "((\"developmental programming\" OR \"early life\" OR \"in utero\" OR maternal)) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": null,
+  "count": "599750",
   "idlist": [
-    "41662751",
-    "41662344",
-    "41662271",
-    "41662256",
-    "41661511",
-    "41661375",
-    "41661303",
-    "41660984"
+    "41662731",
+    "41662665",
+    "41662664",
+    "41662504",
+    "41662428",
+    "41662250",
+    "41661662",
+    "41661596"
   ]
 }

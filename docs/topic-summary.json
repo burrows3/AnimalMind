@@ -1,21 +1,21 @@
 {
-  "updatedAt": "2026-02-10T04:01:36.567Z",
+  "updatedAt": "2026-02-10T04:05:08.766Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
-      "count": 73
+      "count": 81
     },
     {
       "topic": "Decoding Animal Pain and Distress",
-      "count": 57
+      "count": 65
     },
     {
       "topic": "Preclinical Disease States",
-      "count": 69
+      "count": 72
     },
     {
       "topic": "Unexplained Recovery and Resilience",
-      "count": 71
+      "count": 79
     },
     {
       "topic": "Microbiome–Behavior–Health Coupling",
@@ -31,7 +31,7 @@
     },
     {
       "topic": "Emergent Effects of Complex Care Pathways",
-      "count": 39
+      "count": 47
     },
     {
       "topic": "Silent or Masked Disease and Distress",
@@ -43,15 +43,15 @@
     },
     {
       "topic": "Unknown Biological Signals",
-      "count": 47
+      "count": 55
     },
     {
       "topic": "Latent Protective Mechanisms",
-      "count": 48
+      "count": 56
     },
     {
       "topic": "Pain Modulation Beyond Analgesics",
-      "count": 47
+      "count": 54
     },
     {
       "topic": "Hidden Costs of Normal Physiology",
@@ -63,7 +63,7 @@
     },
     {
       "topic": "Species-Specific Health Advantages",
-      "count": 43
+      "count": 51
     },
     {
       "topic": "Comparative Physiology at Extremes",
@@ -71,11 +71,11 @@
     },
     {
       "topic": "Genetic Intervention and Biological Integrity",
-      "count": 53
+      "count": 61
     },
     {
       "topic": "Developmental Programming and Lifelong Health",
-      "count": 42
+      "count": 50
     },
     {
       "topic": "Unexpected Correlations and Anomalies",
@@ -85,6 +85,6 @@
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 20,
-    "totalItems": 1013
+    "totalItems": 1095
   }
 }

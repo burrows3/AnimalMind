@@ -1,17 +1,17 @@
 {
   "topic": "Latent Protective Mechanisms",
   "baseQuery": "(\"protective mechanism\" OR \"disease resistance\" OR tolerance OR \"host resilience\")",
-  "query": "one health animal",
-  "fallback": "global-fallback",
-  "count": "15",
+  "query": "((\"protective mechanism\" OR \"disease resistance\" OR tolerance OR \"host resilience\")) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": null,
+  "count": "543203",
   "idlist": [
-    "41662751",
-    "41662344",
-    "41662271",
-    "41662256",
-    "41661511",
-    "41661375",
-    "41661303",
-    "41660984"
+    "41662482",
+    "41661591",
+    "41661214",
+    "41661052",
+    "41660902",
+    "41660627",
+    "41660626",
+    "41660622"
   ]
 }
