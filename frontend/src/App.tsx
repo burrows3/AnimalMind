@@ -249,6 +249,19 @@ function stripInlineMarkup(text: string): string {
     .trim();
 }
 
+function buildInsightPreview(text: string, maxLines = 4): string {
+  if (!text) return "";
+  const decoded = decodeHtmlEntities(text);
+  const lines = decoded
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !line.startsWith("#"));
+  const bulletLines = lines.filter((line) => /^[-*•]\s+/.test(line));
+  const chosen = (bulletLines.length ? bulletLines : lines).slice(0, maxLines);
+  return chosen.join("\n");
+}
+
 /** Render a line with **bold** as React nodes. */
 function renderBoldLine(line: string) {
   const sanitized = line.replace(/<[^>]+>/g, "");
@@ -410,6 +423,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [expandedInsights, setExpandedInsights] = useState<Record<string, boolean>>({});
+  const [showAllMemory, setShowAllMemory] = useState(false);
 
   const refreshData = useCallback(() => {
     setRefreshing(true);
@@ -495,6 +510,8 @@ export default function App() {
   const topicCounts = new Map(
     (topicSummary?.topics ?? []).map((item) => [item.topic, item.count]),
   );
+  const summaryCounts = summary?.counts ?? {};
+  const totalSignals = Object.values(summaryCounts).reduce((sum, value) => sum + (value || 0), 0);
   const reportHasSurveillance = Boolean(reasoning?.surveillance?.reasoning);
   const reportHasLiterature = Boolean(reasoning?.literature?.reasoning);
   const reportHasSynthesis = Boolean(reasoning?.synthesis?.reasoning);
@@ -506,6 +523,8 @@ export default function App() {
   const reportStatusDetail = formatMaybeDate(reasoning?.updatedAt ?? null);
   const repurposeUpdated = formatMaybeDate(repurposeSignals?.updated_at ?? null);
   const repurposeItems = repurposeSignals?.signals ?? [];
+  const repurposeTotal = repurposeSignals?.total ?? repurposeItems.length;
+  const memoryPreviewLimit = 6;
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
@@ -660,6 +679,72 @@ export default function App() {
               </p>
             </CardContent>
           </Card>
+        </section>
+
+        {/* Quick view */}
+        <section
+          id="quick-view"
+          aria-labelledby="quick-view-heading"
+          className="pb-12 space-y-6"
+        >
+          <div>
+            <h2 id="quick-view-heading" className="text-lg font-semibold text-foreground mb-2">
+              Quick view
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              A lightweight summary for fast scanning. Open details only when you need them.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border border-border bg-card/95 shadow-sm">
+              <CardContent className="p-4 space-y-2">
+                <CardTitle className="text-sm font-semibold">Signals</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  {lastUpdated ? `Updated ${lastUpdated}.` : "Awaiting first ingest."}
+                </p>
+                <div className="text-2xl font-semibold text-foreground">
+                  {totalSignals || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">Total items across all sources.</p>
+              </CardContent>
+            </Card>
+            <Card className="border border-border bg-card/95 shadow-sm">
+              <CardContent className="p-4 space-y-2">
+                <CardTitle className="text-sm font-semibold">Topic coverage</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  {topicUpdated ? `Updated ${topicUpdated}.` : "Topic summary pending."}
+                </p>
+                <div className="text-2xl font-semibold text-foreground">
+                  {(topicTotals.topicsWithItems ?? 0)}/{topicTotals.topicCount ?? 0}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {topicTotals.totalItems ?? 0} total topic-linked items.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border border-border bg-card/95 shadow-sm">
+              <CardContent className="p-4 space-y-2">
+                <CardTitle className="text-sm font-semibold">Repurpose signals</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  {repurposeUpdated ? `Updated ${repurposeUpdated}.` : "No signals yet."}
+                </p>
+                <div className="text-2xl font-semibold text-foreground">
+                  {repurposeTotal || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">Research-only hypotheses.</p>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Badge variant="secondary" className="text-[10px] font-medium">
+              Report status: {reportStatus}
+            </Badge>
+            {reportStatusDetail && (
+              <span className="text-xs text-muted-foreground">
+                Latest report {reportStatusDetail}
+              </span>
+            )}
+          </div>
         </section>
 
         {/* Audience */}
@@ -1090,6 +1175,8 @@ export default function App() {
                         : card.key === "literature"
                           ? BookOpen
                           : Sparkles;
+                    const isExpanded = expandedInsights[card.key] ?? false;
+                    const previewText = buildInsightPreview(card.text ?? "");
                     return (
                       <div
                         key={card.key}
@@ -1116,7 +1203,27 @@ export default function App() {
                           </div>
                         </div>
                         <div className="flex-1 min-h-0 overflow-y-auto p-4 pt-3 max-h-[320px] overscroll-contain">
-                          <InsightContent text={card.text} />
+                          <InsightContent text={isExpanded ? card.text : previewText} />
+                          {!isExpanded && previewText && previewText !== card.text ? (
+                            <p className="text-[11px] text-muted-foreground mt-2">
+                              Preview only.
+                            </p>
+                          ) : null}
+                        </div>
+                        <div className="px-4 pb-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() =>
+                              setExpandedInsights((prev) => ({
+                                ...prev,
+                                [card.key]: !isExpanded,
+                              }))
+                            }
+                          >
+                            {isExpanded ? "Show less" : "Show details"}
+                          </Button>
                         </div>
                       </div>
                     );
@@ -1157,6 +1264,21 @@ export default function App() {
             {memoryOpen ? "Hide data" : "Show data"}
           </Button>
           {memoryOpen && (
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <Badge variant="secondary" className="text-[10px] font-medium">
+                Showing {showAllMemory ? "all" : `${memoryPreviewLimit} per category`}
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => setShowAllMemory((prev) => !prev)}
+              >
+                {showAllMemory ? "Show less" : "Show full list"}
+              </Button>
+            </div>
+          )}
+          {memoryOpen && (
             <Card
               id="memory-panel"
               className="max-h-[70vh] overflow-y-auto shadow-sm border-border"
@@ -1169,13 +1291,23 @@ export default function App() {
                     {DATA_ORDER.map((type) => {
                       const items = memory.filter((r) => r.data_type === type);
                       if (items.length === 0) return null;
+                      const visibleItems = showAllMemory
+                        ? items
+                        : items.slice(0, memoryPreviewLimit);
+                      const hasMore = items.length > visibleItems.length;
                       return (
                         <div key={type}>
                           <h3 className="text-sm font-semibold text-foreground mb-2">
                             {LABELS[type] ?? type} ({items.length})
                           </h3>
+                          {!showAllMemory && (
+                            <p className="text-xs text-muted-foreground mb-2">
+                              Showing {visibleItems.length} of {items.length}.
+                              {hasMore ? " Expand for more." : ""}
+                            </p>
+                          )}
                           <ul className="list-none space-y-2">
-                            {items.map((item, i) => {
+                            {visibleItems.map((item, i) => {
                               const href = safeHref(item.url);
                               return (
                                 <li key={i} className="text-sm">
