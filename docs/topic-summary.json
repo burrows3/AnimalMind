@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-10T00:45:43.650Z",
+  "updatedAt": "2026-02-10T04:01:36.567Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
@@ -11,7 +11,7 @@
     },
     {
       "topic": "Preclinical Disease States",
-      "count": 61
+      "count": 69
     },
     {
       "topic": "Unexplained Recovery and Resilience",
@@ -27,7 +27,7 @@
     },
     {
       "topic": "Non-Linear Dose and Response Effects",
-      "count": 47
+      "count": 55
     },
     {
       "topic": "Emergent Effects of Complex Care Pathways",
@@ -59,7 +59,7 @@
     },
     {
       "topic": "Environmental Exposure and Sentinel Signals",
-      "count": 34
+      "count": 42
     },
     {
       "topic": "Species-Specific Health Advantages",
@@ -85,6 +85,6 @@
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 20,
-    "totalItems": 989
+    "totalItems": 1013
   }
 }
