@@ -1,17 +1,17 @@
 {
   "topic": "Emergent Effects of Complex Care Pathways",
   "baseQuery": "(\"care pathway\" OR \"multimodal\" OR \"combination therapy\" OR \"treatment sequence\")",
-  "query": "((\"care pathway\" OR \"multimodal\" OR \"combination therapy\" OR \"treatment sequence\")) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
-  "fallback": null,
-  "count": "140614",
+  "query": "one health animal",
+  "fallback": "global-fallback",
+  "count": "15",
   "idlist": [
-    "41662460",
-    "41662351",
-    "41662192",
-    "41661443",
-    "41661336",
-    "41661017",
-    "41661008",
-    "41660914"
+    "41664791",
+    "41664767",
+    "41664761",
+    "41664751",
+    "41664715",
+    "41664711",
+    "41664378",
+    "41664284"
   ]
 }

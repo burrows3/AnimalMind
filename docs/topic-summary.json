@@ -1,90 +1,90 @@
 {
-  "updatedAt": "2026-02-10T04:05:08.766Z",
+  "updatedAt": "2026-02-10T12:24:55.123Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
-      "count": 81
+      "count": 89
     },
     {
       "topic": "Decoding Animal Pain and Distress",
-      "count": 65
+      "count": 73
     },
     {
       "topic": "Preclinical Disease States",
-      "count": 72
+      "count": 80
     },
     {
       "topic": "Unexplained Recovery and Resilience",
-      "count": 79
+      "count": 87
     },
     {
       "topic": "Microbiome–Behavior–Health Coupling",
-      "count": 47
+      "count": 55
     },
     {
       "topic": "Biological Timing and Treatment Response",
-      "count": 43
-    },
-    {
-      "topic": "Non-Linear Dose and Response Effects",
-      "count": 55
-    },
-    {
-      "topic": "Emergent Effects of Complex Care Pathways",
-      "count": 47
-    },
-    {
-      "topic": "Silent or Masked Disease and Distress",
-      "count": 50
-    },
-    {
-      "topic": "Unintended Consequences of Standard Care",
-      "count": 47
-    },
-    {
-      "topic": "Unknown Biological Signals",
-      "count": 55
-    },
-    {
-      "topic": "Latent Protective Mechanisms",
-      "count": 56
-    },
-    {
-      "topic": "Pain Modulation Beyond Analgesics",
-      "count": 54
-    },
-    {
-      "topic": "Hidden Costs of Normal Physiology",
-      "count": 48
-    },
-    {
-      "topic": "Environmental Exposure and Sentinel Signals",
-      "count": 42
-    },
-    {
-      "topic": "Species-Specific Health Advantages",
       "count": 51
     },
     {
+      "topic": "Non-Linear Dose and Response Effects",
+      "count": 63
+    },
+    {
+      "topic": "Emergent Effects of Complex Care Pathways",
+      "count": 55
+    },
+    {
+      "topic": "Silent or Masked Disease and Distress",
+      "count": 58
+    },
+    {
+      "topic": "Unintended Consequences of Standard Care",
+      "count": 55
+    },
+    {
+      "topic": "Unknown Biological Signals",
+      "count": 63
+    },
+    {
+      "topic": "Latent Protective Mechanisms",
+      "count": 64
+    },
+    {
+      "topic": "Pain Modulation Beyond Analgesics",
+      "count": 62
+    },
+    {
+      "topic": "Hidden Costs of Normal Physiology",
+      "count": 56
+    },
+    {
+      "topic": "Environmental Exposure and Sentinel Signals",
+      "count": 50
+    },
+    {
+      "topic": "Species-Specific Health Advantages",
+      "count": 59
+    },
+    {
       "topic": "Comparative Physiology at Extremes",
-      "count": 42
+      "count": 50
     },
     {
       "topic": "Genetic Intervention and Biological Integrity",
-      "count": 61
+      "count": 69
     },
     {
       "topic": "Developmental Programming and Lifelong Health",
-      "count": 50
+      "count": 58
     },
     {
       "topic": "Unexpected Correlations and Anomalies",
-      "count": 50
+      "count": 58
     }
   ],
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 20,
-    "totalItems": 1095
+    "totalItems": 1255
   }
 }
