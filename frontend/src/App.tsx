@@ -724,6 +724,88 @@ export default function App() {
           </div>
         </section>
 
+        {/* Animal Health Daily Brief */}
+        <section
+          id="daily-brief"
+          aria-labelledby="daily-brief-heading"
+          className="pb-12 space-y-6"
+        >
+          <div>
+            <h2 id="daily-brief-heading" className="text-lg font-semibold text-foreground mb-2">
+              Animal Health Daily Brief
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              A concise, research-first brief built from the latest ingest and synthesis.
+            </p>
+          </div>
+          <Card className="border border-border bg-card/95 shadow-sm">
+            <CardContent className="p-6 space-y-5">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-1">1. What Changed</h3>
+                <p className="text-sm text-muted-foreground">
+                  {lastUpdated
+                    ? `Latest ingest updated ${lastUpdated}. Surveillance, literature, and clinical feeds refreshed.`
+                    : "Awaiting the next ingest."}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Why it matters: keeps guidance and evidence current for research and clinic decisions.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-1">2. Safety Signals</h3>
+                <p className="text-sm text-muted-foreground">
+                  Automated safety signal extraction is not yet enabled in this pipeline.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-1">3. Trending Topics</h3>
+                {topTopics.length ? (
+                  <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
+                    {topTopics.map((topic) => (
+                      <li key={topic.topic}>
+                        {topic.topic} ({topic.count})
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Topic trends will appear after the next ingest.
+                  </p>
+                )}
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-1">4. Evidence Watch</h3>
+                <p className="text-sm text-muted-foreground">
+                  No automated evidence shift or contradiction detection yet. See Key insights for
+                  latest reasoning.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-1">5. Clinical Takeaway</h3>
+                {watchlist.length ? (
+                  <p className="text-sm text-muted-foreground">
+                    Review the watchlist conditions for travel- and zoonotic-facing client guidance.
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Keep an eye on new surveillance and clinical updates in the data section.
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <Badge variant="secondary" className="text-[10px] font-medium">
+                  Report status: {reportStatus}
+                </Badge>
+                {reportStatusDetail && (
+                  <span className="text-xs text-muted-foreground">
+                    Latest report {reportStatusDetail}
+                  </span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* Overview */}
         <section
           id="overview"
@@ -828,90 +910,6 @@ export default function App() {
                   {repurposeTotal || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">Research-only hypotheses.</p>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="secondary" className="text-[10px] font-medium">
-              Report status: {reportStatus}
-            </Badge>
-            {reportStatusDetail && (
-              <span className="text-xs text-muted-foreground">
-                Latest report {reportStatusDetail}
-              </span>
-            )}
-          </div>
-        </section>
-
-        {/* Animal Health Daily Brief */}
-        <section
-          id="daily-brief"
-          aria-labelledby="daily-brief-heading"
-          className="pb-12 space-y-6"
-        >
-          <div>
-            <h2 id="daily-brief-heading" className="text-lg font-semibold text-foreground mb-2">
-              Animal Health Daily Brief
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              A concise, research-first brief built from the latest ingest and agent synthesis.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="border border-border bg-card/95 shadow-sm">
-              <CardContent className="p-4 space-y-2">
-                <CardTitle className="text-sm font-semibold">Today’s snapshot</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  {lastUpdated ? `Updated ${lastUpdated}.` : "Awaiting ingest."}
-                </p>
-                <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
-                  <li>Signals tracked: {totalSignals || 0}</li>
-                  <li>Surveillance: {summaryCounts.surveillance ?? 0}</li>
-                  <li>Literature: {summaryCounts.literature ?? 0}</li>
-                  <li>Clinical: {summaryCounts.clinical ?? 0}</li>
-                  <li>Case data: {summaryCounts.case_data ?? 0}</li>
-                  <li>Cancer: {summaryCounts.cancer ?? 0}</li>
-                </ul>
-              </CardContent>
-            </Card>
-            <Card className="border border-border bg-card/95 shadow-sm">
-              <CardContent className="p-4 space-y-2">
-                <CardTitle className="text-sm font-semibold">Top active topics</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  {topicUpdated ? `Updated ${topicUpdated}.` : "Topic summary pending."}
-                </p>
-                {topTopics.length ? (
-                  <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
-                    {topTopics.map((topic) => (
-                      <li key={topic.topic}>
-                        {topic.topic} ({topic.count})
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Topic counts will appear after the next ingest.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-            <Card className="border border-border bg-card/95 shadow-sm">
-              <CardContent className="p-4 space-y-2">
-                <CardTitle className="text-sm font-semibold">Watchlist</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  From surveillance synthesis.
-                </p>
-                {watchlist.length ? (
-                  <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
-                    {watchlist.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Watchlist appears after the latest synthesis run.
-                  </p>
-                )}
               </CardContent>
             </Card>
           </div>
