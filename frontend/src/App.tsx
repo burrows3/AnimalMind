@@ -468,6 +468,7 @@ export default function App() {
   const [expandedInsights, setExpandedInsights] = useState<Record<string, boolean>>({});
   const [showAllMemory, setShowAllMemory] = useState(false);
   const [memoryQuery, setMemoryQuery] = useState("");
+  const [shareLabel, setShareLabel] = useState("Share");
 
   const refreshData = useCallback(() => {
     setRefreshing(true);
@@ -526,6 +527,38 @@ export default function App() {
     if (memoryQuery.trim().length === 0) return;
     if (!memoryOpen) setMemoryOpen(true);
   }, [memoryQuery, memoryOpen]);
+
+  const handleShare = useCallback(async () => {
+    const url =
+      typeof window !== "undefined" && window.location
+        ? window.location.href
+        : "https://animalmind.co/";
+    const title = "AnimalMind Daily Brief";
+    const text = "AnimalMind — daily brief and research signals";
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title, text, url });
+        return;
+      }
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        setShareLabel("Copied");
+        setTimeout(() => setShareLabel("Share"), 1600);
+        return;
+      }
+      const temp = document.createElement("textarea");
+      temp.value = url;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand("copy");
+      document.body.removeChild(temp);
+      setShareLabel("Copied");
+      setTimeout(() => setShareLabel("Share"), 1600);
+    } catch {
+      setShareLabel("Copy failed");
+      setTimeout(() => setShareLabel("Share"), 1600);
+    }
+  }, []);
 
   const lastUpdated = summary?.lastUpdated
     ? new Date(summary.lastUpdated).toLocaleString()
@@ -696,6 +729,14 @@ export default function App() {
             >
               Product overview
             </a>
+            <Button
+              variant="outline"
+              size="lg"
+              className="rounded-lg"
+              onClick={handleShare}
+            >
+              {shareLabel}
+            </Button>
           </div>
           <div className="mx-auto max-w-xl w-full text-left">
             <label className="text-xs font-medium text-muted-foreground">
