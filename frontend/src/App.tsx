@@ -636,23 +636,29 @@ export default function App() {
             <label className="text-xs font-medium text-muted-foreground">
               Search the research memory
             </label>
-            <div className="mt-2 flex flex-wrap gap-2 items-center">
+            <div className="mt-2 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
               <input
                 value={memoryQuery}
                 onChange={(event) => setMemoryQuery(event.target.value)}
                 placeholder="Search titles, topics, or URLs"
-                className="flex-1 min-w-[220px] rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full flex-1 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
               <Button
                 variant="outline"
                 size="sm"
-                className="text-xs"
+                className="text-xs w-full sm:w-auto"
                 onClick={() => setMemoryQuery("")}
                 disabled={!hasSearch}
               >
                 Clear
               </Button>
-              <a href="#memory" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-xs")}>
+              <a
+                href="#memory"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "text-xs w-full sm:w-auto text-center"
+                )}
+              >
                 View results
               </a>
             </div>
