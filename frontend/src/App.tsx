@@ -739,58 +739,55 @@ export default function App() {
             </p>
           </div>
           <Card className="border border-border bg-card/95 shadow-sm">
-            <CardContent className="p-6 space-y-5">
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-1">1. What Changed</h3>
-                <p className="text-sm text-muted-foreground">
-                  {lastUpdated
-                    ? `Latest ingest updated ${lastUpdated}. Surveillance, literature, and clinical feeds refreshed.`
-                    : "Awaiting the next ingest."}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Why it matters: keeps guidance and evidence current for research and clinic decisions.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-1">2. Safety Signals</h3>
-                <p className="text-sm text-muted-foreground">
-                  Automated safety signal extraction is not yet enabled in this pipeline.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-1">3. Trending Topics</h3>
-                {topTopics.length ? (
-                  <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
-                    {topTopics.map((topic) => (
-                      <li key={topic.topic}>
-                        {topic.topic} ({topic.count})
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
+            <CardContent className="p-6 space-y-4">
+              <div className="space-y-2">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">1) What Changed</h3>
                   <p className="text-sm text-muted-foreground">
-                    Topic trends will appear after the next ingest.
+                    {lastUpdated
+                      ? `Ingest refreshed ${lastUpdated}. Surveillance ${summaryCounts.surveillance ?? 0}, literature ${summaryCounts.literature ?? 0}, clinical ${summaryCounts.clinical ?? 0}.`
+                      : "Awaiting the next ingest."}
                   </p>
-                )}
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-1">4. Evidence Watch</h3>
-                <p className="text-sm text-muted-foreground">
-                  No automated evidence shift or contradiction detection yet. See Key insights for
-                  latest reasoning.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-1">5. Clinical Takeaway</h3>
-                {watchlist.length ? (
+                  <p className="text-xs text-muted-foreground">
+                    Why it matters: keeps guidance and evidence current.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">2) Safety Signals</h3>
                   <p className="text-sm text-muted-foreground">
-                    Review the watchlist conditions for travel- and zoonotic-facing client guidance.
+                    No automated drug safety alerts in this build yet.
                   </p>
-                ) : (
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">3) Trending Topics</h3>
+                  {topTopics.length ? (
+                    <p className="text-sm text-muted-foreground">
+                      {topTopics.map((topic) => topic.topic).join(" · ")}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Topic trends will appear after the next ingest.
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">4) Evidence Watch</h3>
                   <p className="text-sm text-muted-foreground">
-                    Keep an eye on new surveillance and clinical updates in the data section.
+                    No automated evidence shifts flagged. See Key insights for synthesis.
                   </p>
-                )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">5) Clinical Takeaway</h3>
+                  {watchlist.length ? (
+                    <p className="text-sm text-muted-foreground">
+                      Keep an eye on: {watchlist.slice(0, 3).join(", ")}.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Monitor surveillance and clinical updates in the data feed.
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <Badge variant="secondary" className="text-[10px] font-medium">
