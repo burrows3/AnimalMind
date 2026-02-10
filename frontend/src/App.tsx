@@ -262,6 +262,31 @@ function buildInsightPreview(text: string, maxLines = 4): string {
   return chosen.join("\n");
 }
 
+function extractConditionsFromSynthesis(text: string | null | undefined, limit = 5): string[] {
+  if (!text) return [];
+  const decoded = decodeHtmlEntities(text);
+  const lines = decoded.split(/\r?\n/).map((line) => line.trim());
+  const startIndex = lines.findIndex((line) => /conditions to watch/i.test(line));
+  if (startIndex === -1) return [];
+  const items: string[] = [];
+  for (let i = startIndex + 1; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (!line) {
+      if (items.length > 0) break;
+      continue;
+    }
+    if (line.startsWith("###") || /^\*\*Opportunity/i.test(line)) break;
+    if (/^[-•]\s+/.test(line)) {
+      const cleaned = stripInlineMarkup(line.replace(/^[-•]\s+/, ""));
+      if (cleaned) items.push(cleaned);
+    } else if (items.length > 0) {
+      break;
+    }
+    if (items.length >= limit) break;
+  }
+  return items;
+}
+
 /** Render a line with **bold** as React nodes. */
 function renderBoldLine(line: string) {
   const sanitized = line.replace(/<[^>]+>/g, "");
@@ -542,6 +567,11 @@ export default function App() {
   const filteredMemory = memory ? memory.filter(memoryMatchesQuery) : null;
   const memoryMatchCount = filteredMemory ? filteredMemory.length : 0;
   const hasSearch = normalizedQuery.length > 0;
+  const topTopics = (topicSummary?.topics ?? [])
+    .slice()
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 4);
+  const watchlist = extractConditionsFromSynthesis(reasoning?.synthesis?.reasoning ?? null, 5);
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
@@ -575,6 +605,12 @@ export default function App() {
               className="hidden sm:inline text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Topics
+            </a>
+            <a
+              href="#daily-brief"
+              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Brief
             </a>
             <a
               href="#data"
@@ -792,6 +828,90 @@ export default function App() {
                   {repurposeTotal || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">Research-only hypotheses.</p>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Badge variant="secondary" className="text-[10px] font-medium">
+              Report status: {reportStatus}
+            </Badge>
+            {reportStatusDetail && (
+              <span className="text-xs text-muted-foreground">
+                Latest report {reportStatusDetail}
+              </span>
+            )}
+          </div>
+        </section>
+
+        {/* Animal Health Daily Brief */}
+        <section
+          id="daily-brief"
+          aria-labelledby="daily-brief-heading"
+          className="pb-12 space-y-6"
+        >
+          <div>
+            <h2 id="daily-brief-heading" className="text-lg font-semibold text-foreground mb-2">
+              Animal Health Daily Brief
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              A concise, research-first brief built from the latest ingest and agent synthesis.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border border-border bg-card/95 shadow-sm">
+              <CardContent className="p-4 space-y-2">
+                <CardTitle className="text-sm font-semibold">Today’s snapshot</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  {lastUpdated ? `Updated ${lastUpdated}.` : "Awaiting ingest."}
+                </p>
+                <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+                  <li>Signals tracked: {totalSignals || 0}</li>
+                  <li>Surveillance: {summaryCounts.surveillance ?? 0}</li>
+                  <li>Literature: {summaryCounts.literature ?? 0}</li>
+                  <li>Clinical: {summaryCounts.clinical ?? 0}</li>
+                  <li>Case data: {summaryCounts.case_data ?? 0}</li>
+                  <li>Cancer: {summaryCounts.cancer ?? 0}</li>
+                </ul>
+              </CardContent>
+            </Card>
+            <Card className="border border-border bg-card/95 shadow-sm">
+              <CardContent className="p-4 space-y-2">
+                <CardTitle className="text-sm font-semibold">Top active topics</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  {topicUpdated ? `Updated ${topicUpdated}.` : "Topic summary pending."}
+                </p>
+                {topTopics.length ? (
+                  <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+                    {topTopics.map((topic) => (
+                      <li key={topic.topic}>
+                        {topic.topic} ({topic.count})
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Topic counts will appear after the next ingest.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+            <Card className="border border-border bg-card/95 shadow-sm">
+              <CardContent className="p-4 space-y-2">
+                <CardTitle className="text-sm font-semibold">Watchlist</CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  From surveillance synthesis.
+                </p>
+                {watchlist.length ? (
+                  <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+                    {watchlist.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Watchlist appears after the latest synthesis run.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
