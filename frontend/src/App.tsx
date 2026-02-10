@@ -287,6 +287,23 @@ function extractConditionsFromSynthesis(text: string | null | undefined, limit =
   return items;
 }
 
+function extractSynthesisHighlights(text: string | null | undefined, limit = 2): string[] {
+  if (!text) return [];
+  const decoded = decodeHtmlEntities(text);
+  const lines = decoded
+    .split(/\r?\n/)
+    .map((line) => stripInlineMarkup(line))
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const matches = lines.filter((line) =>
+    /opportunity|partnership|research gap|collaboration|synthesize/i.test(line)
+  );
+  const cleaned = matches
+    .map((line) => line.replace(/^[-•]\s+/, ""))
+    .filter(Boolean);
+  return cleaned.slice(0, limit);
+}
+
 /** Render a line with **bold** as React nodes. */
 function renderBoldLine(line: string) {
   const sanitized = line.replace(/<[^>]+>/g, "");
@@ -572,6 +589,18 @@ export default function App() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 4);
   const watchlist = extractConditionsFromSynthesis(reasoning?.synthesis?.reasoning ?? null, 5);
+  const synthesisHighlights = extractSynthesisHighlights(reasoning?.synthesis?.reasoning ?? null, 2);
+  const surveillanceCounts = new Map<string, number>();
+  (memory ?? []).forEach((item) => {
+    if (item.data_type !== "surveillance") return;
+    const key = item.condition_or_topic || "Other";
+    surveillanceCounts.set(key, (surveillanceCounts.get(key) || 0) + 1);
+  });
+  const topSurveillance = Array.from(surveillanceCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name]) => name);
+  const emergingDiseases = watchlist.length ? watchlist : topSurveillance;
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
@@ -713,7 +742,7 @@ export default function App() {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
             <Badge variant="secondary" className="text-[10px] font-medium">
-              Updated every 3 hours
+              Updated every 12 hours
             </Badge>
             <Badge variant="secondary" className="text-[10px] font-medium">
               Evidence linked
@@ -746,7 +775,7 @@ export default function App() {
                   <p className="text-sm text-muted-foreground">
                     {lastUpdated
                       ? `Ingest refreshed ${lastUpdated}. Surveillance ${summaryCounts.surveillance ?? 0}, literature ${summaryCounts.literature ?? 0}, clinical ${summaryCounts.clinical ?? 0}.`
-                      : "Awaiting the next ingest."}
+                      : "Awaiting the next ingest. Current counts will appear after the next run."}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Why it matters: keeps guidance and evidence current.
@@ -755,7 +784,9 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">2) Safety Signals</h3>
                   <p className="text-sm text-muted-foreground">
-                    No automated drug safety alerts in this build yet.
+                    {emergingDiseases.length
+                      ? `Emerging diseases to watch: ${emergingDiseases.slice(0, 4).join(", ")}.`
+                      : "Monitoring surveillance feeds for emerging conditions."}
                   </p>
                 </div>
                 <div>
@@ -773,7 +804,9 @@ export default function App() {
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">4) Evidence Watch</h3>
                   <p className="text-sm text-muted-foreground">
-                    No automated evidence shifts flagged. See Key insights for synthesis.
+                    {synthesisHighlights.length
+                      ? `Innovative opportunities: ${synthesisHighlights.join(" · ")}.`
+                      : "No automated evidence shifts flagged. See Key insights for synthesis."}
                   </p>
                 </div>
                 <div>
@@ -840,7 +873,7 @@ export default function App() {
                     How it works
                   </h3>
                   <ol className="text-sm text-muted-foreground leading-relaxed list-decimal pl-4 space-y-1">
-                    <li>Ingest global sources every 3 hours</li>
+                    <li>Ingest global sources every 12 hours</li>
                     <li>Agents reason over new data</li>
                     <li>Synthesize opportunities and risks</li>
                     <li>Publish read-only updates</li>

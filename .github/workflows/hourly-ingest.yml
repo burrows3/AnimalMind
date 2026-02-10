@@ -1,15 +1,15 @@
-name: Ingest (every 3 hours)
+name: Ingest (every 12 hours)
 
 on:
   schedule:
-    - cron: "0 */3 * * *"
+    - cron: "0 */12 * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: ingest-3-hours
+  group: ingest-12-hours
   cancel-in-progress: false
 
 jobs:
