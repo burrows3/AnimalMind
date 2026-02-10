@@ -480,6 +480,11 @@ export default function App() {
       .finally(() => setMemoryLoading(false));
   }, [memoryOpen, memory]);
 
+  useEffect(() => {
+    if (memoryQuery.trim().length === 0) return;
+    if (!memoryOpen) setMemoryOpen(true);
+  }, [memoryQuery, memoryOpen]);
+
   const lastUpdated = summary?.lastUpdated
     ? new Date(summary.lastUpdated).toLocaleString()
     : null;
@@ -535,6 +540,8 @@ export default function App() {
     return fields.some((value) => value.includes(normalizedQuery));
   };
   const filteredMemory = memory ? memory.filter(memoryMatchesQuery) : null;
+  const memoryMatchCount = filteredMemory ? filteredMemory.length : 0;
+  const hasSearch = normalizedQuery.length > 0;
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
@@ -624,6 +631,43 @@ export default function App() {
             >
               Product overview
             </a>
+          </div>
+          <div className="mx-auto max-w-xl w-full text-left">
+            <label className="text-xs font-medium text-muted-foreground">
+              Search the research memory
+            </label>
+            <div className="mt-2 flex flex-wrap gap-2 items-center">
+              <input
+                value={memoryQuery}
+                onChange={(event) => setMemoryQuery(event.target.value)}
+                placeholder="Search titles, topics, or URLs"
+                className="flex-1 min-w-[220px] rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => setMemoryQuery("")}
+                disabled={!hasSearch}
+              >
+                Clear
+              </Button>
+              <a href="#memory" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "text-xs")}>
+                View results
+              </a>
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="text-[10px] font-medium">
+                Scope: agent memory
+              </Badge>
+              {memory && (
+                <span>
+                  {hasSearch
+                    ? `${memoryMatchCount} match${memoryMatchCount === 1 ? "" : "es"}`
+                    : `${memory.length} items indexed`}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
             <Badge variant="secondary" className="text-[10px] font-medium">
@@ -1292,17 +1336,6 @@ export default function App() {
                 >
                   {showAllMemory ? "Show less" : "Show full list"}
                 </Button>
-              </div>
-              <div className="max-w-md">
-                <label className="text-[11px] font-medium text-muted-foreground">
-                  Search memory
-                </label>
-                <input
-                  value={memoryQuery}
-                  onChange={(event) => setMemoryQuery(event.target.value)}
-                  placeholder="Search titles, topics, or URLs"
-                  className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
               </div>
             </div>
           )}
