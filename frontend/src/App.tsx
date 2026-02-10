@@ -425,6 +425,7 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [expandedInsights, setExpandedInsights] = useState<Record<string, boolean>>({});
   const [showAllMemory, setShowAllMemory] = useState(false);
+  const [memoryQuery, setMemoryQuery] = useState("");
 
   const refreshData = useCallback(() => {
     setRefreshing(true);
@@ -525,6 +526,15 @@ export default function App() {
   const repurposeItems = repurposeSignals?.signals ?? [];
   const repurposeTotal = repurposeSignals?.total ?? repurposeItems.length;
   const memoryPreviewLimit = 6;
+  const normalizedQuery = memoryQuery.trim().toLowerCase();
+  const memoryMatchesQuery = (item: IngestedRow) => {
+    if (!normalizedQuery) return true;
+    const fields = [item.title, item.condition_or_topic, item.url]
+      .filter(Boolean)
+      .map((value) => String(value).toLowerCase());
+    return fields.some((value) => value.includes(normalizedQuery));
+  };
+  const filteredMemory = memory ? memory.filter(memoryMatchesQuery) : null;
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
@@ -1264,18 +1274,43 @@ export default function App() {
             {memoryOpen ? "Hide data" : "Show data"}
           </Button>
           {memoryOpen && (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <Badge variant="secondary" className="text-[10px] font-medium">
+                  Showing {showAllMemory ? "all" : `${memoryPreviewLimit} per category`}
+                </Badge>
+                {filteredMemory ? (
+                  <Badge variant="secondary" className="text-[10px] font-medium">
+                    Matches: {filteredMemory.length}
+                  </Badge>
+                ) : null}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => setShowAllMemory((prev) => !prev)}
+                >
+                  {showAllMemory ? "Show less" : "Show full list"}
+                </Button>
+              </div>
+              <div className="max-w-md">
+                <label className="text-[11px] font-medium text-muted-foreground">
+                  Search memory
+                </label>
+                <input
+                  value={memoryQuery}
+                  onChange={(event) => setMemoryQuery(event.target.value)}
+                  placeholder="Search titles, topics, or URLs"
+                  className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+            </div>
+          )}
+          {memoryOpen && (
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <Badge variant="secondary" className="text-[10px] font-medium">
-                Showing {showAllMemory ? "all" : `${memoryPreviewLimit} per category`}
+                Tip: filter results to the most relevant items.
               </Badge>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => setShowAllMemory((prev) => !prev)}
-              >
-                {showAllMemory ? "Show less" : "Show full list"}
-              </Button>
             </div>
           )}
           {memoryOpen && (
@@ -1286,10 +1321,10 @@ export default function App() {
               <CardContent className="p-4">
                 {memoryLoading ? (
                   <p className="text-sm text-muted-foreground">Loading…</p>
-                ) : memory && memory.length > 0 ? (
+                ) : filteredMemory && filteredMemory.length > 0 ? (
                   <div className="space-y-6">
                     {DATA_ORDER.map((type) => {
-                      const items = memory.filter((r) => r.data_type === type);
+                      const items = filteredMemory.filter((r) => r.data_type === type);
                       if (items.length === 0) return null;
                       const visibleItems = showAllMemory
                         ? items
@@ -1338,7 +1373,9 @@ export default function App() {
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    No data yet. Run ingest and push.
+                    {normalizedQuery
+                      ? "No matches found. Try a different keyword."
+                      : "No data yet. Run ingest and push."}
                   </p>
                 )}
               </CardContent>
