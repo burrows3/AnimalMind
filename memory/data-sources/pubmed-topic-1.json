@@ -1,17 +1,17 @@
 {
   "topic": "Decoding Animal Pain and Distress",
   "baseQuery": "(\"pain assessment\" OR \"pain behavior\" OR \"pain score\" OR distress OR nociception)",
-  "query": "((\"pain assessment\" OR \"pain behavior\" OR \"pain score\" OR distress OR nociception)) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
-  "fallback": null,
-  "count": "242363",
+  "query": "((\"pain assessment\" OR \"pain behavior\" OR \"pain score\" OR distress OR nociception)) OR (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": "broadened",
+  "count": "28861351",
   "idlist": [
-    "41665893",
-    "41665518",
-    "41665208",
-    "41665080",
-    "41664649",
-    "41664437",
-    "41663278",
-    "41663176"
+    "41669918",
+    "41669911",
+    "41669909",
+    "41669887",
+    "41669883",
+    "41669881",
+    "41669868",
+    "41669866"
   ]
 }

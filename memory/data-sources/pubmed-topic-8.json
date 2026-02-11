@@ -1,17 +1,17 @@
 {
   "topic": "Silent or Masked Disease and Distress",
   "baseQuery": "(\"subclinical\" OR masked OR \"silent disease\" OR occult OR stoic)",
-  "query": "one health animal",
-  "fallback": "global-fallback",
-  "count": "15",
+  "query": "(Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": "domain-only",
+  "count": "28813564",
   "idlist": [
-    "41666236",
-    "41666211",
-    "41666179",
-    "41666178",
-    "41666162",
-    "41666138",
-    "41666027",
-    "41665704"
+    "41669918",
+    "41669911",
+    "41669909",
+    "41669887",
+    "41669883",
+    "41669881",
+    "41669868",
+    "41669866"
   ]
 }

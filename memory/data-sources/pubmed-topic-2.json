@@ -1,17 +1,17 @@
 {
   "topic": "Preclinical Disease States",
   "baseQuery": "(\"preclinical\" OR subclinical OR \"early disease\")",
-  "query": "((\"preclinical\" OR subclinical OR \"early disease\")) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
-  "fallback": null,
-  "count": "281181",
+  "query": "one health animal",
+  "fallback": "global-fallback",
+  "count": "15",
   "idlist": [
-    "41666187",
-    "41665976",
-    "41665938",
-    "41665712",
-    "41665222",
-    "41664891",
-    "41664733",
-    "41664724"
+    "41669836",
+    "41669693",
+    "41669588",
+    "41669095",
+    "41668857",
+    "41668732",
+    "41668637",
+    "41668282"
   ]
 }
