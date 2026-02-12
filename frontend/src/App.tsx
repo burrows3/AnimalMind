@@ -218,11 +218,11 @@ export default function App() {
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
-      {/* ——— Landing: AnimalMind hero, two pathways (Pro / Pet) ——— */}
+      {/* ——— Landing: WSJ-style editorial, hero image, two distinct editions ——— */}
       {view === "" && (
         <>
           <header className="border-b border-border bg-card">
-            <div className="mx-auto max-w-3xl px-4 py-4 flex justify-center">
+            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <button
                 type="button"
                 onClick={() => navigate("")}
@@ -231,44 +231,97 @@ export default function App() {
                 <AnimalMindLogo className="size-8 text-foreground shrink-0" />
                 <span className="text-xl font-semibold tracking-tight">AnimalMind</span>
               </button>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+                Autonomous AI News · Animal Health
+              </p>
             </div>
           </header>
-          <main className="flex-1 mx-auto w-full max-w-2xl px-4 py-16 sm:py-24">
-            <h1 className="text-2xl sm:text-3xl font-semibold text-foreground text-center mb-2 tracking-tight">
-              AnimalMind
-            </h1>
-            <p className="text-center text-lg text-muted-foreground mb-3">
-              Autonomous AI for Animal Health.
-            </p>
-            <p className="text-center text-sm text-muted-foreground mb-12 max-w-md mx-auto">
-              Continuous intelligence for veterinary professionals.<br />
-              Research-backed guidance for pet owners.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 sm:py-12">
+            {/* Hero: editorial image + headline */}
+            <section className="mb-10 sm:mb-14">
+              <div className="rounded-none overflow-hidden border border-border bg-card shadow-sm">
+                <div className="relative aspect-[16/9] sm:aspect-[21/9] min-h-[200px]">
+                  <img
+                    src="https://images.unsplash.com/photo-1576086213369-97a306d36557?w=1200&q=85"
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    fetchPriority="high"
+                  />
+                  <div className="absolute inset-0 bg-foreground/40" />
+                  <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10">
+                    <p className="text-xs uppercase tracking-[0.2em] text-white/90 font-semibold mb-2">
+                      Intelligence for animal health
+                    </p>
+                    <h1 className="text-2xl sm:text-4xl md:text-[2.75rem] font-semibold text-white leading-tight max-w-2xl tracking-tight">
+                      Autonomous AI news and research. Two editions, one engine.
+                    </h1>
+                  </div>
+                </div>
+              </div>
+              <p className="mt-4 text-sm text-muted-foreground max-w-2xl">
+                AI agents run continuously on surveillance, literature, and clinical sources. We deliver a daily brief for professionals and research-backed guidance for pet owners.
+              </p>
+            </section>
+
+            {/* Two editions: distinct cards with pictures */}
+            <p className="section-label mb-4">Our editions</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
               <button
                 type="button"
                 onClick={() => navigate("clinical")}
-                className="flex flex-col rounded-lg border-2 border-border bg-card p-6 text-left min-h-[44px] hover:border-foreground/30 hover:bg-muted/30 transition-colors"
+                className="group text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
               >
-                <span className="text-sm font-medium text-muted-foreground mb-1">For Clinical & Research</span>
-                <span className="font-semibold text-foreground text-lg">AnimalMind Pro</span>
-                <span className="mt-3 text-sm text-muted-foreground">Autonomous research intelligence. Daily veterinary brief.</span>
-                <span className="mt-4 text-sm font-medium text-foreground">→</span>
+                <div className="aspect-[16/10] overflow-hidden bg-muted/30">
+                  <img
+                    src="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&q=85"
+                    alt=""
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                  />
+                </div>
+                <div className="p-5 sm:p-6 border-t border-border">
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Clinical & Research</p>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pro</h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Daily autonomous veterinary intelligence brief. Outbreak signals, new research, drug updates—for veterinarians, researchers, and institutions.
+                  </p>
+                  <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
+                    Enter Pro
+                    <span className="inline-block group-hover:translate-x-1 transition-transform">→</span>
+                  </p>
+                </div>
               </button>
               <button
                 type="button"
                 onClick={() => navigate("consumer")}
-                className="flex flex-col rounded-lg border-2 border-border bg-card p-6 text-left min-h-[44px] hover:border-foreground/30 hover:bg-muted/30 transition-colors"
+                className="group text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
               >
-                <span className="text-sm font-medium text-muted-foreground mb-1">For Pet Owners</span>
-                <span className="font-semibold text-foreground text-lg">AnimalMind Pet</span>
-                <span className="mt-3 text-sm text-muted-foreground">Research-backed guidance. Powered by Pro infrastructure.</span>
-                <span className="mt-4 text-sm font-medium text-foreground">→</span>
+                <div className="aspect-[16/10] overflow-hidden bg-muted/30">
+                  <img
+                    src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=85"
+                    alt=""
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                  />
+                </div>
+                <div className="p-5 sm:p-6 border-t border-border">
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Pet Owners</p>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pet</h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Research-backed guidance in plain language. Same intelligence as Pro—when to watch, when to see a vet, what the evidence says.
+                  </p>
+                  <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
+                    Enter Pet
+                    <span className="inline-block group-hover:translate-x-1 transition-transform">→</span>
+                  </p>
+                </div>
               </button>
             </div>
+
+            <p className="mt-10 pt-8 border-t border-border text-center text-xs text-muted-foreground max-w-xl mx-auto">
+              AI infrastructure for animal health. Evidence from public sources. Not medical advice.
+            </p>
           </main>
           <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
-            <p>AI infrastructure for animal health. Evidence from public sources.</p>
+            <p>AnimalMind · Autonomous AI News · Animal Health</p>
           </footer>
         </>
       )}
