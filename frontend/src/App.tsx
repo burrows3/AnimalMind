@@ -24,6 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { submitWaitlist, isSupabaseConfigured } from "./waitlist";
 
 const DATA_ORDER = [
   "surveillance",
@@ -55,94 +56,6 @@ const TRACK_ITEMS: { key: string; title: string; desc: string; tag: string }[] =
   { key: "vet_practice", title: "Vet practice", desc: "AAHA, AVMA, VIN, Merck", tag: "Guidelines" },
 ];
 
-const CLINICAL_TOPICS = [
-  {
-    title: "Early Detection of Disease Across Species",
-    desc: "Identifying weak, preclinical signals that precede diagnosable disease in companion animals, livestock, wildlife, and sentinel species.",
-  },
-  {
-    title: "Decoding Animal Pain and Distress",
-    desc: "Interpreting pain, discomfort, and stress using behavior, physiology, imaging, and emerging biomarkers—especially in stoic species.",
-  },
-  {
-    title: "Preclinical Disease States",
-    desc: "Tracking subtle biological and behavioral changes that occur before disease becomes clinically apparent.",
-  },
-  {
-    title: "Unexplained Recovery and Resilience",
-    desc: "Studying cases where animals recover faster or more completely than expected to identify protective factors or care patterns.",
-  },
-  {
-    title: "Microbiome–Behavior–Health Coupling",
-    desc: "Understanding how microbial communities influence immunity, pain, appetite, cognition, and disease progression.",
-  },
-  {
-    title: "Biological Timing and Treatment Response",
-    desc: "Exploring how timing (beyond circadian rhythms) affects anesthesia, vaccination, healing, and therapeutic outcomes.",
-  },
-  {
-    title: "Non-Linear Dose and Response Effects",
-    desc: "Identifying threshold and paradoxical responses where small interventions produce large effects—or none at all.",
-  },
-  {
-    title: "Emergent Effects of Complex Care Pathways",
-    desc: "Analyzing how combinations of diagnostics, treatments, environment, and handling influence outcomes beyond any single intervention.",
-  },
-  {
-    title: "Silent or Masked Disease and Distress",
-    desc: "Investigating conditions where symptoms are actively hidden by evolution, limiting detection even with advanced monitoring.",
-  },
-  {
-    title: "Unintended Consequences of Standard Care",
-    desc: "Tracking long-term or population-level effects of widely accepted veterinary practices that were never fully evaluated.",
-  },
-];
-
-const RESEARCH_TOPICS = [
-  {
-    title: "Unknown Biological Signals",
-    desc: "Uncharacterized molecules, rhythms, or physiological signals that correlate with health or disease but lack clear explanation.",
-  },
-  {
-    title: "Latent Protective Mechanisms",
-    desc: "Natural disease resistance, pain tolerance, or longevity traits observed in certain species, breeds, or individuals.",
-  },
-  {
-    title: "Pain Modulation Beyond Analgesics",
-    desc: "Non-drug biological or neurological mechanisms that suppress pain or distress without traditional analgesia.",
-  },
-  {
-    title: "Hidden Costs of Normal Physiology",
-    desc: "Biological processes (stress, inflammation, metabolism) that cause cumulative damage despite being evolutionarily necessary.",
-  },
-  {
-    title: "Environmental Exposure and Sentinel Signals",
-    desc: "Animal responses to toxins, climate stressors, and ecological change that precede human health impacts.",
-  },
-  {
-    title: "Species-Specific Health Advantages",
-    desc: "Evolutionary adaptations that outperform current medical solutions, such as hypoxia tolerance or infection resistance.",
-  },
-  {
-    title: "Comparative Physiology at Extremes",
-    desc: "How animals survive extreme environments and what this reveals about biological limits and resilience.",
-  },
-  {
-    title: "Genetic Intervention and Biological Integrity",
-    desc: "Health implications of gene editing, selective breeding, and biologic modification.",
-  },
-  {
-    title: "Developmental Programming and Lifelong Health",
-    desc: "How early-life exposures shape disease risk, resilience, and aging across an animal's lifespan.",
-  },
-  {
-    title: "Unexpected Correlations and Anomalies",
-    desc: "Reproducible patterns that do not fit existing biological models but may point to new mechanisms or therapies.",
-  },
-];
-
-const ALL_TOPICS = [...CLINICAL_TOPICS, ...RESEARCH_TOPICS];
-
 const DATA_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   surveillance: Globe,
   literature: BookOpen,
@@ -165,216 +78,11 @@ type IngestedRow = {
   url?: string;
 };
 
-type ReasoningSection = {
-  lastRun?: string | null;
-  reasoning?: string | null;
-};
-
-type AgentReasoning = {
-  updatedAt?: string | null;
-  surveillance?: ReasoningSection;
-  literature?: ReasoningSection;
-  synthesis?: ReasoningSection;
-};
-
-type TopicSummaryItem = {
-  topic: string;
-  count: number;
-};
-
-type TopicSummaryTotals = {
-  topicCount?: number;
-  topicsWithItems?: number;
-  totalItems?: number;
-};
-
-type TopicSummary = {
-  updatedAt?: string | null;
-  topics?: TopicSummaryItem[];
-  totals?: TopicSummaryTotals;
-};
-
-type RepurposeSignalSummary = {
-  signal_id: string;
-  compound: string;
-  proposed_species: string[];
-  proposed_condition: string;
-  confidence_score: number;
-  risk_overall?: number | null;
-  summary_hypothesis?: string;
-  executive_summary?: string[];
-  disclaimer?: string;
-};
-
-type RepurposeSignalIndex = {
-  run_id?: string;
-  updated_at?: string;
-  total?: number;
-  signals?: RepurposeSignalSummary[];
-};
-
 function safeHref(url: string | undefined): string {
   if (!url || typeof url !== "string") return "#";
   const u = String(url).trim();
   if (u.startsWith("http://") || u.startsWith("https://")) return u;
   return "#";
-}
-
-function formatMaybeDate(value?: string | null): string | null {
-  if (!value) return null;
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) return value;
-  return new Date(parsed).toLocaleString();
-}
-
-/** Decode common HTML entities in agent text so they display correctly. */
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
-}
-
-function stripInlineMarkup(text: string): string {
-  return text
-    .replace(/<[^>]+>/g, "")
-    .replace(/\*\*\*/g, "")
-    .replace(/\*\*/g, "")
-    .replace(/__+/g, "")
-    .replace(/`+/g, "")
-    .replace(/~~/g, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
-
-function buildInsightPreview(text: string, maxLines = 4): string {
-  if (!text) return "";
-  const decoded = decodeHtmlEntities(text);
-  const lines = decoded
-    .split(/\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .filter((line) => !line.startsWith("#"));
-  const bulletLines = lines.filter((line) => /^[-*•]\s+/.test(line));
-  const chosen = (bulletLines.length ? bulletLines : lines).slice(0, maxLines);
-  return chosen.join("\n");
-}
-
-function extractConditionsFromSynthesis(text: string | null | undefined, limit = 5): string[] {
-  if (!text) return [];
-  const decoded = decodeHtmlEntities(text);
-  const lines = decoded.split(/\r?\n/).map((line) => line.trim());
-  const startIndex = lines.findIndex((line) => /conditions to watch/i.test(line));
-  if (startIndex === -1) return [];
-  const items: string[] = [];
-  for (let i = startIndex + 1; i < lines.length; i += 1) {
-    const line = lines[i];
-    if (!line) {
-      if (items.length > 0) break;
-      continue;
-    }
-    if (line.startsWith("###") || /^\*\*Opportunity/i.test(line)) break;
-    if (/^[-•]\s+/.test(line)) {
-      const cleaned = stripInlineMarkup(line.replace(/^[-•]\s+/, ""));
-      if (cleaned) items.push(cleaned);
-    } else if (items.length > 0) {
-      break;
-    }
-    if (items.length >= limit) break;
-  }
-  return items;
-}
-
-function extractSynthesisHighlights(text: string | null | undefined, limit = 2): string[] {
-  if (!text) return [];
-  const decoded = decodeHtmlEntities(text);
-  const lines = decoded
-    .split(/\r?\n/)
-    .map((line) => stripInlineMarkup(line))
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const matches = lines.filter((line) =>
-    /opportunity|partnership|research gap|collaboration|synthesize/i.test(line)
-  );
-  const cleaned = matches
-    .map((line) => line.replace(/^[-•]\s+/, ""))
-    .filter(Boolean);
-  return cleaned.slice(0, limit);
-}
-
-/** Render a line with **bold** as React nodes. */
-function renderBoldLine(line: string) {
-  const sanitized = line.replace(/<[^>]+>/g, "");
-  const parts = sanitized.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, k) =>
-    /^\*\*[^*]+\*\*$/.test(part) ? (
-      <strong key={k} className="font-medium text-foreground">
-        {stripInlineMarkup(part.slice(2, -2))}
-      </strong>
-    ) : (
-      stripInlineMarkup(part)
-    )
-  );
-}
-
-/** Render insight block with simple markdown: paragraphs, **bold**, ### subheadings, bullets. */
-function InsightContent({ text, className }: { text: string; className?: string }) {
-  const decoded = decodeHtmlEntities(text);
-  const blocks = decoded.split(/\n\n+/).filter(Boolean);
-  return (
-    <div className={cn("space-y-3 text-sm leading-relaxed", className)}>
-      {blocks.map((block, i) => {
-        const trimmed = block.trim();
-        if (!trimmed) return null;
-        const lines = trimmed.split(/\n/);
-        const firstLine = lines[0] ?? "";
-        const isH3 = /^###\s+/.test(firstLine);
-        const allBullets = lines.every(
-          (l) => /^[•\-]\s+/.test(l.trim()) || /^\*\s+/.test(l.trim())
-        );
-        if (isH3) {
-          const heading = firstLine.replace(/^###\s+/, "").trim();
-          const rest = lines.slice(1).join("\n").trim();
-          return (
-            <div key={i}>
-              <h4 className="font-semibold text-foreground mt-4 mb-1.5 first:mt-0 text-xs uppercase tracking-wide text-muted-foreground">
-                {renderBoldLine(heading)}
-              </h4>
-              {rest ? (
-                <div className="text-muted-foreground space-y-1">
-                  {rest.split(/\n/).map((line, j) => (
-                    <p key={j}>{renderBoldLine(line)}</p>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          );
-        }
-        if (allBullets && lines.length > 0) {
-          return (
-            <ul key={i} className="list-disc list-inside space-y-1 text-muted-foreground">
-              {lines.map((line, j) => {
-                const content = line.replace(/^[•\-*\s]+/, "").trim();
-                return <li key={j}>{renderBoldLine(content)}</li>;
-              })}
-            </ul>
-          );
-        }
-        return (
-          <p key={i} className="text-muted-foreground">
-            {lines.map((line, j) => (
-              <span key={j}>
-                {renderBoldLine(line)}
-                {j < lines.length - 1 && <br />}
-              </span>
-            ))}
-          </p>
-        );
-      })}
-    </div>
-  );
 }
 
 /** Animal Mind logo: animal head (profile) + mind dot. Same as favicon. */
@@ -400,8 +108,6 @@ const base = typeof document !== "undefined" ? "" : "";
 async function fetchDashboard(): Promise<{
   summary: DataSummary | null;
   ingested: IngestedRow[] | null;
-  reasoning: AgentReasoning | null;
-  topicSummary: TopicSummary | null;
 }> {
   try {
     const r = await fetch(`${base}/api/dashboard`, { cache: "no-store" });
@@ -410,660 +116,336 @@ async function fetchDashboard(): Promise<{
       return {
         summary: data.summary ?? null,
         ingested: Array.isArray(data.ingested) ? data.ingested : null,
-        reasoning: data.reasoning ?? null,
-        topicSummary: data.topicSummary ?? null,
       };
     }
   } catch {
     // e.g. GitHub Pages: no API
   }
-  const [summaryRes, ingestedRes, reasoningRes, topicRes] = await Promise.all([
+  const [summaryRes, ingestedRes] = await Promise.all([
     fetch(`${base}/data-summary.json`, { cache: "no-store" }),
     fetch(`${base}/data/ingested.json`, { cache: "no-store" }),
-    fetch(`${base}/agent-reasoning.json`, { cache: "no-store" }),
-    fetch(`${base}/topic-summary.json`, { cache: "no-store" }),
   ]);
   const summary = summaryRes.ok ? await summaryRes.json() : null;
-  const ingestedData = ingestedRes.ok ? await ingestedRes.json() : null;
-  const ingested = Array.isArray(ingestedData) ? ingestedData : null;
-  const reasoningData = reasoningRes.ok ? await reasoningRes.json() : null;
-  const reasoning = reasoningData && typeof reasoningData === "object"
-    ? reasoningData
+  const ingested = ingestedRes.ok && Array.isArray(await ingestedRes.json())
+    ? await ingestedRes.json()
     : null;
-  const topicData = topicRes.ok ? await topicRes.json() : null;
-  const topicSummary = topicData && typeof topicData === "object"
-    ? topicData
-    : null;
-  return { summary, ingested, reasoning, topicSummary };
-}
-
-async function fetchRepurposeSignals(): Promise<RepurposeSignalIndex | null> {
-  try {
-    const api = await fetch(`${base}/api/repurpose/signals`, { cache: "no-store" });
-    if (api.ok) {
-      return await api.json();
-    }
-  } catch {
-    // fall back to static docs
-  }
-  try {
-    const staticRes = await fetch(`${base}/repurpose/signals.json`, { cache: "no-store" });
-    if (staticRes.ok) return await staticRes.json();
-  } catch {
-    // ignore
-  }
-  return null;
+  return { summary, ingested };
 }
 
 export default function App() {
   const [summary, setSummary] = useState<DataSummary | null>(null);
   const [memory, setMemory] = useState<IngestedRow[] | null>(null);
-  const [reasoning, setReasoning] = useState<AgentReasoning | null>(null);
-  const [topicSummary, setTopicSummary] = useState<TopicSummary | null>(null);
-  const [repurposeSignals, setRepurposeSignals] = useState<RepurposeSignalIndex | null>(null);
-  const [memoryOpen, setMemoryOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [expandedInsights, setExpandedInsights] = useState<Record<string, boolean>>({});
-  const [showAllMemory, setShowAllMemory] = useState(false);
-  const [memoryQuery, setMemoryQuery] = useState("");
-  const [shareLabel, setShareLabel] = useState("Share");
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [waitlistError, setWaitlistError] = useState("");
+  const [proCtaExpanded, setProCtaExpanded] = useState(false);
 
-  const refreshData = useCallback(() => {
+  const hashToView = (h: string) => (h === "consumer" || h === "clinical" ? h : "");
+  const [view, setView] = useState<"" | "consumer" | "clinical">(() =>
+    hashToView(typeof window !== "undefined" ? window.location.hash.slice(1) : "")
+  );
+
+  useEffect(() => {
+    const onHash = () => setView(hashToView(window.location.hash.slice(1)));
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  const navigate = (v: "" | "consumer" | "clinical") => {
+    window.location.hash = v;
+    setView(v);
+  };
+
+  const loadData = useCallback(() => {
     setRefreshing(true);
     fetchDashboard()
-      .then(({ summary: s, ingested: i, reasoning: r, topicSummary: t }) => {
+      .then(({ summary: s, ingested: i }) => {
         setSummary(s);
         setMemory(i);
-        setReasoning(r);
-        setTopicSummary(t);
       })
-      .catch(() => {})
       .finally(() => setRefreshing(false));
-    fetchRepurposeSignals().then(setRepurposeSignals).catch(() => {});
   }, []);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     fetchDashboard()
-      .then(({ summary: s, ingested: i, reasoning: r, topicSummary: t }) => {
+      .then(({ summary: s, ingested: i }) => {
         if (!cancelled) {
           setSummary(s);
           setMemory(i);
-          setReasoning(r);
-          setTopicSummary(t);
         }
       })
       .catch(() => {})
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    fetchRepurposeSignals()
-      .then((data) => {
-        if (!cancelled) setRepurposeSignals(data);
-      })
-      .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, []);
 
+  // Load ingested list if dashboard didn't include it (e.g. API returned summary only)
   useEffect(() => {
-    if (!memoryOpen) return;
-    if (memory !== null) return; // already have from dashboard
+    if (memory !== null) return;
     setMemoryLoading(true);
     fetch(`${base}/data/ingested.json`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        setMemory(Array.isArray(data) ? data : null);
-      })
+      .then((data) => setMemory(Array.isArray(data) ? data : null))
       .catch(() => setMemory(null))
       .finally(() => setMemoryLoading(false));
-  }, [memoryOpen, memory]);
-
-  useEffect(() => {
-    if (memoryQuery.trim().length === 0) return;
-    if (!memoryOpen) setMemoryOpen(true);
-  }, [memoryQuery, memoryOpen]);
-
-  const handleShare = useCallback(async () => {
-    const url =
-      typeof window !== "undefined" && window.location
-        ? window.location.href
-        : "https://animalmind.co/";
-    const title = "AnimalMind Daily Brief";
-    const text = "AnimalMind — daily brief and research signals";
-    try {
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({ title, text, url });
-        return;
-      }
-      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-        setShareLabel("Copied");
-        setTimeout(() => setShareLabel("Share"), 1600);
-        return;
-      }
-      const temp = document.createElement("textarea");
-      temp.value = url;
-      document.body.appendChild(temp);
-      temp.select();
-      document.execCommand("copy");
-      document.body.removeChild(temp);
-      setShareLabel("Copied");
-      setTimeout(() => setShareLabel("Share"), 1600);
-    } catch {
-      setShareLabel("Copy failed");
-      setTimeout(() => setShareLabel("Share"), 1600);
-    }
-  }, []);
+  }, [memory]);
 
   const lastUpdated = summary?.lastUpdated
     ? new Date(summary.lastUpdated).toLocaleString()
     : null;
-  const reasoningUpdated = formatMaybeDate(reasoning?.updatedAt ?? null);
-  const reasoningCards = [
-    {
-      key: "surveillance",
-      title: "Surveillance reasoning",
-      text: reasoning?.surveillance?.reasoning ?? null,
-      lastRun: formatMaybeDate(reasoning?.surveillance?.lastRun ?? null),
-    },
-    {
-      key: "literature",
-      title: "Literature reasoning",
-      text: reasoning?.literature?.reasoning ?? null,
-      lastRun: formatMaybeDate(reasoning?.literature?.lastRun ?? null),
-    },
-    {
-      key: "synthesis",
-      title: "Opportunities synthesis",
-      text: reasoning?.synthesis?.reasoning ?? null,
-      lastRun: formatMaybeDate(reasoning?.synthesis?.lastRun ?? null),
-    },
-  ];
-  const hasReasoning = reasoningCards.some((item) => Boolean(item.text));
-  const visibleReasoningCards = reasoningCards.filter((item) => item.text);
-  const topicUpdated = formatMaybeDate(topicSummary?.updatedAt ?? null);
-  const topicTotals = topicSummary?.totals ?? {};
-  const topicCounts = new Map(
-    (topicSummary?.topics ?? []).map((item) => [item.topic, item.count]),
-  );
-  const summaryCounts = summary?.counts ?? {};
-  const totalSignals = Object.values(summaryCounts).reduce((sum, value) => sum + (value || 0), 0);
-  const reportHasSurveillance = Boolean(reasoning?.surveillance?.reasoning);
-  const reportHasLiterature = Boolean(reasoning?.literature?.reasoning);
-  const reportHasSynthesis = Boolean(reasoning?.synthesis?.reasoning);
-  const reportStatus = reportHasSurveillance || reportHasLiterature || reportHasSynthesis
-    ? reportHasSurveillance && reportHasLiterature && reportHasSynthesis
-      ? "Complete"
-      : "Partial"
-    : "Pending";
-  const reportStatusDetail = formatMaybeDate(reasoning?.updatedAt ?? null);
-  const repurposeUpdated = formatMaybeDate(repurposeSignals?.updated_at ?? null);
-  const repurposeItems = repurposeSignals?.signals ?? [];
-  const repurposeTotal = repurposeSignals?.total ?? repurposeItems.length;
-  const memoryPreviewLimit = 6;
-  const normalizedQuery = memoryQuery.trim().toLowerCase();
-  const memoryMatchesQuery = (item: IngestedRow) => {
-    if (!normalizedQuery) return true;
-    const fields = [item.title, item.condition_or_topic, item.url]
-      .filter(Boolean)
-      .map((value) => String(value).toLowerCase());
-    return fields.some((value) => value.includes(normalizedQuery));
-  };
-  const filteredMemory = memory ? memory.filter(memoryMatchesQuery) : null;
-  const memoryMatchCount = filteredMemory ? filteredMemory.length : 0;
-  const hasSearch = normalizedQuery.length > 0;
-  const topTopics = (topicSummary?.topics ?? [])
-    .slice()
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 4);
-  const watchlist = extractConditionsFromSynthesis(reasoning?.synthesis?.reasoning ?? null, 5);
-  const synthesisHighlights = extractSynthesisHighlights(reasoning?.synthesis?.reasoning ?? null, 2);
-  const surveillanceCounts = new Map<string, number>();
-  (memory ?? []).forEach((item) => {
-    if (item.data_type !== "surveillance") return;
-    const key = item.condition_or_topic || "Other";
-    surveillanceCounts.set(key, (surveillanceCounts.get(key) || 0) + 1);
-  });
-  const topSurveillance = Array.from(surveillanceCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([name]) => name);
-  const emergingDiseases = watchlist.length ? watchlist : topSurveillance;
+
+  const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
-      {/* Nav */}
-      <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
-        <nav className="mx-auto max-w-5xl px-4 py-3 sm:px-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <a href="#" className="flex items-center gap-2 font-semibold text-foreground tracking-tight text-base sm:text-lg">
-            <AnimalMindLogo className="size-8 text-primary" />
-            <span className="hidden sm:inline">
-              <span className="text-muted-foreground font-medium text-sm">Animal Mind</span>
-              <span className="mx-1.5 text-border">/</span>
-            </span>
-            <span className="sm:hidden">AnimalMind</span>
-            <span className="hidden sm:inline">Animal Research Network</span>
-          </a>
-          <div className="flex w-full flex-wrap items-center gap-2 text-xs sm:text-sm sm:w-auto">
-            <a
-              href="#overview"
-              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Overview
-            </a>
-            <a
-              href="#audience"
-              className="hidden sm:inline text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Audience
-            </a>
-            <a
-              href="#topics"
-              className="hidden sm:inline text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Topics
-            </a>
-            <a
-              href="#daily-brief"
-              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Brief
-            </a>
-            <a
-              href="#data"
-              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Data
-            </a>
-            <a
-              href="#repurpose"
-              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Repurpose
-            </a>
-            <a
-              href="#track"
-              className="hidden sm:inline text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Sources
-            </a>
-            <Badge variant="secondary" className="hidden sm:inline-flex text-[10px] font-medium rounded-full px-2.5">
-              Free access
-            </Badge>
-          </div>
-        </nav>
-      </header>
-
-      <main className="flex-1 mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 relative z-[1]">
-        {/* Hero */}
-        <section className="text-center space-y-6 pb-12">
-          <Badge
-            variant="secondary"
-            className="rounded-full px-3 py-1 text-xs font-medium gap-1.5"
-          >
-            <Shield className="size-3.5" aria-hidden />
-            Autonomous · Free · Read-only
-          </Badge>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
-            Autonomous research intelligence for animal health
-          </h1>
-          <p className="text-lg text-foreground max-w-2xl mx-auto font-medium leading-relaxed">
-            A free platform built on public sources that ingests global signals and
-            synthesizes evidence for research leaders, biotech teams, and investors.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="#data"
-              className={cn(buttonVariants({ size: "lg" }), "rounded-lg shadow-sm")}
-            >
-              See live signals
-            </a>
-            <a
-              href="#overview"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-lg")}
-            >
-              Product overview
-            </a>
-            <Button
-              variant="outline"
-              size="lg"
-              className="rounded-lg"
-              onClick={handleShare}
-            >
-              {shareLabel}
-            </Button>
-          </div>
-          <div className="mx-auto max-w-xl w-full text-left">
-            <label className="text-xs font-medium text-muted-foreground">
-              Search the research memory
-            </label>
-            <div className="mt-2 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-              <input
-                value={memoryQuery}
-                onChange={(event) => setMemoryQuery(event.target.value)}
-                placeholder="Search titles, topics, or URLs"
-                className="w-full flex-1 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs w-full sm:w-auto"
-                onClick={() => setMemoryQuery("")}
-                disabled={!hasSearch}
+      {/* ——— Landing: animal-focused, two paths ——— */}
+      {view === "" && (
+        <>
+          <header className="border-b border-border bg-card">
+            <div className="mx-auto max-w-2xl px-4 py-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => navigate("")}
+                className="flex items-center gap-2 font-editorial text-foreground no-underline min-h-[44px]"
               >
-                Clear
-              </Button>
-              <a
-                href="#memory"
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  "text-xs w-full sm:w-auto text-center"
-                )}
-              >
-                View results
-              </a>
+                <AnimalMindLogo className="size-8 text-primary shrink-0" />
+                <span className="text-xl font-semibold tracking-tight">For Animals</span>
+              </button>
             </div>
-            <div className="mt-2 text-xs text-muted-foreground flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="text-[10px] font-medium">
-                Scope: agent memory
-              </Badge>
-              {memory && (
-                <span>
-                  {hasSearch
-                    ? `${memoryMatchCount} match${memoryMatchCount === 1 ? "" : "es"}`
-                    : `${memory.length} items indexed`}
+          </header>
+          <main className="flex-1 mx-auto w-full max-w-2xl px-4 py-12 sm:py-16">
+            <h1 className="font-editorial text-2xl sm:text-3xl font-semibold text-foreground text-center mb-2">
+              For Animals
+            </h1>
+            <p className="text-center text-muted-foreground text-sm mb-10">
+              Pet owners or vet & clinical. Choose your path.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("consumer")}
+                className="flex flex-col rounded-xl border-2 border-border bg-card p-6 sm:p-8 shadow-sm hover:border-primary/30 hover:shadow-md transition-all text-left min-h-[44px]"
+              >
+                <span className="inline-flex items-center justify-center rounded-full bg-primary/10 w-12 h-12 mb-4">
+                  <Heart className="size-6 text-primary" aria-hidden />
                 </span>
-              )}
+                <h2 className="font-editorial text-lg font-semibold text-foreground mb-1">Pet owners</h2>
+                <p className="text-sm text-muted-foreground">Resources for people who care for companion animals.</p>
+                <span className="mt-4 text-sm text-primary font-medium">Enter →</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("clinical")}
+                className="flex flex-col rounded-xl border-2 border-primary/30 bg-card p-6 sm:p-8 shadow-sm hover:border-primary/50 hover:shadow-md transition-all text-left min-h-[44px]"
+              >
+                <span className="inline-flex items-center justify-center rounded-full bg-primary/10 w-12 h-12 mb-4">
+                  <Stethoscope className="size-6 text-primary" aria-hidden />
+                </span>
+                <h2 className="font-editorial text-lg font-semibold text-foreground mb-1">Clinical</h2>
+                <p className="text-sm text-muted-foreground">Vet, clinical & research. Animal Research Network.</p>
+                <span className="mt-4 text-sm text-primary font-medium">Enter →</span>
+              </button>
             </div>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="secondary" className="text-[10px] font-medium">
-              Updated every 12 hours
-            </Badge>
-            <Badge variant="secondary" className="text-[10px] font-medium">
-              Evidence linked
-            </Badge>
-            <Badge variant="secondary" className="text-[10px] font-medium">
-              Free access
-            </Badge>
-          </div>
-        </section>
+          </main>
+          <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
+            <p>Animal-focused. Evidence from public sources.</p>
+          </footer>
+        </>
+      )}
 
-        {/* Animal Health Daily Brief */}
-        <section
-          id="daily-brief"
-          aria-labelledby="daily-brief-heading"
-          className="pb-12 space-y-6"
-        >
-          <div>
-            <h2 id="daily-brief-heading" className="text-lg font-semibold text-foreground mb-2">
-              Animal Health Daily Brief
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              A concise, research-first brief built from the latest ingest and synthesis.
+      {/* ——— Consumer: Pet owners page ——— */}
+      {view === "consumer" && (
+        <>
+          <header className="sticky top-0 z-10 border-b border-border bg-card">
+            <nav className="mx-auto max-w-4xl px-4 py-3 flex justify-between items-center">
+              <button
+                type="button"
+                onClick={() => navigate("")}
+                className="flex items-center gap-2 font-editorial text-foreground min-h-[44px]"
+              >
+                <AnimalMindLogo className="size-7 text-primary shrink-0" />
+                <span className="text-base font-semibold">For Animals</span>
+              </button>
+              <span className="text-sm text-muted-foreground font-medium">Pet owners</span>
+            </nav>
+          </header>
+          <main className="flex-1 mx-auto w-full max-w-2xl px-4 py-10">
+            <h1 className="font-editorial text-xl sm:text-2xl font-semibold text-foreground mb-4">
+              Pet owners
+            </h1>
+            <p className="text-muted-foreground mb-6">
+              We’re building resources for pet owners with data that runs autonomously—animal health and care, in plain language. Coming soon.
             </p>
-          </div>
-          <Card className="border border-border bg-card/95 shadow-sm">
-            <CardContent className="p-6 space-y-4">
-              <div className="space-y-2">
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">1) What Changed</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {lastUpdated
-                      ? `Ingest refreshed ${lastUpdated}. Surveillance ${summaryCounts.surveillance ?? 0}, literature ${summaryCounts.literature ?? 0}, clinical ${summaryCounts.clinical ?? 0}.`
-                      : "Awaiting the next ingest. Current counts will appear after the next run."}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Why it matters: keeps guidance and evidence current.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">2) Safety Signals</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {emergingDiseases.length
-                      ? `Emerging diseases to watch: ${emergingDiseases.slice(0, 4).join(", ")}.`
-                      : "Monitoring surveillance feeds for emerging conditions."}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">3) Trending Topics</h3>
-                  {topTopics.length ? (
-                    <p className="text-sm text-muted-foreground">
-                      {topTopics.map((topic) => topic.topic).join(" · ")}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Topic trends will appear after the next ingest.
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">4) Evidence Watch</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {synthesisHighlights.length
-                      ? `Innovative opportunities: ${synthesisHighlights.join(" · ")}.`
-                      : "No automated evidence shifts flagged. See Key insights for synthesis."}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">5) Clinical Takeaway</h3>
-                  {watchlist.length ? (
-                    <p className="text-sm text-muted-foreground">
-                      Keep an eye on: {watchlist.slice(0, 3).join(", ")}.
-                    </p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Monitor surveillance and clinical updates in the data feed.
-                    </p>
-                  )}
-                </div>
+            <p className="text-sm text-muted-foreground">
+              <button type="button" onClick={() => navigate("")} className="text-primary hover:underline">
+                ← Back to For Animals
+              </button>
+            </p>
+          </main>
+          <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
+            <p>For Animals · Pet owners</p>
+          </footer>
+        </>
+      )}
+
+      {/* ——— Clinical: Animal Research Network (vet, clinical, research) ——— */}
+      {view === "clinical" && (
+        <>
+          <header className="sticky top-0 z-10 border-b-2 border-primary/20 bg-card shadow-sm">
+            <nav className="mx-auto max-w-4xl px-4 py-3 sm:px-6 flex flex-wrap justify-between items-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate("")}
+                className="flex items-center gap-2 font-editorial text-foreground min-h-[44px] py-1 text-left"
+              >
+                <AnimalMindLogo className="size-7 sm:size-8 text-primary shrink-0" />
+                <span className="text-base sm:text-xl font-semibold tracking-tight">Animal Research Network</span>
+              </button>
+              <div className="flex flex-wrap items-center gap-0.5 sm:gap-2 text-sm">
+                <a href="#data" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Digest</a>
+                <a href="#pro-cta" className="px-2.5 py-2 rounded-md text-primary font-medium hover:bg-primary/10 min-h-[44px] flex items-center">Pro</a>
+                <a href="#mission" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Mission</a>
+                <a href="#topics" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Topics</a>
+                <a href="#track" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Sources</a>
+                <a href="#waitlist" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Newsletter</a>
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="secondary" className="text-[10px] font-medium">
-                  Report status: {reportStatus}
-                </Badge>
-                {reportStatusDetail && (
-                  <span className="text-xs text-muted-foreground">
-                    Latest report {reportStatusDetail}
+            </nav>
+            <div className="mx-auto max-w-4xl px-4 pb-2 sm:px-6 flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-0.5 text-xs text-muted-foreground">
+              <span className="truncate">Vet, clinical & research. Evidence from public sources.</span>
+              <span className="shrink-0">{editionDate}</span>
+            </div>
+          </header>
+
+          <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
+            {/* Pro CTA */}
+        <section
+          id="pro-cta"
+          aria-labelledby="pro-cta-heading"
+          className="mb-8 sm:mb-10 rounded-xl border-2 border-primary/20 bg-linear-to-b from-primary/5 to-transparent shadow-sm overflow-hidden"
+        >
+          <div className="p-4 sm:p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
+              <div className="space-y-2 sm:space-y-3 max-w-xl min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center rounded-md bg-primary/10 p-1.5 shrink-0">
+                    <Sparkles className="size-4 text-primary" aria-hidden />
                   </span>
+                  <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md">
+                    Pro
+                  </Badge>
+                </div>
+                <h2 id="pro-cta-heading" className="font-editorial text-lg sm:text-xl md:text-2xl font-semibold text-foreground leading-tight">
+                  Pro animal health insights
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  AI agents run autonomously—surveillance, literature, and clinical sources—so your digest stays current. Weekly insights when Pro launches.
+                </p>
+              </div>
+              <div className="shrink-0 w-full sm:w-auto">
+                {waitlistStatus === "success" ? (
+                  <p className="text-sm text-primary font-medium py-2">You’re on the list! We’ll notify you when Pro insights are ready.</p>
+                ) : proCtaExpanded ? (
+                  <form
+                    className="flex flex-col sm:flex-row gap-2"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const email = waitlistEmail.trim();
+                      if (!email) return;
+                      setWaitlistStatus("loading");
+                      setWaitlistError("");
+                      const result = await submitWaitlist(email);
+                      if (result.ok) {
+                        setWaitlistStatus("success");
+                        setWaitlistEmail("");
+                      } else if (result.error === "MAILTO") {
+                        window.location.href = `mailto:pro@animalmind.co?subject=Pro%20early%20access&body=${encodeURIComponent(`Please add me for early access.\nEmail: ${email}`)}`;
+                        setWaitlistStatus("success");
+                        setWaitlistEmail("");
+                      } else {
+                        setWaitlistStatus("error");
+                        setWaitlistError(result.error || "Something went wrong.");
+                      }
+                    }}
+                  >
+                    <input
+                      type="email"
+                      placeholder="Your email"
+                      value={waitlistEmail}
+                      onChange={(e) => setWaitlistEmail(e.target.value)}
+                      disabled={waitlistStatus === "loading"}
+                      className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
+                      aria-label="Email"
+                    />
+                    <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
+                      {waitlistStatus === "loading" ? "…" : "Notify me"}
+                    </Button>
+                  </form>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto rounded-md font-medium border-primary/30 bg-background min-h-[44px]"
+                    onClick={() => setProCtaExpanded(true)}
+                  >
+                    Get early access
+                  </Button>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Overview */}
-        <section
-          id="overview"
-          aria-labelledby="overview-heading"
-          className="pb-12 space-y-6"
-        >
-          <h2 id="overview-heading" className="text-lg font-semibold text-foreground">
-            Product overview
-          </h2>
-          <Card className="shadow-sm border-border bg-card/95">
-            <CardContent className="p-6 sm:p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-xl border border-border bg-muted/40 p-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">
-                    What it is
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    A free research engine that continuously ingests surveillance,
-                    literature, clinical, and imaging signals for animal health.
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border bg-muted/40 p-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">
-                    What it delivers
-                  </h3>
-                  <ul className="text-sm text-muted-foreground leading-relaxed list-disc pl-4 space-y-1">
-                    <li>Ranked signals by topic and domain</li>
-                    <li>Agent reasoning and synthesis outputs</li>
-                    <li>Report status with timestamps</li>
-                    <li>Exportable JSON for analysis workflows</li>
-                  </ul>
-                </div>
-                <div className="rounded-xl border border-border bg-muted/40 p-4">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">
-                    How it works
-                  </h3>
-                  <ol className="text-sm text-muted-foreground leading-relaxed list-decimal pl-4 space-y-1">
-                    <li>Ingest global sources every 12 hours</li>
-                    <li>Agents reason over new data</li>
-                    <li>Synthesize opportunities and risks</li>
-                    <li>Publish read-only updates</li>
-                  </ol>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                This is a free, read-only research surface built on public sources under
-                fair use. The UI links to original evidence and does not expose
-                credentials or PII.
-              </p>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Quick view */}
-        <section
-          id="quick-view"
-          aria-labelledby="quick-view-heading"
-          className="pb-12 space-y-6"
-        >
-          <div>
-            <h2 id="quick-view-heading" className="text-lg font-semibold text-foreground mb-2">
-              Quick view
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              A lightweight summary for fast scanning. Open details only when you need them.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="border border-border bg-card/95 shadow-sm">
-              <CardContent className="p-4 space-y-2">
-                <CardTitle className="text-sm font-semibold">Signals</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  {lastUpdated ? `Updated ${lastUpdated}.` : "Awaiting first ingest."}
-                </p>
-                <div className="text-2xl font-semibold text-foreground">
-                  {totalSignals || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">Total items across all sources.</p>
-              </CardContent>
-            </Card>
-            <Card className="border border-border bg-card/95 shadow-sm">
-              <CardContent className="p-4 space-y-2">
-                <CardTitle className="text-sm font-semibold">Topic coverage</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  {topicUpdated ? `Updated ${topicUpdated}.` : "Topic summary pending."}
-                </p>
-                <div className="text-2xl font-semibold text-foreground">
-                  {(topicTotals.topicsWithItems ?? 0)}/{topicTotals.topicCount ?? 0}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {topicTotals.totalItems ?? 0} total topic-linked items.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border border-border bg-card/95 shadow-sm">
-              <CardContent className="p-4 space-y-2">
-                <CardTitle className="text-sm font-semibold">Repurpose signals</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  {repurposeUpdated ? `Updated ${repurposeUpdated}.` : "No signals yet."}
-                </p>
-                <div className="text-2xl font-semibold text-foreground">
-                  {repurposeTotal || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">Research-only hypotheses.</p>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="secondary" className="text-[10px] font-medium">
-              Report status: {reportStatus}
-            </Badge>
-            {reportStatusDetail && (
-              <span className="text-xs text-muted-foreground">
-                Latest report {reportStatusDetail}
-              </span>
+            </div>
+            {waitlistStatus === "error" && waitlistError && (
+              <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
             )}
+            <p className="mt-4 pt-4 border-t border-border/80 text-xs text-muted-foreground">
+              Powered by autonomous agents. Evidence from public sources only; not medical advice.
+            </p>
           </div>
         </section>
 
-        {/* Audience */}
-        <section
-          id="audience"
-          aria-labelledby="audience-heading"
-          className="pb-12 space-y-6"
-        >
-          <div>
-            <h2 id="audience-heading" className="text-lg font-semibold text-foreground mb-2">
-              Who it is for
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              Built for research teams and decision-makers who need a continuously updated
-              view of animal health evidence and opportunity. Free to access and open to
-              anyone.
+        {/* Lead */}
+        <section className="pb-8 border-b border-border">
+          <p className="section-label mb-1">Editorial</p>
+          <h1 className="font-editorial text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
+            Animal health research and practice, in one place
+          </h1>
+          <p className="text-muted-foreground leading-relaxed max-w-2xl">
+            Autonomous agents aggregate CDC travel notices, PubMed literature, veterinary oncology, case reports, clinical and imaging sources, and guidelines. This digest is read-only; no credentials or PII are used.
+          </p>
+          <a href="#data" className={cn(buttonVariants({ size: "sm" }), "mt-4 rounded-md")}>
+            View today’s digest
+          </a>
+        </section>
+
+        {/* Mission */}
+        <section id="mission" aria-labelledby="mission-heading" className="pb-10">
+          <h2 id="mission-heading" className="section-label mb-3">Mission</h2>
+          <div className="space-y-6 text-muted-foreground leading-relaxed">
+            <p>
+              We exist to improve animal health. By bringing surveillance, literature, clinical, and vet practice resources into one research network, we help veterinarians, researchers, and one-health teams make better decisions—from outbreak awareness to oncology, imaging, and guidelines.
             </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              {
-                title: "Academia",
-                desc: "Track emerging topics, prioritize grant ideas, and spot research gaps.",
-              },
-              {
-                title: "Biotech & Pharma",
-                desc: "Monitor translational signals, comparative oncology, and new targets.",
-              },
-              {
-                title: "Investors & M&A",
-                desc: "Surface momentum shifts, evidence clusters, and potential assets.",
-              },
-              {
-                title: "Public health & conservation",
-                desc: "Coordinate early signals and cross-species risk awareness.",
-              },
-            ].map((item) => (
-              <Card key={item.title} className="border border-border bg-card/95 shadow-sm">
-                <CardContent className="p-4">
-                  <CardTitle className="text-sm font-semibold mb-1.5">
-                    {item.title}
-                  </CardTitle>
-                  <CardDescription className="text-xs leading-relaxed">
-                    {item.desc}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            ))}
+            <p>
+              Autonomous agents run on a schedule with curated sources: PubMed (one health, veterinary oncology, case reports, clinical, small animal, equine), CDC travel notices, TCIA imaging, and curated links (AAHA, AVMA, Merck, etc.). This site is read-only. We’re building toward topic-driven investigation over time.
+            </p>
+            <p>
+              For clinicians checking travel notices or differentials; researchers scanning literature and case data; educators and students building on current evidence.
+            </p>
           </div>
         </section>
 
-        {/* Autonomous-Agent Topics: Clinical-Adjacent + Research & Discovery */}
-        <section
-          id="topics"
-          aria-labelledby="topics-heading"
-          className="pb-12 space-y-8"
-        >
-          <div>
-            <h2
-              id="topics-heading"
-              className="text-lg font-semibold text-foreground mb-2"
-            >
-              Autonomous-Agent Topics
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              Clinical-adjacent topics inform veterinary care today. Research topics explore biology, mechanisms, and long-term discovery.
-              Topic queries are scoped to animal, veterinary, and animal health sources with automatic backfill when signals are sparse.
-            </p>
-          </div>
-
+        {/* Topics */}
+        <section id="topics" aria-labelledby="topics-heading" className="pb-10">
+          <h2 id="topics-heading" className="section-label mb-3">Autonomous-Agent Topics</h2>
+          <p className="text-sm text-muted-foreground max-w-2xl mb-6">
+            Clinical-adjacent topics inform veterinary care today. Research topics explore biology, mechanisms, and long-term discovery.
+          </p>
           <div className="space-y-6">
             <div>
               <h3 className="text-base font-semibold text-foreground mb-1">
@@ -1073,7 +455,18 @@ export default function App() {
                 Topics that directly inform veterinary decision-making, interpretation, and care—without replacing clinical judgment.
               </p>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 list-none">
-                {CLINICAL_TOPICS.map((item, i) => (
+                {[
+                  { title: "Early Detection of Disease Across Species", desc: "Identifying weak, preclinical signals that precede diagnosable disease in companion animals, livestock, wildlife, and sentinel species." },
+                  { title: "Decoding Animal Pain and Distress", desc: "Interpreting pain, discomfort, and stress using behavior, physiology, imaging, and emerging biomarkers—especially in stoic species." },
+                  { title: "Preclinical Disease States", desc: "Tracking subtle biological and behavioral changes that occur before disease becomes clinically apparent." },
+                  { title: "Unexplained Recovery and Resilience", desc: "Studying cases where animals recover faster or more completely than expected to identify protective factors or care patterns." },
+                  { title: "Microbiome–Behavior–Health Coupling", desc: "Understanding how microbial communities influence immunity, pain, appetite, cognition, and disease progression." },
+                  { title: "Biological Timing and Treatment Response", desc: "Exploring how timing (beyond circadian rhythms) affects anesthesia, vaccination, healing, and therapeutic outcomes." },
+                  { title: "Non-Linear Dose and Response Effects", desc: "Identifying threshold and paradoxical responses where small interventions produce large effects—or none at all." },
+                  { title: "Emergent Effects of Complex Care Pathways", desc: "Analyzing how combinations of diagnostics, treatments, environment, and handling influence outcomes beyond any single intervention." },
+                  { title: "Silent or Masked Disease and Distress", desc: "Investigating conditions where symptoms are actively hidden by evolution, limiting detection even with advanced monitoring." },
+                  { title: "Unintended Consequences of Standard Care", desc: "Tracking long-term or population-level effects of widely accepted veterinary practices that were never fully evaluated." },
+                ].map((item, i) => (
                   <li key={i}>
                     <Card className="border border-border bg-card/95 shadow-sm h-full">
                       <CardContent className="p-4">
@@ -1098,7 +491,18 @@ export default function App() {
                 Topics where mechanisms are unclear, outcomes are surprising, and long-term autonomous exploration may lead to new biology, tools, or therapies.
               </p>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 list-none">
-                {RESEARCH_TOPICS.map((item, i) => (
+                {[
+                  { title: "Unknown Biological Signals", desc: "Uncharacterized molecules, rhythms, or physiological signals that correlate with health or disease but lack clear explanation." },
+                  { title: "Latent Protective Mechanisms", desc: "Natural disease resistance, pain tolerance, or longevity traits observed in certain species, breeds, or individuals." },
+                  { title: "Pain Modulation Beyond Analgesics", desc: "Non-drug biological or neurological mechanisms that suppress pain or distress without traditional analgesia." },
+                  { title: "Hidden Costs of Normal Physiology", desc: "Biological processes (stress, inflammation, metabolism) that cause cumulative damage despite being evolutionarily necessary." },
+                  { title: "Environmental Exposure and Sentinel Signals", desc: "Animal responses to toxins, climate stressors, and ecological change that precede human health impacts." },
+                  { title: "Species-Specific Health Advantages", desc: "Evolutionary adaptations that outperform current medical solutions, such as hypoxia tolerance or infection resistance." },
+                  { title: "Comparative Physiology at Extremes", desc: "How animals survive extreme environments and what this reveals about biological limits and resilience." },
+                  { title: "Genetic Intervention and Biological Integrity", desc: "Health implications of gene editing, selective breeding, and biologic modification." },
+                  { title: "Developmental Programming and Lifelong Health", desc: "How early-life exposures shape disease risk, resilience, and aging across an animal's lifespan." },
+                  { title: "Unexpected Correlations and Anomalies", desc: "Reproducible patterns that do not fit existing biological models but may point to new mechanisms or therapies." },
+                ].map((item, i) => (
                   <li key={i}>
                     <Card className="border border-border bg-card/95 shadow-sm h-full">
                       <CardContent className="p-4">
@@ -1117,216 +521,53 @@ export default function App() {
           </div>
         </section>
 
-        {/* Topic summary + report status */}
-        <section
-          id="topic-summary"
-          aria-labelledby="topic-summary-heading"
-          className="pb-12 space-y-4"
-        >
-          <h2 id="topic-summary-heading" className="text-lg font-semibold text-foreground">
-            Topic summary
+        {/* Today's digest + Topics side by side */}
+        <section id="data" aria-labelledby="data-heading" className="pb-10">
+          <h2 id="data-heading" className="section-label mb-2 flex items-center gap-2">
+            <BarChart3 className="size-4" aria-hidden />
+            Today’s digest
           </h2>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            Summary by autonomous-agent topic after each ingest. Topics are filtered to animal and veterinary domains and
-            auto-expanded to prevent empty coverage.
-            {topicUpdated ? ` Updated ${topicUpdated}.` : ""}
-          </p>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            <Badge variant="secondary" className="text-[10px] font-medium">
-              Report status: {reportStatus}
-            </Badge>
-            {reportStatusDetail && (
-              <span className="text-xs text-muted-foreground">
-                Last report update {reportStatusDetail}
-              </span>
-            )}
-            {topicTotals.topicCount !== undefined && (
-              <Badge variant="secondary" className="text-[10px] font-medium">
-                Topics with data: {topicTotals.topicsWithItems ?? 0}/{topicTotals.topicCount ?? 0}
-              </Badge>
-            )}
-            {topicTotals.totalItems !== undefined && (
-              <Badge variant="secondary" className="text-[10px] font-medium">
-                Total items: {topicTotals.totalItems ?? 0}
-              </Badge>
-            )}
-          </div>
-          <Card className="shadow-sm border-border">
-            <CardContent className="p-6">
-              {loading ? (
-                <p className="text-sm text-muted-foreground">Loading topic summary...</p>
-              ) : topicSummary?.topics?.length ? (
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 list-none">
-                  {ALL_TOPICS.map((item) => {
-                    const count = topicCounts.get(item.title) ?? 0;
-                    return (
-                      <li key={item.title}>
-                        <Card className="border border-border bg-card/95 shadow-sm h-full">
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between gap-2">
-                              <CardTitle className="text-sm font-semibold">
-                                {item.title}
-                              </CardTitle>
-                              <Badge variant="secondary" className="text-[10px] font-medium shrink-0">
-                                {count}
-                              </Badge>
-                            </div>
-                            <CardDescription className="text-xs leading-relaxed mt-1.5">
-                              {item.desc}
-                            </CardDescription>
-                          </CardContent>
-                        </Card>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Topic summary appears after the next ingest and push.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </section>
+          <p className="text-xs text-muted-foreground mb-4">Latest from autonomous ingest. Data from public sources only.</p>
 
-        {/* Repurpose signals */}
-        <section
-          id="repurpose"
-          aria-labelledby="repurpose-heading"
-          className="pb-12 space-y-4"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 id="repurpose-heading" className="text-lg font-semibold text-foreground">
-                Veterinary drug repurpose signals
-              </h2>
-              <p className="text-sm text-muted-foreground max-w-2xl">
-                Research hypotheses only. No dosing guidance. Evidence is linked to public
-                sources and summarized for research triage.
-                {repurposeUpdated ? ` Updated ${repurposeUpdated}.` : ""}
-              </p>
-            </div>
-            <Badge variant="secondary" className="text-[10px] font-medium">
-              Research only
-            </Badge>
-          </div>
-          <Card className="shadow-sm border-border">
-            <CardContent className="p-6">
-              {loading ? (
-                <p className="text-sm text-muted-foreground">Loading repurpose signals...</p>
-              ) : repurposeItems.length ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {repurposeItems.slice(0, 6).map((signal) => (
-                    <Card key={signal.signal_id} className="border border-border bg-card/95 shadow-sm">
-                      <CardHeader className="p-4 pb-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <CardTitle className="text-sm font-semibold">
-                            {signal.compound}
-                          </CardTitle>
-                          <Badge variant="secondary" className="text-[10px] font-medium">
-                            {signal.confidence_score ?? 0} / 100
-                          </Badge>
-                        </div>
-                        <CardDescription className="text-xs">
-                          {signal.proposed_condition} · {signal.proposed_species?.join(", ") || "Multi-species"}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="p-4 pt-0 space-y-3">
-                        {signal.executive_summary?.length ? (
-                          <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
-                            {signal.executive_summary.slice(0, 3).map((line, idx) => (
-                              <li key={idx}>{line}</li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-xs text-muted-foreground">
-                            Executive summary pending. Run the repurpose engine to populate.
-                          </p>
-                        )}
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
-                          <Badge variant="secondary" className="text-[10px] font-medium">
-                            Risk {signal.risk_overall ?? "—"}
-                          </Badge>
-                          <a
-                            href={`/repurpose/signals/${signal.signal_id}.json`}
-                            className="text-primary hover:underline"
-                          >
-                            View JSON
-                          </a>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No repurpose signals yet. Run <code>npm run repurpose</code> to generate
-                  the first batch.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Two-column: Live data + What the agents track */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-          {/* Live data */}
-          <section
-            id="data"
-            aria-labelledby="data-heading"
-            className="lg:col-span-7 space-y-4"
-          >
-            <h2
-              id="data-heading"
-              className="flex items-center gap-2 text-lg font-semibold text-foreground"
-            >
-              <BarChart3 className="size-5 text-primary" aria-hidden />
-              Live data (from autonomous ingest)
-            </h2>
-            <Card className="shadow-sm border-border">
-              <CardContent className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+            {/* Left: Today's digest — counts + summary */}
+            <Card className="shadow-sm border-border border-l-4 border-l-primary/30 h-fit">
+              <CardContent className="p-4 sm:p-6">
                 {loading ? (
                   <p className="text-sm text-muted-foreground">Loading…</p>
                 ) : summary?.counts ? (
                   <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {DATA_ORDER.map((key) => {
                         const Icon = DATA_ICONS[key];
                         return (
                           <div
                             key={key}
-                            className="rounded-xl border border-border bg-muted/40 p-4 text-center transition-colors hover:bg-muted/70 hover:border-primary/20 shadow-sm"
+                            className="rounded-lg border border-border bg-muted/40 p-3 text-center"
                           >
-                            {Icon && (
-                              <Icon className="size-5 text-primary mx-auto mb-2 block" aria-hidden />
-                            )}
-                            <span className="block text-2xl font-bold text-foreground">
-                              {summary.counts[key] ?? 0}
-                            </span>
-                            <span className="mt-1 block text-xs text-muted-foreground">
-                              {LABELS[key] ?? key}
-                            </span>
+                            {Icon && <Icon className="size-4 text-primary mx-auto mb-1 block" aria-hidden />}
+                            <span className="block text-xl font-bold text-foreground">{summary.counts[key] ?? 0}</span>
+                            <span className="block text-[11px] text-muted-foreground">{LABELS[key] ?? key}</span>
                           </div>
                         );
                       })}
                     </div>
-                    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                    <p className="mt-4 text-sm text-muted-foreground">
+                      {(() => {
+                        const total = Object.values(summary.counts).reduce((a, b) => a + b, 0);
+                        return `${total} items across surveillance, literature, clinical, and more. Links open original sources (CDC, PubMed, etc.).`;
+                      })()}
+                    </p>
+                    <div className="mt-4 pt-3 border-t border-border flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
                       {lastUpdated && (
                         <span className="flex items-center gap-2">
                           <Clock className="size-4" aria-hidden />
-                          Data as of {lastUpdated}
+                          As of {lastUpdated}
                         </span>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        disabled={refreshing}
-                        onClick={refreshData}
-                        aria-label="Refresh data"
-                      >
+                      <Button variant="outline" size="sm" className="gap-2 rounded-md" disabled={refreshing} onClick={loadData} aria-label="Refresh data">
                         <RefreshCw className={cn("size-4", refreshing && "animate-spin")} aria-hidden />
-                        {refreshing ? "Refreshing…" : "Refresh data"}
+                        {refreshing ? "Refreshing…" : "Refresh"}
                       </Button>
                     </div>
                   </>
@@ -1337,259 +578,51 @@ export default function App() {
                 )}
               </CardContent>
             </Card>
-          </section>
 
-          {/* What the agents track */}
-          <section
-            id="track"
-            aria-labelledby="track-heading"
-            className="lg:col-span-5 space-y-4"
-          >
-            <h2
-              id="track-heading"
-              className="text-lg font-semibold text-foreground"
-            >
-              What the agents track
-            </h2>
-            <div className="space-y-3">
-              {TRACK_ITEMS.map((item) => (
-                <Card
-                  key={item.key}
-                  className="border border-border bg-card shadow-sm transition-shadow hover:shadow"
-                >
-                  <CardHeader className="p-4 pb-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-sm font-semibold">
-                        {item.title}
-                      </CardTitle>
-                      <Badge variant="secondary" className="text-[10px] font-medium shrink-0">
-                        {item.tag}
-                      </Badge>
-                    </div>
-                    <CardDescription className="text-xs">
-                      {item.desc}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        {/* Key insights — research insights by autonomous agents */}
-        <section
-          id="insights"
-          aria-labelledby="insights-heading"
-          className="mt-16 space-y-5"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-            <div>
-              <h2
-                id="insights-heading"
-                className="text-xl font-semibold text-foreground tracking-tight flex items-center gap-2"
-              >
-                <Sparkles className="size-5 text-primary shrink-0" aria-hidden />
-                Key insights
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Research insights by autonomous agents.
-                {reasoningUpdated ? (
-                  <span className="ml-1">Updated {reasoningUpdated}.</span>
-                ) : null}
-              </p>
-            </div>
-            <span
-              className="text-[11px] text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-md shrink-0 w-fit"
-              aria-label="Usage notice"
-            >
-              For personal use only. Do not copy or redistribute in bulk.
-            </span>
-          </div>
-          <Card className="overflow-hidden border-border bg-card shadow-md rounded-xl">
-            <CardContent className="p-0">
-              {loading ? (
-                <div className="p-8 text-center">
-                  <p className="text-sm text-muted-foreground">Loading insights…</p>
-                </div>
-              ) : hasReasoning ? (
-                <div
-                  className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border select-none"
-                  style={{ userSelect: "none" }}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  {visibleReasoningCards.map((card) => {
-                    const Icon =
-                      card.key === "surveillance"
-                        ? Globe
-                        : card.key === "literature"
-                          ? BookOpen
-                          : Sparkles;
-                    const isExpanded = expandedInsights[card.key] ?? false;
-                    const previewText = buildInsightPreview(card.text ?? "");
-                    return (
-                      <div
-                        key={card.key}
-                        className="flex flex-col min-h-0 bg-card hover:bg-muted/30 transition-colors"
-                      >
-                        <div className="p-4 pb-2 shrink-0 border-b border-border/60">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className="flex items-center justify-center size-8 rounded-lg bg-primary/10 shrink-0">
-                                <Icon className="size-4 text-primary" aria-hidden />
-                              </div>
-                              <CardTitle className="text-sm font-semibold text-foreground truncate">
-                                {card.title}
-                              </CardTitle>
-                            </div>
-                            {card.lastRun ? (
-                              <time
-                                className="text-[11px] text-muted-foreground shrink-0 tabular-nums"
-                                dateTime={card.lastRun}
-                              >
-                                {card.lastRun}
-                              </time>
-                            ) : null}
-                          </div>
-                        </div>
-                        <div className="flex-1 min-h-0 overflow-y-auto p-4 pt-3 max-h-[320px] overscroll-contain">
-                          <InsightContent text={isExpanded ? card.text : previewText} />
-                          {!isExpanded && previewText && previewText !== card.text ? (
-                            <p className="text-[11px] text-muted-foreground mt-2">
-                              Preview only.
-                            </p>
-                          ) : null}
-                        </div>
-                        <div className="px-4 pb-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs"
-                            onClick={() =>
-                              setExpandedInsights((prev) => ({
-                                ...prev,
-                                [card.key]: !isExpanded,
-                              }))
-                            }
-                          >
-                            {isExpanded ? "Show less" : "Show details"}
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="p-8 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Insights appear after the NVIDIA LLM runs. Set NVIDIA_API_KEY
-                    in the VM or GitHub Actions secrets and wait for the next ingest.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Browse data (agent memory) */}
-        <section
-          id="memory"
-          aria-labelledby="memory-heading"
-          className="mt-12 space-y-4"
-        >
-          <h2 id="memory-heading" className="text-lg font-semibold text-foreground">
-            Browse data (agent memory)
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Latest items from autonomous ingest. Links open the source (CDC,
-            PubMed, etc.).
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => setMemoryOpen((o) => !o)}
-            aria-expanded={memoryOpen}
-            aria-controls="memory-panel"
-            className="rounded-lg shadow-sm"
-          >
-            {memoryOpen ? "Hide data" : "Show data"}
-          </Button>
-          {memoryOpen && (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="secondary" className="text-[10px] font-medium">
-                  Showing {showAllMemory ? "all" : `${memoryPreviewLimit} per category`}
-                </Badge>
-                {filteredMemory ? (
-                  <Badge variant="secondary" className="text-[10px] font-medium">
-                    Matches: {filteredMemory.length}
-                  </Badge>
-                ) : null}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => setShowAllMemory((prev) => !prev)}
-                >
-                  {showAllMemory ? "Show less" : "Show full list"}
-                </Button>
-              </div>
-            </div>
-          )}
-          {memoryOpen && (
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="secondary" className="text-[10px] font-medium">
-                Tip: filter results to the most relevant items.
-              </Badge>
-            </div>
-          )}
-          {memoryOpen && (
-            <Card
-              id="memory-panel"
-              className="max-h-[70vh] overflow-y-auto shadow-sm border-border"
-            >
-              <CardContent className="p-4">
+            {/* Right: Topics — data by type */}
+            <Card id="memory-panel" className="shadow-sm border-border border-l-4 border-l-primary/20 max-h-[55vh] sm:max-h-[65vh] lg:max-h-[70vh] flex flex-col min-h-0">
+              <CardHeader className="p-3 sm:p-4 pb-2 border-b border-border shrink-0">
+                <CardTitle className="text-sm font-semibold">Topics</CardTitle>
+                <CardDescription className="text-xs">
+                  Items by source type. Click through to CDC, PubMed, and more.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0 flex-1 overflow-y-auto min-h-0 overscroll-contain">
                 {memoryLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading…</p>
-                ) : filteredMemory && filteredMemory.length > 0 ? (
-                  <div className="space-y-6">
+                  <div className="p-6">
+                    <p className="text-sm text-muted-foreground">Loading…</p>
+                  </div>
+                ) : memory && memory.length > 0 ? (
+                  <div className="divide-y divide-border">
                     {DATA_ORDER.map((type) => {
-                      const items = filteredMemory.filter((r) => r.data_type === type);
+                      const items = memory.filter((r) => r.data_type === type);
                       if (items.length === 0) return null;
-                      const visibleItems = showAllMemory
-                        ? items
-                        : items.slice(0, memoryPreviewLimit);
-                      const hasMore = items.length > visibleItems.length;
+                      const Icon = DATA_ICONS[type];
                       return (
-                        <div key={type}>
-                          <h3 className="text-sm font-semibold text-foreground mb-2">
-                            {LABELS[type] ?? type} ({items.length})
-                          </h3>
-                          {!showAllMemory && (
-                            <p className="text-xs text-muted-foreground mb-2">
-                              Showing {visibleItems.length} of {items.length}.
-                              {hasMore ? " Expand for more." : ""}
-                            </p>
-                          )}
+                        <div key={type} className="p-4 bg-muted/15 first:bg-transparent">
+                          <div className="flex items-center gap-2 mb-2">
+                            {Icon && <Icon className="size-4 text-primary shrink-0" aria-hidden />}
+                            <h3 className="text-sm font-semibold text-foreground">
+                              {LABELS[type] ?? type}
+                            </h3>
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              {items.length}
+                            </span>
+                          </div>
                           <ul className="list-none space-y-2">
-                            {visibleItems.map((item, i) => {
+                            {items.map((item, i) => {
                               const href = safeHref(item.url);
                               return (
-                                <li key={i} className="text-sm">
+                                <li key={i} className="text-sm py-1.5 px-2 rounded border border-border/50 bg-card hover:border-primary/20">
                                   {href !== "#" ? (
-                                    <a
-                                      href={href}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-primary hover:underline"
-                                    >
-                                      {item.title || item.condition_or_topic || "Untitled"}
+                                    <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline block">
+                                      {item.title || "Untitled"}
                                     </a>
                                   ) : (
-                                    <span>{item.title || item.condition_or_topic || "Untitled"}</span>
+                                    <span className="text-foreground">{item.title || "Untitled"}</span>
                                   )}
                                   {item.condition_or_topic && (
-                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                      {item.condition_or_topic}
-                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">{item.condition_or_topic}</div>
                                   )}
                                 </li>
                               );
@@ -1600,39 +633,105 @@ export default function App() {
                     })}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {normalizedQuery
-                      ? "No matches found. Try a different keyword."
-                      : "No data yet. Run ingest and push."}
-                  </p>
+                  <div className="p-6">
+                    <p className="text-sm text-muted-foreground">No data yet. Run ingest and push.</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
+          </div>
+
+          {/* Sources (what the agents track) — full width below */}
+          <section id="track" aria-labelledby="track-heading" className="mt-8 space-y-3">
+            <h2 id="track-heading" className="section-label mb-2">Sources</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {TRACK_ITEMS.map((item) => (
+                <Card key={item.key} className="border border-border bg-card shadow-sm">
+                  <CardHeader className="p-3 pb-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-sm font-semibold">{item.title}</CardTitle>
+                      <Badge variant="secondary" className="text-[10px] shrink-0">{item.tag}</Badge>
+                    </div>
+                    <CardDescription className="text-xs">{item.desc}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          </section>
+        </section>
+
+        {/* Newsletter / Waitlist — Supabase or mailto */}
+        <section id="waitlist" aria-labelledby="waitlist-heading" className="py-12 border-t border-border">
+          <h2 id="waitlist-heading" className="section-label mb-2">Newsletter</h2>
+          <p className="font-editorial text-lg font-semibold text-foreground mb-1">Stay updated</p>
+          <p className="text-sm text-muted-foreground mb-4 max-w-md">
+            Get notified when we add new digests, Pro reports, or major updates. No spam.
+          </p>
+          {waitlistStatus === "success" ? (
+            <p className="text-sm text-primary font-medium">You’re on the list! We’ll notify you when we have updates.</p>
+          ) : (
+            <form
+              className="flex flex-col sm:flex-row gap-2 max-w-md"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const email = waitlistEmail.trim();
+                if (!email) return;
+                setWaitlistStatus("loading");
+                setWaitlistError("");
+                const result = await submitWaitlist(email);
+                if (result.ok) {
+                  setWaitlistStatus("success");
+                  setWaitlistEmail("");
+                } else if (result.error === "MAILTO") {
+                  window.location.href = `mailto:pro@animalmind.co?subject=Newsletter%20sign-up&body=${encodeURIComponent(`Please add me to the newsletter.\nEmail: ${email}`)}`;
+                  setWaitlistStatus("success");
+                  setWaitlistEmail("");
+                } else {
+                  setWaitlistStatus("error");
+                  setWaitlistError(result.error || "Something went wrong.");
+                }
+              }}
+            >
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={waitlistEmail}
+                onChange={(e) => setWaitlistEmail(e.target.value)}
+                disabled={waitlistStatus === "loading"}
+                className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                aria-label="Email for newsletter"
+              />
+              <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
+                {waitlistStatus === "loading" ? "Signing up…" : "Sign up"}
+              </Button>
+            </form>
+          )}
+          {waitlistStatus === "error" && waitlistError && (
+            <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+          )}
+          {!isSupabaseConfigured() && waitlistStatus === "idle" && (
+            <p className="mt-2 text-xs text-muted-foreground">Or email pro@animalmind.co with subject “Newsletter sign-up”.</p>
           )}
         </section>
 
-        {/* Discover more */}
-        <div className="mt-16 flex justify-center">
-          <a
-            href="#memory"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Discover more
-            <ChevronDown className="size-4" aria-hidden />
+        <div className="pt-8 flex justify-center">
+          <a href="#data" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Back to digest
+            <ChevronDown className="size-4 rotate-180" aria-hidden />
           </a>
         </div>
-      </main>
+          </main>
 
-      <footer className="border-t border-border bg-card/80 mt-auto py-6 text-center text-sm text-muted-foreground relative z-[1]">
-        <p>
-          Research engine for veterinarians and partners. Data from public
-          sources only.
-        </p>
-        <p className="mt-1 flex items-center justify-center gap-1.5 text-emerald-700 text-xs font-medium">
-          <Heart className="size-3.5" aria-hidden />
-          No credentials, API keys, or PII are exposed in this UI.
-        </p>
-      </footer>
+          <footer className="border-t-2 border-primary/10 bg-card mt-auto py-8 text-center text-sm text-muted-foreground relative z-1">
+            <p className="font-editorial font-semibold text-foreground">Animal Research Network</p>
+            <p className="mt-1">Vet, clinical & research. Evidence from public sources only.</p>
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-primary/80 text-xs">
+              <Heart className="size-3.5" aria-hidden />
+              No credentials or PII collected.
+            </p>
+          </footer>
+        </>
+      )}
     </div>
   );
 }
