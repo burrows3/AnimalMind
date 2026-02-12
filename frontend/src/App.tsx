@@ -524,36 +524,39 @@ export default function App() {
               </div>
             </nav>
             <div className="mx-auto max-w-4xl px-4 pb-2 sm:px-6 flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-0.5 text-xs text-muted-foreground">
-              <span className="truncate">Autonomous research intelligence. Evidence from public sources.</span>
+              <span className="truncate">Rapid autonomous AI agent news · Animal health</span>
               <span className="shrink-0">{editionDate}</span>
             </div>
           </header>
 
           <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
-            {/* Pro CTA */}
+            {/* Pro CTA — newsletter hero with image */}
         <section
           id="pro-cta"
           aria-labelledby="pro-cta-heading"
           className="mb-8 sm:mb-10 rounded-lg border border-border bg-muted/30 overflow-hidden"
         >
-          <div className="p-4 sm:p-6 md:p-8">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
-              <div className="space-y-2 sm:space-y-3 max-w-xl min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center rounded-md bg-foreground/10 p-1.5 shrink-0">
-                    <Sparkles className="size-4 text-foreground" aria-hidden />
-                  </span>
-                  <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md text-muted-foreground border-0">
-                    AnimalMind Pro
-                  </Badge>
-                </div>
-                <h2 id="pro-cta-heading" className="text-lg sm:text-xl md:text-2xl font-semibold text-foreground leading-tight">
-                  Daily Autonomous Veterinary Intelligence Brief
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  AI agents run autonomously—surveillance, literature, and clinical sources—so your digest stays current. Weekly insights when Pro launches.
-                </p>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
+            <div className="lg:col-span-2 relative h-48 sm:h-56 lg:min-h-[240px] order-2 lg:order-1">
+              <img
+                src="https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80"
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+            <div className="lg:col-span-3 p-4 sm:p-6 flex flex-col justify-center order-1 lg:order-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md text-muted-foreground border-0">
+                  Newsletter
+                </Badge>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">AI agent–driven</span>
               </div>
+              <h2 id="pro-cta-heading" className="text-lg sm:text-xl font-semibold text-foreground leading-tight mb-2">
+                Daily Autonomous Veterinary Intelligence Brief
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                Autonomous AI agents monitor surveillance, literature, and clinical sources 24/7. This newsletter delivers a rapid, structured digest—outbreak signals, new research, drug updates—so you stay current on animal health.
+              </p>
               <div className="shrink-0 w-full sm:w-auto">
                 {waitlistStatus === "success" ? (
                   <p className="text-sm text-foreground font-medium py-2">You’re on the list. We’ll notify you when the daily brief launches.</p>
@@ -604,43 +607,59 @@ export default function App() {
                   </Button>
                 )}
               </div>
+              {waitlistStatus === "error" && waitlistError && (
+                <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+              )}
             </div>
-            {waitlistStatus === "error" && waitlistError && (
-              <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
-            )}
-            <p className="mt-4 pt-4 border-t border-border/80 text-xs text-muted-foreground">
-              AnimalMind Pro: autonomous research engine. Evidence from public sources only; not medical advice.
-            </p>
           </div>
+          <p className="px-4 sm:px-6 py-3 border-t border-border/80 text-xs text-muted-foreground">
+            AnimalMind Pro: autonomous research engine. Evidence from public sources only; not medical advice.
+          </p>
         </section>
 
-        {/* Lead */}
+        {/* Lead — newsletter edition with image */}
         <section className="pb-8 border-b border-border">
-          <p className="section-label mb-1">Intelligence</p>
+          <p className="section-label mb-1">This edition</p>
           <h1 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
-            Autonomous veterinary research, in one place
+            Rapid autonomous AI agent news for animal health
           </h1>
-          <p className="text-muted-foreground leading-relaxed max-w-2xl">
-            AnimalMind Pro aggregates CDC travel notices, PubMed literature, veterinary oncology, case reports, clinical and imaging sources, and guidelines. Continuous ingestion. This digest is read-only; no credentials or PII are used.
+          <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
+            AI agents ingest CDC travel notices, PubMed literature, veterinary oncology, case reports, clinical and imaging sources, and guidelines on a schedule. This digest is the live output—read-only; no credentials or PII.
           </p>
-          <a href="#data" className={cn(buttonVariants({ variant: "default", size: "sm" }), "mt-4 rounded-md")}>
+          <div className="rounded-lg overflow-hidden border border-border bg-muted/20 max-w-2xl mb-6">
+            <img
+              src="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=700&q=80"
+              alt=""
+              className="w-full h-44 object-cover"
+            />
+          </div>
+          <a href="#data" className={cn(buttonVariants({ variant: "default", size: "sm" }), "rounded-md")}>
             View today’s digest
           </a>
         </section>
 
-        {/* Mission */}
+        {/* Mission — how the newsletter works */}
         <section id="mission" aria-labelledby="mission-heading" className="pb-10">
-          <h2 id="mission-heading" className="section-label mb-3">Mission</h2>
-          <div className="space-y-6 text-muted-foreground leading-relaxed">
-            <p>
-              AnimalMind is an AI-first autonomous research lab for animal health. We build the research engine—continuous monitoring of veterinary literature, outbreak data, drug development signals, and clinical research—to generate structured intelligence for veterinarians, researchers, academia, pharma, and public health.
-            </p>
-            <p>
-              Pro runs on a schedule with curated sources: PubMed (one health, veterinary oncology, case reports, clinical, small animal, equine), CDC travel notices, TCIA imaging, and guidelines (AAHA, AVMA, Merck, etc.). This site is read-only. We publish daily AI-generated research briefs as the core output.
-            </p>
-            <p>
-              For clinicians, researchers, educators, and students. Infrastructure-level AI for animal health.
-            </p>
+          <h2 id="mission-heading" className="section-label mb-3">How the newsletter works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <div className="rounded-lg overflow-hidden border border-border bg-muted/20">
+              <img
+                src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&q=80"
+                alt=""
+                className="w-full h-48 object-cover"
+              />
+            </div>
+            <div className="space-y-4 text-muted-foreground leading-relaxed">
+              <p>
+                AnimalMind Pro is a rapid, AI agent–driven newsletter focused on animal health. Autonomous agents run on a schedule: they monitor veterinary literature, outbreak data, drug signals, and clinical research, then synthesize a daily brief.
+              </p>
+              <p>
+                Curated sources: PubMed (one health, oncology, case reports, clinical, small animal, equine), CDC travel notices, TCIA imaging, and guidelines (AAHA, AVMA, Merck, etc.). Read-only; we publish the digest as the core product.
+              </p>
+              <p>
+                For clinicians, researchers, educators, and students. Newsletter-style delivery; infrastructure-level AI.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -725,17 +744,17 @@ export default function App() {
           </div>
         </section>
 
-        {/* Today's digest + Topics side by side */}
+        {/* Today's digest + Topics — agent output */}
         <section id="data" aria-labelledby="data-heading" className="pb-10">
           <h2 id="data-heading" className="section-label mb-2 flex items-center gap-2">
             <BarChart3 className="size-4" aria-hidden />
             Today’s digest
           </h2>
-          <p className="text-xs text-muted-foreground mb-4">Latest from autonomous ingest. Data from public sources only.</p>
+          <p className="text-xs text-muted-foreground mb-4">Rapid autonomous ingest. Surveillance, literature, clinical—public sources only.</p>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Left: Today's digest — counts + summary */}
-            <Card className="shadow-sm border-border border-l-4 border-l-primary/30 h-fit">
+            <Card className="shadow-sm border-border border-l-4 border-l-foreground/20 h-fit">
               <CardContent className="p-4 sm:p-6">
                 {loading ? (
                   <p className="text-sm text-muted-foreground">Loading…</p>
