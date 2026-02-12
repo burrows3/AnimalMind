@@ -234,13 +234,15 @@ export default function App() {
             </div>
           </header>
           <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
-            {/* Mission */}
-            <p className="font-editorial text-center text-lg sm:text-xl text-foreground/90 mb-2">
-              Rapid insights from animal sources.
-            </p>
-            <p className="text-center text-muted-foreground text-sm sm:text-base mb-8">
-              In one place—for clinicians and pet owners.
-            </p>
+            {/* Mission — clear and prominent */}
+            <section className="rounded-2xl border border-primary/20 bg-primary/5 px-6 py-6 sm:px-8 sm:py-8 mb-8 text-center">
+              <p className="font-editorial text-xl sm:text-2xl font-semibold text-foreground mb-2">
+                Rapid insights from animal sources.
+              </p>
+              <p className="text-muted-foreground text-sm sm:text-base">
+                In one place—for clinicians and pet owners.
+              </p>
+            </section>
 
             {/* Hero image */}
             <div className="rounded-2xl overflow-hidden border border-border shadow-sm mb-10 bg-muted/30">
