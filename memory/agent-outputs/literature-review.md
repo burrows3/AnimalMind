@@ -1,8 +1,8 @@
 # Literature reviewer
 
 **Agent:** Literature reviewer (autonomous)
-**Last run:** 2026-02-12T15:24:35.540Z
-**Data as of:** 2026-02-12T15:19:55.977Z
+**Last run:** 2026-02-12T16:50:59.185Z
+**Data as of:** 2026-02-12T16:50:59.028Z
 
 ---
 
@@ -10,7 +10,7 @@
 
 | Type | Count |
 |------|-------|
-| Literature (one health) | 2234 |
+| Literature (one health) | 2260 |
 | Cancer (animal/veterinary) | 26 |
 | Case data (veterinary case reports) | 55 |
 
@@ -28,14 +28,14 @@ The agent reasons over ingested literature for each autonomous-agent topic (Clin
 - **Emergent Effects of Complex Care Pathways** — 95 item(s). **Reasoning:** Analyze combination effects beyond single interventions.
 - **Silent or Masked Disease and Distress** — 98 item(s). **Reasoning:** Aggregate behavior, physiology, and biomarker studies to improve recognition in stoic species.
 - **Unintended Consequences of Standard Care** — 93 item(s). **Reasoning:** Track long-term effects of common practices to refine guidelines.
-- **Unknown Biological Signals** — 95 item(s). **Reasoning:** Explore uncharacterized signals and anomalies for new biology or biomarkers.
+- **Unknown Biological Signals** — 103 item(s). **Reasoning:** Explore uncharacterized signals and anomalies for new biology or biomarkers.
 - **Latent Protective Mechanisms** — 104 item(s). **Reasoning:** Explore uncharacterized signals and anomalies for new biology or biomarkers.
 - **Pain Modulation Beyond Analgesics** — 101 item(s). **Reasoning:** Aggregate behavior, physiology, and biomarker studies to improve recognition in stoic species.
 - **Hidden Costs of Normal Physiology** — 94 item(s). **Reasoning:** Quantify cumulative cost of stress and inflammation for prevention.
 - **Environmental Exposure and Sentinel Signals** — 90 item(s). **Reasoning:** Use animal sentinel data for environmental and human health early warning.
-- **Species-Specific Health Advantages** — 91 item(s). **Reasoning:** Translate extreme physiology and adaptations into medical insights.
-- **Comparative Physiology at Extremes** — 82 item(s). **Reasoning:** Translate extreme physiology and adaptations into medical insights.
-- **Genetic Intervention and Biological Integrity** — 101 item(s). **Reasoning:** Integrate gene editing and early-life effects into health and welfare assessment.
+- **Species-Specific Health Advantages** — 99 item(s). **Reasoning:** Translate extreme physiology and adaptations into medical insights.
+- **Comparative Physiology at Extremes** — 84 item(s). **Reasoning:** Translate extreme physiology and adaptations into medical insights.
+- **Genetic Intervention and Biological Integrity** — 109 item(s). **Reasoning:** Integrate gene editing and early-life effects into health and welfare assessment.
 - **Developmental Programming and Lifelong Health** — 90 item(s). **Reasoning:** Integrate gene editing and early-life effects into health and welfare assessment.
 - **Unexpected Correlations and Anomalies** — 98 item(s). **Reasoning:** Explore uncharacterized signals and anomalies for new biology or biomarkers.
 

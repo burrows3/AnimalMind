@@ -1,6 +1,6 @@
 # Autonomous insights
 
-**Last updated:** 2026-02-12T15:19:55.977Z
+**Last updated:** 2026-02-12T16:50:59.028Z
 
 The system read the latest ingested data and summarized what matters for animal health.
 
@@ -11,10 +11,11 @@ The system read the latest ingested data and summarized what matters for animal 
 | Type | Count |
 |------|-------|
 | Surveillance (CDC) | 22 |
-| Literature (PubMed) | 2234 |
+| Literature (PubMed) | 2260 |
 | Cancer (animal / veterinary) | 26 |
 | Case data (veterinary case reports) | 55 |
 | Clinical (practice, small animal, equine) | 148 |
+| Pet owner brief items | 18 |
 | Imaging & radiographs | 3 |
 | Vet practice (guidelines, resources) | 6 |
 
@@ -40,6 +41,7 @@ The system read the latest ingested data and summarized what matters for animal 
 - **Cancer:** Review new animal/veterinary oncology items for comparative oncology and collaboration.
 - **Case data:** Review new veterinary case reports for emerging patterns or teaching material.
 - **Clinical:** Use clinical/small animal/equine literature for protocols, differentials, and CE.
+- **Pet owners:** Surface plain-language guidance and when-to-see-vet cues from pet_owner items.
 - **Imaging:** Use curated imaging datasets (TCIA, radiographs) for teaching or model development.
 - **Vet practice:** Use AAHA/AVMA/VIN/Merck resources for guidelines and client handouts.
 

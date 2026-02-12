@@ -1,17 +1,17 @@
 {
   "topic": "Decoding Animal Pain and Distress",
   "baseQuery": "(\"pain assessment\" OR \"pain behavior\" OR \"pain score\" OR distress OR nociception)",
-  "query": "((\"pain assessment\" OR \"pain behavior\" OR \"pain score\" OR distress OR nociception)) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
-  "fallback": null,
-  "count": "242434",
+  "query": "one health animal",
+  "fallback": "global-fallback",
+  "count": "15",
   "idlist": [
-    "41674910",
-    "41674529",
-    "41674519",
-    "41674434",
-    "41673979",
-    "41673522",
-    "41672469",
-    "41671573"
+    "41676263",
+    "41675579",
+    "41675174",
+    "41675173",
+    "41675151",
+    "41674858",
+    "41674765",
+    "41674762"
   ]
 }

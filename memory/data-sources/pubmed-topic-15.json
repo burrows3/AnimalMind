@@ -1,17 +1,17 @@
 {
   "topic": "Species-Specific Health Advantages",
   "baseQuery": "(\"comparative physiology\" OR \"species specific\" OR adaptation)",
-  "query": "one health animal",
-  "fallback": "global-fallback",
-  "count": "15",
+  "query": "((\"comparative physiology\" OR \"species specific\" OR adaptation)) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": null,
+  "count": "744480",
   "idlist": [
-    "41676263",
-    "41675579",
-    "41675174",
-    "41675173",
-    "41675151",
-    "41674858",
-    "41674765",
-    "41674762"
+    "41676862",
+    "41676696",
+    "41676465",
+    "41675059",
+    "41674524",
+    "41674519",
+    "41674508",
+    "41674504"
   ]
 }
