@@ -59,11 +59,11 @@ mkdir -p "$REPO_DIR/memory"
 
 # Run ingest once
 echo ""
-echo "Running ingest + think + push once..."
-if node scripts/ingest-data-sources.js && node scripts/think-autonomous.js && node scripts/push-ingest-to-github.js; then
+echo "Running full ingest + autonomous agents + push once..."
+if ./scripts/run-ingest.sh; then
   echo "First run succeeded. Check GitHub for new commit."
 else
-  echo "First run had issues (e.g. push needs token). Fix and re-run: node scripts/push-ingest-to-github.js"
+  echo "First run had issues (e.g. push needs token). Fix and re-run: ./scripts/run-ingest.sh"
 fi
 
 # Cron: every 12 hours

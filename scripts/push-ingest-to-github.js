@@ -17,6 +17,11 @@ const DOCS_DATA_DIR = path.join(REPO_ROOT, 'docs', 'data');
 const DOCS_INGESTED_JSON = path.join(DOCS_DATA_DIR, 'ingested.json');
 const DOCS_REASONING_JSON = path.join(REPO_ROOT, 'docs', 'agent-reasoning.json');
 const DOCS_TOPIC_SUMMARY = path.join(REPO_ROOT, 'docs', 'topic-summary.json');
+const PUBLIC_SUMMARY = path.join(REPO_ROOT, 'public', 'data-summary.json');
+const PUBLIC_DATA_DIR = path.join(REPO_ROOT, 'public', 'data');
+const PUBLIC_INGESTED_JSON = path.join(PUBLIC_DATA_DIR, 'ingested.json');
+const PUBLIC_REASONING_JSON = path.join(REPO_ROOT, 'public', 'agent-reasoning.json');
+const PUBLIC_TOPIC_SUMMARY = path.join(REPO_ROOT, 'public', 'topic-summary.json');
 const INGESTED_EXPORT_LIMIT = 200;
 
 function run(cmd, opts = {}) {
@@ -127,8 +132,11 @@ async function main() {
       },
     };
     const docsDir = path.join(REPO_ROOT, 'docs');
+    const publicDir = path.join(REPO_ROOT, 'public');
     if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
+    if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
     fs.writeFileSync(DOCS_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
+    fs.writeFileSync(PUBLIC_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
     // Export ingested rows for landing page "Browse data" (embed memory)
     const rows = getIngestedSorted().slice(0, INGESTED_EXPORT_LIMIT);
     const missingPubMedIds = new Set();
@@ -153,23 +161,29 @@ async function main() {
       };
     });
     if (!fs.existsSync(DOCS_DATA_DIR)) fs.mkdirSync(DOCS_DATA_DIR, { recursive: true });
+    if (!fs.existsSync(PUBLIC_DATA_DIR)) fs.mkdirSync(PUBLIC_DATA_DIR, { recursive: true });
     fs.writeFileSync(DOCS_INGESTED_JSON, JSON.stringify(mappedRows), 'utf8');
+    fs.writeFileSync(PUBLIC_INGESTED_JSON, JSON.stringify(mappedRows), 'utf8');
     const reasoning = getAgentReasoning();
     fs.writeFileSync(DOCS_REASONING_JSON, JSON.stringify(reasoning, null, 2), 'utf8');
+    fs.writeFileSync(PUBLIC_REASONING_JSON, JSON.stringify(reasoning, null, 2), 'utf8');
     const topicSummary = getTopicSummary();
     fs.writeFileSync(DOCS_TOPIC_SUMMARY, JSON.stringify(topicSummary, null, 2), 'utf8');
-    // Inline fallback in index.html so data shows even if fetch path fails
-    const indexPath = path.join(REPO_ROOT, 'docs', 'index.html');
-    if (fs.existsSync(indexPath)) {
+    fs.writeFileSync(PUBLIC_TOPIC_SUMMARY, JSON.stringify(topicSummary, null, 2), 'utf8');
+
+    // Inline fallback in index.html so data shows even if fetch path fails.
+    function writeInlineSummary(indexPath, gitAddPath) {
+      if (!fs.existsSync(indexPath)) return;
       let html = fs.readFileSync(indexPath, 'utf8');
-      if (html.includes('window.__DATA_SUMMARY__')) {
-        html = html.replace(/window\.__DATA_SUMMARY__\s*=\s*[^;]+;/, 'window.__DATA_SUMMARY__ = ' + JSON.stringify(summary) + ';');
-        fs.writeFileSync(indexPath, html, 'utf8');
-        run('git add docs/index.html');
-      }
+      if (!html.includes('window.__DATA_SUMMARY__')) return;
+      html = html.replace(/window\.__DATA_SUMMARY__\s*=\s*[^;]+;/, 'window.__DATA_SUMMARY__ = ' + JSON.stringify(summary) + ';');
+      fs.writeFileSync(indexPath, html, 'utf8');
+      run(`git add ${gitAddPath}`);
     }
+    writeInlineSummary(path.join(REPO_ROOT, 'docs', 'index.html'), 'docs/index.html');
+    writeInlineSummary(path.join(REPO_ROOT, 'public', 'index.html'), 'public/index.html');
   } catch (e) {
-    console.warn('Could not write docs/data-summary.json:', e.message);
+    console.warn('Could not write static dashboard data files:', e.message);
   }
 
   run('git add memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md memory/agent-outputs/ memory/opportunities.md');
@@ -177,7 +191,12 @@ async function main() {
   if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
   if (fs.existsSync(DOCS_REASONING_JSON)) run('git add docs/agent-reasoning.json');
   if (fs.existsSync(DOCS_TOPIC_SUMMARY)) run('git add docs/topic-summary.json');
+  if (fs.existsSync(PUBLIC_SUMMARY)) run('git add public/data-summary.json');
+  if (fs.existsSync(PUBLIC_INGESTED_JSON)) run('git add public/data/ingested.json');
+  if (fs.existsSync(PUBLIC_REASONING_JSON)) run('git add public/agent-reasoning.json');
+  if (fs.existsSync(PUBLIC_TOPIC_SUMMARY)) run('git add public/topic-summary.json');
   if (fs.existsSync(path.join(REPO_ROOT, 'docs', 'index.html'))) run('git add docs/index.html');
+  if (fs.existsSync(path.join(REPO_ROOT, 'public', 'index.html'))) run('git add public/index.html');
   if (!hasStagedChanges()) {
     console.log('No ingest changes to commit.');
     return;

@@ -126,9 +126,8 @@ async function fetchDashboard(): Promise<{
     fetch(`${base}/data/ingested.json`, { cache: "no-store" }),
   ]);
   const summary = summaryRes.ok ? await summaryRes.json() : null;
-  const ingested = ingestedRes.ok && Array.isArray(await ingestedRes.json())
-    ? await ingestedRes.json()
-    : null;
+  const ingestedPayload = ingestedRes.ok ? await ingestedRes.json() : null;
+  const ingested = Array.isArray(ingestedPayload) ? ingestedPayload : null;
   return { summary, ingested };
 }
 

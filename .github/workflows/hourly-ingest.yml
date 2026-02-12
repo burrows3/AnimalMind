@@ -34,5 +34,5 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          node scripts/ingest-data-sources.js
-          node scripts/push-ingest-to-github.js
+          chmod +x scripts/run-ingest.sh
+          ./scripts/run-ingest.sh
