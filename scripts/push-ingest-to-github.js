@@ -14,7 +14,6 @@ const DATA_DIR = path.join(REPO_ROOT, 'memory', 'data-sources');
 const DOCS_SUMMARY = path.join(REPO_ROOT, 'docs', 'data-summary.json');
 const DOCS_DATA_DIR = path.join(REPO_ROOT, 'docs', 'data');
 const DOCS_INGESTED_JSON = path.join(DOCS_DATA_DIR, 'ingested.json');
-const DOCS_REASONING_JSON = path.join(REPO_ROOT, 'docs', 'agent-reasoning.json');
 const INGESTED_EXPORT_LIMIT = 200;
 
 function run(cmd, opts = {}) {
@@ -35,27 +34,15 @@ function hasStagedChanges() {
   }
 }
 
-function resolvePushBranch() {
-  if (process.env.INGEST_PUSH_BRANCH) return process.env.INGEST_PUSH_BRANCH;
-  try {
-    const current = run('git branch --show-current').trim();
-    if (current) return current;
-  } catch {
-    // ignore and fall back
-  }
-  return 'main';
-}
-
 function main() {
   if (!fs.existsSync(DB_PATH)) {
     console.log('No database yet; run npm run ingest first.');
     return;
   }
 
-  // Write docs data for landing page (GitHub Pages)
+  // Write docs/data-summary.json for landing page (GitHub Pages)
   try {
     const { getIngestedMeta, getIngestedSorted } = require(path.join(REPO_ROOT, 'lib', 'db.js'));
-    const { getAgentReasoning } = require(path.join(REPO_ROOT, 'lib', 'agentReasoning.js'));
     const meta = getIngestedMeta();
     const summary = {
       lastUpdated: meta.lastFetched || null,
@@ -78,8 +65,6 @@ function main() {
       .map((r) => ({ data_type: r.data_type, condition_or_topic: r.condition_or_topic, title: r.title || '', url: r.url || '' }));
     if (!fs.existsSync(DOCS_DATA_DIR)) fs.mkdirSync(DOCS_DATA_DIR, { recursive: true });
     fs.writeFileSync(DOCS_INGESTED_JSON, JSON.stringify(rows), 'utf8');
-    const reasoning = getAgentReasoning();
-    fs.writeFileSync(DOCS_REASONING_JSON, JSON.stringify(reasoning, null, 2), 'utf8');
     // Inline fallback in index.html so data shows even if fetch path fails
     const indexPath = path.join(REPO_ROOT, 'docs', 'index.html');
     if (fs.existsSync(indexPath)) {
@@ -97,7 +82,6 @@ function main() {
   run('git add memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md memory/agent-outputs/ memory/opportunities.md');
   if (fs.existsSync(DOCS_SUMMARY)) run('git add docs/data-summary.json');
   if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
-  if (fs.existsSync(DOCS_REASONING_JSON)) run('git add docs/agent-reasoning.json');
   if (fs.existsSync(path.join(REPO_ROOT, 'docs', 'index.html'))) run('git add docs/index.html');
   if (!hasStagedChanges()) {
     console.log('No ingest changes to commit.');
@@ -107,8 +91,7 @@ function main() {
   const when = new Date().toISOString().replace(/T/, ' ').slice(0, 16);
   // Use run() for commit so Windows git receives args correctly; when is safe (no quotes)
   run('git commit -m "Ingest: ' + when + '"');
-  const pushBranch = resolvePushBranch();
-  run('git push origin ' + pushBranch);
+  run('git push origin main');
   console.log('Pushed ingest to GitHub.');
 }
 

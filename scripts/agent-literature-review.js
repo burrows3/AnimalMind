@@ -2,15 +2,12 @@
 /**
  * Agent: Literature reviewer. Runs autonomously after ingest.
  * Reads literature, cancer, and case_data from DB; reasons by autonomous-agent topic;
- * writes themes and gaps so the synthesizer can find opportunities. Cost: $0 by default;
- * optional NVIDIA LLM reasoning when NVIDIA_API_KEY is set.
+ * writes themes and gaps so the synthesizer can find opportunities. Cost: $0 (no API calls).
  */
 
-require('../lib/env');
 const fs = require('fs');
 const path = require('path');
 const { getIngestedGrouped, getIngestedMeta } = require('../lib/db');
-const { chat: nvidiaChat, isEnabled: isNvidiaEnabled } = require('../lib/nvidiaNim');
 
 const MEMORY_DIR = path.join(__dirname, '..', 'memory');
 const AGENT_OUTPUTS = path.join(MEMORY_DIR, 'agent-outputs');
@@ -60,38 +57,7 @@ function inferOpportunity(topic) {
   return 'Use new literature for research gaps, teaching, or practice-relevant synthesis.';
 }
 
-async function buildLlmReasoning({ lastFetched, counts, topicCounts }) {
-  if (!isNvidiaEnabled()) return null;
-  const rows = topicCounts.length
-    ? topicCounts.map((t) => `- ${t.topic}: ${t.count}`).join('\n')
-    : '- (no topic-specific literature in this run)';
-  const user = [
-    `Data as of: ${lastFetched}`,
-    `Counts: literature=${counts.literature || 0}, cancer=${counts.cancer || 0}, case_data=${counts.case_data || 0}`,
-    '',
-    'Autonomous-agent topic counts:',
-    rows,
-    '',
-    'Return:',
-    '- 3-5 key patterns (bullets)',
-    '- 3-5 research gaps/opportunities (bullets)',
-    '- 2-3 collaboration ideas (bullets)',
-    'Keep it concise. No extra preamble.',
-  ].join('\n');
-  try {
-    return await nvidiaChat({
-      system: 'You are an autonomous literature analyst for animal health research.',
-      user,
-      maxTokens: 420,
-      temperature: 0.2,
-    });
-  } catch (e) {
-    console.warn('agent-literature-review: LLM unavailable:', e.message);
-    return null;
-  }
-}
-
-async function main() {
+function main() {
   let grouped, meta;
   try {
     grouped = getIngestedGrouped();
@@ -131,12 +97,10 @@ async function main() {
   ];
 
   let topicCount = 0;
-  const topicCounts = [];
   for (const topic of AUTONOMOUS_AGENT_TOPICS) {
     const items = litByCond[topic] || [];
     if (items.length === 0) continue;
     topicCount++;
-    topicCounts.push({ topic, count: items.length });
     const opportunity = inferOpportunity(topic);
     lines.push(`- **${topic}** — ${items.length} item(s). **Reasoning:** ${opportunity}`);
   }
@@ -144,11 +108,6 @@ async function main() {
     lines.push('- *No topic-specific literature in this run. Topic queries run each ingest.*', '');
   }
   lines.push('');
-  const llmReasoning = await buildLlmReasoning({ lastFetched, counts, topicCounts });
-  if (llmReasoning) {
-    lines.push('## LLM reasoning (NVIDIA)', '');
-    lines.push(llmReasoning, '');
-  }
 
   lines.push('## Themes and gaps (for synthesizer)', '');
   const types = [
@@ -180,7 +139,4 @@ async function main() {
   console.log('agent-literature-review: wrote', OUT_PATH);
 }
 
-main().catch((err) => {
-  console.error('agent-literature-review: failed', err.message);
-  process.exit(1);
-});
+main();
