@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   BookOpen,
@@ -32,6 +32,7 @@ const DATA_ORDER = [
   "cancer",
   "case_data",
   "clinical",
+  "pet_owner",
   "imaging",
   "vet_practice",
 ] as const;
@@ -42,6 +43,7 @@ const LABELS: Record<string, string> = {
   cancer: "Cancer",
   case_data: "Case reports",
   clinical: "Clinical",
+  pet_owner: "Pet brief",
   imaging: "Imaging",
   vet_practice: "Vet practice",
 };
@@ -52,6 +54,7 @@ const TRACK_ITEMS: { key: string; title: string; desc: string; tag: string }[] =
   { key: "cancer", title: "Cancer", desc: "Veterinary oncology", tag: "Oncology" },
   { key: "case_data", title: "Case data", desc: "Veterinary case reports", tag: "Case reports" },
   { key: "clinical", title: "Clinical", desc: "Practice, small animal, equine", tag: "Clinical" },
+  { key: "pet_owner", title: "Pet owner brief", desc: "Companion-animal owner guidance", tag: "Pet" },
   { key: "imaging", title: "Imaging", desc: "TCIA, radiographs", tag: "TCIA" },
   { key: "vet_practice", title: "Vet practice", desc: "AAHA, AVMA, VIN, Merck", tag: "Guidelines" },
 ];
@@ -62,9 +65,13 @@ const DATA_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   cancer: FlaskConical,
   case_data: FileText,
   clinical: Stethoscope,
+  pet_owner: Heart,
   imaging: BarChart3,
   vet_practice: Building2,
 };
+
+const PET_OWNER_KEYWORDS = /\b(dog|dogs|canine|cat|cats|feline|pet|pets|puppy|kitten|owner|home care|triage|poison|toxin|flea|tick|vaccin|vomit|diarrhea|itch|cough|ear|dental|behavior)\b/i;
+const PET_OWNER_FALLBACK_TYPES = new Set(["clinical", "case_data", "vet_practice", "surveillance"]);
 
 type DataSummary = {
   lastUpdated?: string | null;
@@ -129,6 +136,27 @@ async function fetchDashboard(): Promise<{
   const ingestedPayload = ingestedRes.ok ? await ingestedRes.json() : null;
   const ingested = Array.isArray(ingestedPayload) ? ingestedPayload : null;
   return { summary, ingested };
+}
+
+function toPetBriefItems(rows: IngestedRow[] | null, limit = 14): IngestedRow[] {
+  if (!rows || rows.length === 0) return [];
+  const explicit = rows.filter((r) => r.data_type === "pet_owner");
+  const fallback = rows.filter((r) => {
+    if (!PET_OWNER_FALLBACK_TYPES.has(r.data_type)) return false;
+    const text = `${r.title || ""} ${r.condition_or_topic || ""}`;
+    return PET_OWNER_KEYWORDS.test(text);
+  });
+  const combined = [...explicit, ...fallback];
+  const seen = new Set<string>();
+  const unique: IngestedRow[] = [];
+  for (const item of combined) {
+    const key = `${item.url || ""}|${item.title || ""}|${item.condition_or_topic || ""}|${item.data_type}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(item);
+    if (unique.length >= limit) break;
+  }
+  return unique;
 }
 
 export default function App() {
@@ -214,6 +242,8 @@ export default function App() {
     : null;
 
   const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const petBriefItems = useMemo(() => toPetBriefItems(memory), [memory]);
+  const petBriefCount = summary?.counts?.pet_owner ?? petBriefItems.length;
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
@@ -339,6 +369,7 @@ export default function App() {
                 <span className="text-base font-semibold">AnimalMind</span>
               </button>
               <div className="flex items-center gap-4">
+                <a href="#pet-brief" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Today's brief</a>
                 <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Notify me</a>
                 <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
               </div>
@@ -435,6 +466,71 @@ export default function App() {
                   className="w-full h-48 object-cover"
                 />
               </div>
+            </section>
+
+            <section id="pet-brief" aria-labelledby="pet-brief-heading" className="py-10 border-b border-border">
+              <h2 id="pet-brief-heading" className="section-label mb-2 flex items-center gap-2">
+                <Heart className="size-4" aria-hidden />
+                Today's pet brief
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
+                Same autonomous ingest as Pro, filtered for companion-animal owner guidance and plain-language follow-up topics.
+              </p>
+              <Card className="border border-border bg-card shadow-sm">
+                <CardHeader className="p-4 pb-2">
+                  <CardTitle className="text-base font-semibold">Live pet-owner signals</CardTitle>
+                  <CardDescription className="text-xs">
+                    Sources include pet-owner guidance links, companion-animal literature, and practical clinical topics.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 pt-2">
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">Pet brief</Badge>
+                      <span className="text-sm text-muted-foreground">{petBriefCount} item(s)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {lastUpdated && (
+                        <span className="text-xs text-muted-foreground">As of {lastUpdated}</span>
+                      )}
+                      <Button variant="outline" size="sm" className="gap-2 rounded-md" disabled={refreshing} onClick={loadData} aria-label="Refresh pet brief">
+                        <RefreshCw className={cn("size-4", refreshing && "animate-spin")} aria-hidden />
+                        {refreshing ? "Refreshing…" : "Refresh"}
+                      </Button>
+                    </div>
+                  </div>
+                  {loading || memoryLoading ? (
+                    <p className="text-sm text-muted-foreground">Loading latest pet brief…</p>
+                  ) : petBriefItems.length > 0 ? (
+                    <ul className="list-none space-y-2">
+                      {petBriefItems.map((item, idx) => {
+                        const href = safeHref(item.url);
+                        return (
+                          <li key={`${item.url || item.title || "pet"}-${idx}`} className="rounded border border-border/70 bg-muted/20 px-3 py-2">
+                            {href !== "#" ? (
+                              <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm text-foreground hover:underline">
+                                {item.title || "Untitled"}
+                              </a>
+                            ) : (
+                              <span className="text-sm text-foreground">{item.title || "Untitled"}</span>
+                            )}
+                            {item.condition_or_topic && (
+                              <p className="text-xs text-muted-foreground mt-0.5">{item.condition_or_topic}</p>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Pet brief data will appear after the next autonomous ingest and push.
+                    </p>
+                  )}
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Educational only. AnimalMind Pet does not replace veterinary diagnosis or emergency care.
+                  </p>
+                </CardContent>
+              </Card>
             </section>
 
             {/* Mission / What we do */}

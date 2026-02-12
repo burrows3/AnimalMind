@@ -22,7 +22,8 @@ const PUBLIC_DATA_DIR = path.join(REPO_ROOT, 'public', 'data');
 const PUBLIC_INGESTED_JSON = path.join(PUBLIC_DATA_DIR, 'ingested.json');
 const PUBLIC_REASONING_JSON = path.join(REPO_ROOT, 'public', 'agent-reasoning.json');
 const PUBLIC_TOPIC_SUMMARY = path.join(REPO_ROOT, 'public', 'topic-summary.json');
-const INGESTED_EXPORT_LIMIT = 200;
+const INGESTED_EXPORT_LIMIT = 280;
+const INGESTED_PER_TYPE_LIMIT = 40;
 
 function run(cmd, opts = {}) {
   return execSync(cmd, { encoding: 'utf8', cwd: REPO_ROOT, ...opts });
@@ -107,6 +108,20 @@ function extractPubMedId(url) {
   return match ? match[1] : null;
 }
 
+function selectDashboardRows(rows, perTypeLimit = INGESTED_PER_TYPE_LIMIT, totalLimit = INGESTED_EXPORT_LIMIT) {
+  const selected = [];
+  const byTypeCount = {};
+  for (const row of rows) {
+    const type = row.data_type || 'other';
+    byTypeCount[type] = byTypeCount[type] || 0;
+    if (byTypeCount[type] >= perTypeLimit) continue;
+    selected.push(row);
+    byTypeCount[type] += 1;
+    if (selected.length >= totalLimit) break;
+  }
+  return selected;
+}
+
 async function main() {
   if (!fs.existsSync(DB_PATH)) {
     console.log('No database yet; run npm run ingest first.');
@@ -127,6 +142,7 @@ async function main() {
         cancer: meta.counts.cancer || 0,
         case_data: meta.counts.case_data || 0,
         clinical: meta.counts.clinical || 0,
+        pet_owner: meta.counts.pet_owner || 0,
         imaging: meta.counts.imaging || 0,
         vet_practice: meta.counts.vet_practice || 0,
       },
@@ -138,7 +154,7 @@ async function main() {
     fs.writeFileSync(DOCS_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
     fs.writeFileSync(PUBLIC_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
     // Export ingested rows for landing page "Browse data" (embed memory)
-    const rows = getIngestedSorted().slice(0, INGESTED_EXPORT_LIMIT);
+    const rows = selectDashboardRows(getIngestedSorted());
     const missingPubMedIds = new Set();
     for (const row of rows) {
       if (row.title) continue;

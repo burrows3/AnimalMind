@@ -62,7 +62,23 @@ app.get('/api/ingested', rateLimit, (req, res) => {
 });
 
 // API: dashboard payload (summary + flat ingested list + key insights). Rate-limited to prevent bulk extraction.
-const INGESTED_EXPORT_LIMIT = 200;
+const INGESTED_EXPORT_LIMIT = 280;
+const INGESTED_PER_TYPE_LIMIT = 40;
+
+function selectDashboardRows(rows, perTypeLimit = INGESTED_PER_TYPE_LIMIT, totalLimit = INGESTED_EXPORT_LIMIT) {
+  const selected = [];
+  const byTypeCount = {};
+  for (const row of rows) {
+    const type = row.data_type || 'other';
+    byTypeCount[type] = byTypeCount[type] || 0;
+    if (byTypeCount[type] >= perTypeLimit) continue;
+    selected.push(row);
+    byTypeCount[type] += 1;
+    if (selected.length >= totalLimit) break;
+  }
+  return selected;
+}
+
 app.get('/api/dashboard', rateLimit, (req, res) => {
   try {
     const meta = getIngestedMeta();
@@ -72,8 +88,7 @@ app.get('/api/dashboard', rateLimit, (req, res) => {
     };
     const reasoning = getAgentReasoning();
     const topicSummary = getTopicSummary();
-    const rows = getIngestedSorted()
-      .slice(0, INGESTED_EXPORT_LIMIT)
+    const rows = selectDashboardRows(getIngestedSorted())
       .map((r) => ({
         data_type: r.data_type,
         condition_or_topic: r.condition_or_topic || '',

@@ -4,7 +4,7 @@
  * Also writes JSON snapshots to memory/data-sources/.
  *
  * Data sources:
- * 1. PubMed – literature (one health), cancer, case_data, clinical (vet practice, small animal, equine)
+ * 1. PubMed – literature (one health), cancer, case_data, clinical (vet practice, small animal, equine), pet_owner
  * 2. CDC Travel Notices (RSS) – surveillance
  * 3. Curated datasets (JSON) – cancer, imaging, vet_practice (guidelines, AVMA, AAHA, etc.)
  * 4. TCIA (Cancer Imaging Archive) – imaging collections (canine/veterinary when available)
@@ -20,6 +20,42 @@ const https = require('https');
 const { upsertIngested } = require('../lib/db');
 
 const MEMORY_DIR = path.join(__dirname, '..', 'memory', 'data-sources');
+const PET_OWNER_PUBMED_QUERY =
+  '((dog OR canine OR cat OR feline OR puppy OR kitten) AND ("client education" OR "owner guidance" OR "home care" OR prevention OR triage) AND (veterinary OR vet))';
+
+// Curated links for pet-owner brief output in UI (consumer-safe guidance sources).
+const PET_OWNER_RESOURCES = [
+  {
+    title: 'AVMA Pet Owner Resources',
+    url: 'https://www.avma.org/resources/pet-owners',
+    condition_or_topic: 'When to see a vet',
+  },
+  {
+    title: 'AAHA Pet Owner Education',
+    url: 'https://www.aaha.org/your-pet/',
+    condition_or_topic: 'Preventive care',
+  },
+  {
+    title: 'Merck Veterinary Manual - Pet Health Center',
+    url: 'https://www.merckvetmanual.com/pethealthcenter',
+    condition_or_topic: 'Symptoms and home guidance',
+  },
+  {
+    title: 'ASPCA Animal Poison Control',
+    url: 'https://www.aspca.org/pet-care/animal-poison-control',
+    condition_or_topic: 'Poisoning and emergencies',
+  },
+  {
+    title: 'CDC Healthy Pets, Healthy People',
+    url: 'https://www.cdc.gov/healthypets/',
+    condition_or_topic: 'Household zoonotic safety',
+  },
+  {
+    title: 'WSAVA Pet Owners',
+    url: 'https://wsava.org/pet-owners/',
+    condition_or_topic: 'Small-animal guidance',
+  },
+];
 
 // Ensure output dir exists
 if (!fs.existsSync(MEMORY_DIR)) {
@@ -289,7 +325,21 @@ function resolvePubMedTitle(pmid, titleMap) {
   return titleMap[String(pmid)] || null;
 }
 
-function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults, pubmedTitles) {
+function ingestIntoDb(
+  pubmed,
+  cdc,
+  ecdc,
+  pubmedCancer,
+  pubmedCaseReports,
+  pubmedClinical,
+  pubmedSmallAnimal,
+  pubmedEquine,
+  pubmedPetOwner,
+  curated,
+  tcia,
+  topicResults,
+  pubmedTitles
+) {
   const fetchedAt = new Date().toISOString();
 
   // Literature: PubMed (one health animal)
@@ -403,6 +453,34 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
     }
   }
 
+  // Pet owner brief: PubMed (consumer-facing companion-animal guidance terms)
+  for (const pmid of (pubmedPetOwner && pubmedPetOwner.idlist) || []) {
+    upsertIngested({
+      data_type: 'pet_owner',
+      source: 'pubmed_pet_owner',
+      condition_or_topic: 'Pet owner guidance',
+      title: resolvePubMedTitle(pmid, pubmedTitles),
+      url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
+      external_id: `pet-owner-${pmid}`,
+      published_at: null,
+      fetched_at: fetchedAt,
+    });
+  }
+
+  // Pet owner brief: curated consumer-safe resources
+  for (const item of PET_OWNER_RESOURCES) {
+    upsertIngested({
+      data_type: 'pet_owner',
+      source: 'pet_owner_resource',
+      condition_or_topic: item.condition_or_topic || 'Pet owner guidance',
+      title: item.title,
+      url: item.url,
+      external_id: item.url,
+      published_at: null,
+      fetched_at: fetchedAt,
+    });
+  }
+
   // Curated: cancer, imaging, vet_practice (guidelines, resources)
   for (const item of (curated && curated.items) || []) {
     upsertIngested({
@@ -438,7 +516,18 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
 async function main() {
   console.log('Ingesting data sources...');
   try {
-    const [pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, tcia] = await Promise.all([
+    const [
+      pubmed,
+      cdc,
+      ecdc,
+      pubmedCancer,
+      pubmedCaseReports,
+      pubmedClinical,
+      pubmedSmallAnimal,
+      pubmedEquine,
+      pubmedPetOwner,
+      tcia,
+    ] = await Promise.all([
       fetchPubMed(),
       fetchCdcTravelNotices(),
       fetchEcdcAvianFlu(),
@@ -447,6 +536,7 @@ async function main() {
       fetchPubMedQuery('veterinary clinical practice', 12),
       fetchPubMedQuery('small animal veterinary medicine', 12),
       fetchPubMedQuery('equine veterinary medicine', 12),
+      fetchPubMedQuery(PET_OWNER_PUBMED_QUERY, 12),
       fetchTciaCollections(),
     ]);
     const curated = loadCuratedDatasets();
@@ -473,6 +563,7 @@ async function main() {
     writeJson('pubmed-clinical.json', pubmedClinical);
     writeJson('pubmed-small-animal.json', pubmedSmallAnimal);
     writeJson('pubmed-equine.json', pubmedEquine);
+    writeJson('pubmed-pet-owner.json', pubmedPetOwner);
     writeJson('tcia-imaging.json', tcia);
 
     const pubmedIds = new Set([
@@ -482,6 +573,7 @@ async function main() {
       ...((pubmedClinical && pubmedClinical.idlist) || []),
       ...((pubmedSmallAnimal && pubmedSmallAnimal.idlist) || []),
       ...((pubmedEquine && pubmedEquine.idlist) || []),
+      ...((pubmedPetOwner && pubmedPetOwner.idlist) || []),
       ...topicResults.flatMap((result) => result.idlist || []),
     ]);
     const pubmedTitles = await fetchPubMedSummaries(Array.from(pubmedIds));
@@ -495,12 +587,15 @@ async function main() {
       pubmedClinical,
       pubmedSmallAnimal,
       pubmedEquine,
+      pubmedPetOwner,
       curated,
       tcia,
       topicResults,
       pubmedTitles
     );
-    console.log('Ingested into database (literature including autonomous-agent topics, surveillance, cancer, case_data, clinical, imaging, vet_practice).');
+    console.log(
+      'Ingested into database (literature including autonomous-agent topics, surveillance, cancer, case_data, clinical, pet_owner, imaging, vet_practice).'
+    );
     console.log('Done.');
   } catch (err) {
     console.error('Ingest failed:', err.message);
