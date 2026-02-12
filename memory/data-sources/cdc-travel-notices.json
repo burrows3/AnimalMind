@@ -1,8 +1,13 @@
 {
-  "fetchedAt": "2026-02-11T12:23:18.003Z",
+  "fetchedAt": "2026-02-12T00:36:24.482Z",
   "source": "CDC Travel Notices RSS",
   "url": "https://wwwnc.cdc.gov/travel/rss/notices.xml",
   "items": [
+    {
+      "title": "Level 2 - Chikungunya in Bolivia",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/chikungunya-bolivia",
+      "pubDate": "Wed, 11 Feb 2026 05:00:00 GMT"
+    },
     {
       "title": "Level 2 - Chikungunya in Suriname",
       "link": "https://wwwnc.cdc.gov/travel/notices/level2/chikungunya-suriname",
@@ -44,13 +49,13 @@
       "pubDate": "Fri, 05 Dec 2025 05:00:00 GMT"
     },
     {
-      "title": "Level 1 - Rabies in India",
-      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rabies-india",
+      "title": "Level 2 - Global Polio",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level2/global-polio",
       "pubDate": "Tue, 25 Nov 2025 05:00:00 GMT"
     },
     {
-      "title": "Level 2 - Global Polio",
-      "link": "https://wwwnc.cdc.gov/travel/notices/level2/global-polio",
+      "title": "Level 1 - Rabies in India",
+      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rabies-india",
       "pubDate": "Tue, 25 Nov 2025 05:00:00 GMT"
     },
     {
