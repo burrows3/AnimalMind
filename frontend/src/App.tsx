@@ -154,6 +154,17 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const t =
+      view === "consumer"
+        ? "Animal Health Newsletter — Pet Owners"
+        : view === "clinical"
+          ? "Animal Health Newsletter — Clinical"
+          : "Animal Health Newsletter";
+    document.title = t;
+  }, [view]);
+
   const navigate = (v: "" | "consumer" | "clinical") => {
     window.location.hash = v;
     setView(v);
@@ -207,62 +218,83 @@ export default function App() {
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
-      {/* ——— Landing: animal-focused, two paths ——— */}
+      {/* ——— Landing: mission, imagery, two paths ——— */}
       {view === "" && (
         <>
-          <header className="border-b border-border bg-card">
-            <div className="mx-auto max-w-2xl px-4 py-4 flex justify-center">
+          <header className="border-b border-border bg-card/80 backdrop-blur-sm">
+            <div className="mx-auto max-w-3xl px-4 py-3 flex justify-center">
               <button
                 type="button"
                 onClick={() => navigate("")}
                 className="flex items-center gap-2 font-editorial text-foreground no-underline min-h-[44px]"
               >
                 <AnimalMindLogo className="size-8 text-primary shrink-0" />
-                <span className="text-xl font-semibold tracking-tight">For Animals</span>
+                <span className="text-xl font-semibold tracking-tight">Animal Health Newsletter</span>
               </button>
             </div>
           </header>
-          <main className="flex-1 mx-auto w-full max-w-2xl px-4 py-12 sm:py-16">
-            <h1 className="font-editorial text-2xl sm:text-3xl font-semibold text-foreground text-center mb-2">
-              For Animals
-            </h1>
-            <p className="text-center text-muted-foreground text-sm mb-10">
-              Pet owners or vet & clinical. Choose your path.
+          <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
+            {/* Mission */}
+            <p className="font-editorial text-center text-lg sm:text-xl text-foreground/90 mb-2">
+              Rapid insights from animal sources.
             </p>
+            <p className="text-center text-muted-foreground text-sm sm:text-base mb-8">
+              In one place—for clinicians and pet owners.
+            </p>
+
+            {/* Hero image */}
+            <div className="rounded-2xl overflow-hidden border border-border shadow-sm mb-10 bg-muted/30">
+              <img
+                src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80"
+                alt=""
+                className="w-full h-48 sm:h-56 object-cover"
+                fetchPriority="high"
+              />
+            </div>
+
+            <p className="text-center text-muted-foreground text-sm mb-6">Choose your edition.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
                 type="button"
                 onClick={() => navigate("consumer")}
-                className="flex flex-col rounded-xl border-2 border-border bg-card p-6 sm:p-8 shadow-sm hover:border-primary/30 hover:shadow-md transition-all text-left min-h-[44px]"
+                className="group flex flex-col rounded-xl border-2 border-border bg-card p-6 shadow-sm hover:border-primary/30 hover:shadow-md transition-all text-left min-h-[44px] overflow-hidden"
               >
-                <span className="inline-flex items-center justify-center rounded-full bg-primary/10 w-12 h-12 mb-4">
-                  <Heart className="size-6 text-primary" aria-hidden />
-                </span>
-                <h2 className="font-editorial text-lg font-semibold text-foreground mb-1">Pet owners</h2>
-                <p className="text-sm text-muted-foreground">Resources for people who care for companion animals.</p>
+                <div className="rounded-lg overflow-hidden mb-4 h-24 -mx-1 bg-muted/50">
+                  <img
+                    src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80"
+                    alt=""
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <h2 className="font-editorial text-lg font-semibold text-foreground mb-1">Pet Owners</h2>
+                <p className="text-sm text-muted-foreground">Plain-language insights for people who care for companion animals.</p>
                 <span className="mt-4 text-sm text-primary font-medium">Enter →</span>
               </button>
               <button
                 type="button"
                 onClick={() => navigate("clinical")}
-                className="flex flex-col rounded-xl border-2 border-primary/30 bg-card p-6 sm:p-8 shadow-sm hover:border-primary/50 hover:shadow-md transition-all text-left min-h-[44px]"
+                className="group flex flex-col rounded-xl border-2 border-primary/30 bg-card p-6 shadow-sm hover:border-primary/50 hover:shadow-md transition-all text-left min-h-[44px] overflow-hidden"
               >
-                <span className="inline-flex items-center justify-center rounded-full bg-primary/10 w-12 h-12 mb-4">
-                  <Stethoscope className="size-6 text-primary" aria-hidden />
-                </span>
+                <div className="rounded-lg overflow-hidden mb-4 h-24 -mx-1 bg-muted/50">
+                  <img
+                    src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=80"
+                    alt=""
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
                 <h2 className="font-editorial text-lg font-semibold text-foreground mb-1">Clinical</h2>
-                <p className="text-sm text-muted-foreground">Vet, clinical & research. Animal Research Network.</p>
+                <p className="text-sm text-muted-foreground">Vet, clinical & research. Surveillance, literature, guidelines.</p>
                 <span className="mt-4 text-sm text-primary font-medium">Enter →</span>
               </button>
             </div>
           </main>
-          <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
+          <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
             <p>Animal-focused. Evidence from public sources.</p>
           </footer>
         </>
       )}
 
-      {/* ——— Consumer: Pet owners page ——— */}
+      {/* ——— Consumer: Animal Health Newsletter — Pet Owners ——— */}
       {view === "consumer" && (
         <>
           <header className="sticky top-0 z-10 border-b border-border bg-card">
@@ -273,31 +305,31 @@ export default function App() {
                 className="flex items-center gap-2 font-editorial text-foreground min-h-[44px]"
               >
                 <AnimalMindLogo className="size-7 text-primary shrink-0" />
-                <span className="text-base font-semibold">For Animals</span>
+                <span className="text-base font-semibold">Animal Health Newsletter</span>
               </button>
-              <span className="text-sm text-muted-foreground font-medium">Pet owners</span>
+              <span className="text-sm text-muted-foreground font-medium">Pet Owners</span>
             </nav>
           </header>
           <main className="flex-1 mx-auto w-full max-w-2xl px-4 py-10">
             <h1 className="font-editorial text-xl sm:text-2xl font-semibold text-foreground mb-4">
-              Pet owners
+              Animal Health Newsletter — Pet Owners
             </h1>
             <p className="text-muted-foreground mb-6">
-              We’re building resources for pet owners with data that runs autonomously—animal health and care, in plain language. Coming soon.
+              Resources for people who care for companion animals. We’re building this edition with data that runs autonomously—animal health and care in plain language. Coming soon.
             </p>
             <p className="text-sm text-muted-foreground">
               <button type="button" onClick={() => navigate("")} className="text-primary hover:underline">
-                ← Back to For Animals
+                ← Back to Animal Health Newsletter
               </button>
             </p>
           </main>
           <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-            <p>For Animals · Pet owners</p>
+            <p>Animal Health Newsletter — Pet Owners</p>
           </footer>
         </>
       )}
 
-      {/* ——— Clinical: Animal Research Network (vet, clinical, research) ——— */}
+      {/* ——— Clinical: Animal Health Newsletter — Clinical ——— */}
       {view === "clinical" && (
         <>
           <header className="sticky top-0 z-10 border-b-2 border-primary/20 bg-card shadow-sm">
@@ -308,7 +340,7 @@ export default function App() {
                 className="flex items-center gap-2 font-editorial text-foreground min-h-[44px] py-1 text-left"
               >
                 <AnimalMindLogo className="size-7 sm:size-8 text-primary shrink-0" />
-                <span className="text-base sm:text-xl font-semibold tracking-tight">Animal Research Network</span>
+                <span className="text-base sm:text-xl font-semibold tracking-tight">Animal Health Newsletter — Clinical</span>
               </button>
               <div className="flex flex-wrap items-center gap-0.5 sm:gap-2 text-sm">
                 <a href="#data" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Digest</a>
@@ -723,7 +755,7 @@ export default function App() {
           </main>
 
           <footer className="border-t-2 border-primary/10 bg-card mt-auto py-8 text-center text-sm text-muted-foreground relative z-1">
-            <p className="font-editorial font-semibold text-foreground">Animal Research Network</p>
+            <p className="font-editorial font-semibold text-foreground">Animal Health Newsletter — Clinical</p>
             <p className="mt-1">Vet, clinical & research. Evidence from public sources only.</p>
             <p className="mt-2 flex items-center justify-center gap-1.5 text-primary/80 text-xs">
               <Heart className="size-3.5" aria-hidden />
