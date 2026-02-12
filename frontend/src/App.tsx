@@ -273,11 +273,11 @@ export default function App() {
         </>
       )}
 
-      {/* ——— AnimalMind Pet: consumer layer powered by Pro ——— */}
+      {/* ——— AnimalMind Pet: same format as Pro, pet-owner focus, more imagery ——— */}
       {view === "consumer" && (
         <>
           <header className="sticky top-0 z-10 border-b border-border bg-card">
-            <nav className="mx-auto max-w-4xl px-4 py-3 flex justify-between items-center">
+            <nav className="mx-auto max-w-4xl px-4 py-3 sm:px-6 flex justify-between items-center">
               <button
                 type="button"
                 onClick={() => navigate("")}
@@ -286,25 +286,217 @@ export default function App() {
                 <AnimalMindLogo className="size-7 text-foreground shrink-0" />
                 <span className="text-base font-semibold">AnimalMind</span>
               </button>
-              <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
+              <div className="flex items-center gap-4">
+                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Notify me</a>
+                <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
+              </div>
             </nav>
           </header>
-          <main className="flex-1 mx-auto w-full max-w-2xl px-4 py-10">
-            <h1 className="text-xl sm:text-2xl font-semibold text-foreground mb-4">
-              AnimalMind Pet
-            </h1>
-            <p className="text-muted-foreground mb-6">
-              Research-backed guidance for pet owners. Structured responses derived from AnimalMind Pro—autonomous veterinary intelligence. Clear escalation to veterinarians when needed. Not a replacement for clinical care.
-            </p>
-            <p className="text-sm text-muted-foreground">Coming soon.</p>
-            <p className="text-sm text-muted-foreground mt-6">
-              <button type="button" onClick={() => navigate("")} className="text-foreground hover:underline font-medium">
+
+          <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
+            {/* Hero CTA — image + headline + waitlist */}
+            <section
+              id="pet-cta"
+              aria-labelledby="pet-cta-heading"
+              className="mb-8 sm:mb-10 rounded-lg border border-border bg-muted/30 overflow-hidden"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
+                <div className="lg:col-span-3 relative h-56 sm:h-64 lg:h-auto min-h-[220px]">
+                  <img
+                    src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80"
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+                <div className="lg:col-span-2 p-4 sm:p-6 flex flex-col justify-center">
+                  <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md text-muted-foreground border-0 w-fit mb-2">
+                    AnimalMind Pet
+                  </Badge>
+                  <h2 id="pet-cta-heading" className="text-lg sm:text-xl font-semibold text-foreground leading-tight mb-2">
+                    Research-backed guidance for pet owners
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                    Plain-language insights from the same intelligence that powers veterinary and clinical research. When to see a vet, what to watch for, and what the evidence says.
+                  </p>
+                  {waitlistStatus === "success" ? (
+                    <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when Pet launches.</p>
+                  ) : (
+                    <form
+                      className="flex flex-col sm:flex-row gap-2"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const email = waitlistEmail.trim();
+                        if (!email) return;
+                        setWaitlistStatus("loading");
+                        setWaitlistError("");
+                        const result = await submitWaitlist(email);
+                        if (result.ok) {
+                          setWaitlistStatus("success");
+                          setWaitlistEmail("");
+                        } else if (result.error === "MAILTO") {
+                          window.location.href = `mailto:pro@animalmind.co?subject=AnimalMind%20Pet%20updates&body=${encodeURIComponent(`Please add me for Pet owner updates.\nEmail: ${email}`)}`;
+                          setWaitlistStatus("success");
+                          setWaitlistEmail("");
+                        } else {
+                          setWaitlistStatus("error");
+                          setWaitlistError(result.error || "Something went wrong.");
+                        }
+                      }}
+                    >
+                      <input
+                        type="email"
+                        placeholder="Your email"
+                        value={waitlistEmail}
+                        onChange={(e) => setWaitlistEmail(e.target.value)}
+                        disabled={waitlistStatus === "loading"}
+                        className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
+                        aria-label="Email"
+                      />
+                      <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
+                        {waitlistStatus === "loading" ? "…" : "Notify me"}
+                      </Button>
+                    </form>
+                  )}
+                  {waitlistStatus === "error" && waitlistError && (
+                    <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+                  )}
+                </div>
+              </div>
+              <p className="p-4 pt-0 sm:px-6 text-xs text-muted-foreground border-t border-border/80 mt-0">
+                Powered by AnimalMind Pro. Not a replacement for veterinary care. When in doubt, see your vet.
+              </p>
+            </section>
+
+            {/* Lead */}
+            <section className="pb-8 border-b border-border">
+              <p className="section-label mb-1">For pet owners</p>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
+                Clear, evidence-based guidance in one place
+              </h1>
+              <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
+                AnimalMind Pet turns the same autonomous research that professionals use into clear answers for people who care for companion animals—without replacing your veterinarian.
+              </p>
+              <div className="rounded-lg overflow-hidden border border-border bg-muted/20 max-w-2xl">
+                <img
+                  src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=700&q=80"
+                  alt=""
+                  className="w-full h-48 object-cover"
+                />
+              </div>
+            </section>
+
+            {/* Mission / What we do */}
+            <section id="pet-mission" aria-labelledby="pet-mission-heading" className="pb-10">
+              <h2 id="pet-mission-heading" className="section-label mb-3">What to expect</h2>
+              <div className="space-y-6 text-muted-foreground leading-relaxed">
+                <p>
+                  AnimalMind Pet gives you structured, research-backed guidance: what the literature and veterinary sources say about common concerns, when to monitor at home, and when to seek a vet. We always recommend escalation to a veterinarian when appropriate.
+                </p>
+                <p>
+                  Content is derived from AnimalMind Pro—the same autonomous intelligence that monitors veterinary literature, outbreak data, and clinical research. Simplified for clarity; accurate and evidence-based.
+                </p>
+                <p>
+                  For pet owners who want to understand the evidence without replacing professional care. Clear, reassuring, and professional.
+                </p>
+              </div>
+            </section>
+
+            {/* Topics we cover — cards with professional images */}
+            <section id="pet-topics" aria-labelledby="pet-topics-heading" className="pb-10">
+              <h2 id="pet-topics-heading" className="section-label mb-3">What we cover</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card className="border border-border bg-card overflow-hidden">
+                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
+                    <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=80" alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base font-semibold">Dogs & cats</CardTitle>
+                    <CardDescription className="text-sm">Companion animal health, behavior, and care—backed by current research.</CardDescription>
+                  </CardHeader>
+                </Card>
+                <Card className="border border-border bg-card overflow-hidden">
+                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
+                    <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=80" alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base font-semibold">When to see a vet</CardTitle>
+                    <CardDescription className="text-sm">Signs to watch for and when to seek professional care.</CardDescription>
+                  </CardHeader>
+                </Card>
+                <Card className="border border-border bg-card overflow-hidden">
+                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
+                    <img src="https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&q=80" alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base font-semibold">Evidence in plain language</CardTitle>
+                    <CardDescription className="text-sm">What studies and guidelines say—without the jargon.</CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+            </section>
+
+            {/* Updates */}
+            <section id="pet-updates" aria-labelledby="pet-updates-heading" className="py-12 border-t border-border">
+              <h2 id="pet-updates-heading" className="section-label mb-2">Updates</h2>
+              <p className="text-lg font-semibold text-foreground mb-1">Get notified</p>
+              <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                We’ll email you when AnimalMind Pet launches and when we add new guidance. No spam.
+              </p>
+              {waitlistStatus === "success" ? (
+                <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when we have updates.</p>
+              ) : (
+                <form
+                  className="flex flex-col sm:flex-row gap-2 max-w-md"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const email = waitlistEmail.trim();
+                    if (!email) return;
+                    setWaitlistStatus("loading");
+                    setWaitlistError("");
+                    const result = await submitWaitlist(email);
+                    if (result.ok) {
+                      setWaitlistStatus("success");
+                      setWaitlistEmail("");
+                    } else if (result.error === "MAILTO") {
+                      window.location.href = `mailto:pro@animalmind.co?subject=AnimalMind%20Pet%20updates&body=${encodeURIComponent(`Please add me for Pet updates.\nEmail: ${email}`)}`;
+                      setWaitlistStatus("success");
+                      setWaitlistEmail("");
+                    } else {
+                      setWaitlistStatus("error");
+                      setWaitlistError(result.error || "Something went wrong.");
+                    }
+                  }}
+                >
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={waitlistEmail}
+                    onChange={(e) => setWaitlistEmail(e.target.value)}
+                    disabled={waitlistStatus === "loading"}
+                    className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                    aria-label="Email for updates"
+                  />
+                  <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
+                    {waitlistStatus === "loading" ? "…" : "Notify me"}
+                  </Button>
+                </form>
+              )}
+              {waitlistStatus === "error" && waitlistError && (
+                <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+              )}
+            </section>
+
+            <div className="pt-6 flex justify-center">
+              <button type="button" onClick={() => navigate("")} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 ← Back to AnimalMind
               </button>
-            </p>
+            </div>
           </main>
-          <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-            <p>AnimalMind Pet. Powered by AnimalMind Pro infrastructure.</p>
+
+          <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
+            <p className="font-semibold text-foreground">AnimalMind Pet</p>
+            <p className="mt-1">Research-backed guidance for pet owners. Powered by AnimalMind Pro.</p>
+            <p className="mt-2 text-xs">Not a replacement for veterinary care. When in doubt, see your vet.</p>
           </footer>
         </>
       )}
