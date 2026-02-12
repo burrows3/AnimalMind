@@ -1,22 +1,21 @@
 @import "tailwindcss";
 @import "@fontsource-variable/dm-sans";
 
-/* Medical / editorial newspaper style */
+/* Research lab: clean, monochrome, subtle accent (DeepMind × OpenAI feel) */
 @theme inline {
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Lora", "Georgia", serif;
-  /* Editorial: cream, navy, burgundy accent */
-  --color-background: #faf9f6;
-  --color-foreground: #1a1a2e;
-  --color-muted: #f0eee8;
-  --color-muted-foreground: #5c5c6d;
-  --color-border: #e0ddd6;
-  --color-primary: #722f37;
-  --color-primary-foreground: #ffffff;
+  --font-serif: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-background: #fafafa;
+  --color-foreground: #0f0f0f;
+  --color-muted: #f0f0f0;
+  --color-muted-foreground: #525252;
+  --color-border: #e5e5e5;
+  --color-primary: #171717;
+  --color-primary-foreground: #fafafa;
   --color-card: #ffffff;
-  --color-card-foreground: #1a1a2e;
-  --color-ring: #722f37;
-  --color-accent: #8b2942;
+  --color-card-foreground: #0f0f0f;
+  --color-ring: #171717;
+  --color-accent: #404040;
   --color-destructive: #b91c1c;
 }
 
@@ -45,22 +44,19 @@ body {
 }
 
 .app-bg {
-  background-image:
-    linear-gradient(to bottom, rgba(114, 47, 55, 0.02) 0%, transparent 12%),
-    linear-gradient(to bottom, transparent 0%, var(--color-background) 20%);
+  background: var(--color-background);
 }
 
-/* Newspaper section labels */
+/* Section labels: minimal, technical */
 .section-label {
   font-family: var(--font-sans);
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-primary);
+  color: var(--color-muted-foreground);
 }
 
-/* Serif display for headlines */
 .font-editorial {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
 }
