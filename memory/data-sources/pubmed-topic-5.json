@@ -1,17 +1,17 @@
 {
   "topic": "Biological Timing and Treatment Response",
   "baseQuery": "(\"chronobiology\" OR circadian OR \"time of day\") AND (treatment OR anesthesia OR vaccination)",
-  "query": "one health animal",
-  "fallback": "global-fallback",
-  "count": "15",
+  "query": "((\"chronobiology\" OR circadian OR \"time of day\") AND (treatment OR anesthesia OR vaccination)) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": null,
+  "count": "33552",
   "idlist": [
-    "41676263",
-    "41675579",
-    "41675174",
-    "41675173",
-    "41675151",
-    "41674858",
-    "41674765",
-    "41674762"
+    "41665080",
+    "41663379",
+    "41661185",
+    "41640033",
+    "41639111",
+    "41633323",
+    "41627537",
+    "41626874"
   ]
 }

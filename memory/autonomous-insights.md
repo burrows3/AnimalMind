@@ -1,6 +1,6 @@
 # Autonomous insights
 
-**Last updated:** 2026-02-10T04:05:08.766Z
+**Last updated:** 2026-02-12T15:19:55.977Z
 
 The system read the latest ingested data and summarized what matters for animal health.
 
@@ -10,11 +10,11 @@ The system read the latest ingested data and summarized what matters for animal 
 
 | Type | Count |
 |------|-------|
-| Surveillance (CDC) | 21 |
-| Literature (PubMed) | 1266 |
-| Cancer (animal / veterinary) | 23 |
-| Case data (veterinary case reports) | 45 |
-| Clinical (practice, small animal, equine) | 124 |
+| Surveillance (CDC) | 22 |
+| Literature (PubMed) | 2234 |
+| Cancer (animal / veterinary) | 26 |
+| Case data (veterinary case reports) | 55 |
+| Clinical (practice, small animal, equine) | 148 |
 | Imaging & radiographs | 3 |
 | Vet practice (guidelines, resources) | 6 |
 

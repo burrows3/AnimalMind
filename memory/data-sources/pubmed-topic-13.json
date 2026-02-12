@@ -1,17 +1,17 @@
 {
   "topic": "Hidden Costs of Normal Physiology",
   "baseQuery": "(\"chronic stress\" OR \"low grade inflammation\" OR \"allostatic load\")",
-  "query": "one health animal",
-  "fallback": "global-fallback",
-  "count": "15",
+  "query": "((\"chronic stress\" OR \"low grade inflammation\" OR \"allostatic load\")) AND (Animals[MeSH Terms] OR \"Veterinary Medicine\"[MeSH Terms] OR \"Animal Diseases\"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR \"animal health\"[Title/Abstract] OR \"one health\"[Title/Abstract])",
+  "fallback": null,
+  "count": "20075",
   "idlist": [
-    "41676263",
-    "41675579",
-    "41675174",
-    "41675173",
-    "41675151",
-    "41674858",
-    "41674765",
-    "41674762"
+    "41672094",
+    "41669814",
+    "41669247",
+    "41663815",
+    "41656978",
+    "41656497",
+    "41646859",
+    "41642378"
   ]
 }
