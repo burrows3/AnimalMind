@@ -1,41 +1,66 @@
 @import "tailwindcss";
 @import "@fontsource-variable/dm-sans";
 
+/* Medical / editorial newspaper style */
 @theme inline {
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  /* Refined light theme — research / medical */
-  --color-background: #f8fafc;
-  --color-foreground: #0f172a;
-  --color-muted: #f1f5f9;
-  --color-muted-foreground: #64748b;
-  --color-border: #e2e8f0;
-  --color-primary: #1e40af;
+  --font-serif: "Lora", "Georgia", serif;
+  /* Editorial: cream, navy, burgundy accent */
+  --color-background: #faf9f6;
+  --color-foreground: #1a1a2e;
+  --color-muted: #f0eee8;
+  --color-muted-foreground: #5c5c6d;
+  --color-border: #e0ddd6;
+  --color-primary: #722f37;
   --color-primary-foreground: #ffffff;
   --color-card: #ffffff;
-  --color-card-foreground: #0f172a;
-  --color-ring: #1e40af;
+  --color-card-foreground: #1a1a2e;
+  --color-ring: #722f37;
+  --color-accent: #8b2942;
+  --color-destructive: #b91c1c;
 }
 
-/* Prevent mobile "slide around" / rubber-band and horizontal drag */
 html {
   overscroll-behavior: none;
   touch-action: pan-y;
+  scroll-behavior: smooth;
 }
 body {
   font-family: var(--font-sans);
   background: var(--color-background);
   color: var(--color-foreground);
-  line-height: 1.6;
+  line-height: 1.65;
   min-height: 100vh;
   overscroll-behavior: none;
   touch-action: pan-y;
   overflow-x: hidden;
 }
 
-/* Restrained depth: very subtle gradient only (not “kid” wave) */
-.app-bg {
-  background-image:
-    radial-gradient(ellipse 70% 40% at 75% 15%, rgba(30, 64, 175, 0.06) 0%, transparent 55%),
-    linear-gradient(to bottom, transparent 0%, var(--color-background) 25%);
+/* Mobile: prevent overflow, safe area for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
 }
 
+.app-bg {
+  background-image:
+    linear-gradient(to bottom, rgba(114, 47, 55, 0.02) 0%, transparent 12%),
+    linear-gradient(to bottom, transparent 0%, var(--color-background) 20%);
+}
+
+/* Newspaper section labels */
+.section-label {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+/* Serif display for headlines */
+.font-editorial {
+  font-family: var(--font-serif);
+}

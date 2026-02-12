@@ -11,6 +11,7 @@ import {
   Heart,
   RefreshCw,
   Shield,
+  Sparkles,
   Stethoscope,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { submitWaitlist, isSupabaseConfigured } from "./waitlist";
 
 const DATA_ORDER = [
   "surveillance",
@@ -133,16 +135,38 @@ async function fetchDashboard(): Promise<{
 export default function App() {
   const [summary, setSummary] = useState<DataSummary | null>(null);
   const [memory, setMemory] = useState<IngestedRow[] | null>(null);
-  const [memoryOpen, setMemoryOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [waitlistError, setWaitlistError] = useState("");
+  const [proCtaExpanded, setProCtaExpanded] = useState(false);
+
+  const hashToView = (h: string) => (h === "consumer" || h === "clinical" ? h : "");
+  const [view, setView] = useState<"" | "consumer" | "clinical">(() =>
+    hashToView(typeof window !== "undefined" ? window.location.hash.slice(1) : "")
+  );
+
+  useEffect(() => {
+    const onHash = () => setView(hashToView(window.location.hash.slice(1)));
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  const navigate = (v: "" | "consumer" | "clinical") => {
+    window.location.hash = v;
+    setView(v);
+  };
 
   const loadData = useCallback(() => {
-    fetchDashboard().then(({ summary: s, ingested: i }) => {
-      setSummary(s);
-      setMemory(i);
-    });
+    setRefreshing(true);
+    fetchDashboard()
+      .then(({ summary: s, ingested: i }) => {
+        setSummary(s);
+        setMemory(i);
+      })
+      .finally(() => setRefreshing(false));
   }, []);
 
   useEffect(() => {
@@ -164,167 +188,264 @@ export default function App() {
     };
   }, []);
 
+  // Load ingested list if dashboard didn't include it (e.g. API returned summary only)
   useEffect(() => {
-    if (!memoryOpen) return;
-    if (memory !== null) return; // already have from dashboard
+    if (memory !== null) return;
     setMemoryLoading(true);
     fetch(`${base}/data/ingested.json`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        setMemory(Array.isArray(data) ? data : null);
-      })
+      .then((data) => setMemory(Array.isArray(data) ? data : null))
       .catch(() => setMemory(null))
       .finally(() => setMemoryLoading(false));
-  }, [memoryOpen, memory]);
+  }, [memory]);
 
   const lastUpdated = summary?.lastUpdated
     ? new Date(summary.lastUpdated).toLocaleString()
     : null;
 
+  const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
-      {/* Nav */}
-      <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
-        <nav className="mx-auto max-w-5xl px-4 py-3 sm:px-6 flex justify-between items-center gap-4">
-          <a href="#" className="flex items-center gap-2 font-semibold text-foreground tracking-tight text-lg">
-            <AnimalMindLogo className="size-8 text-primary" />
-            <span className="hidden sm:inline">
-              <span className="text-muted-foreground font-medium text-sm">Animal Mind</span>
-              <span className="mx-1.5 text-border">/</span>
-            </span>
-            Animal Research Network
-          </a>
-          <div className="flex items-center gap-3">
-            <a
-              href="#mission"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Mission
-            </a>
-            <a
-              href="#topics"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Topics
-            </a>
-            <a
-              href="#data"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Data
-            </a>
-            <a
-              href="#track"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Sources
-            </a>
-            <a
-              href="https://github.com/burrows3/AnimalMind"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(buttonVariants({ size: "sm" }), "rounded-lg")}
-            >
-              View source
-            </a>
-          </div>
-        </nav>
-      </header>
+      {/* ——— Landing: animal-focused, two paths ——— */}
+      {view === "" && (
+        <>
+          <header className="border-b border-border bg-card">
+            <div className="mx-auto max-w-2xl px-4 py-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => navigate("")}
+                className="flex items-center gap-2 font-editorial text-foreground no-underline min-h-[44px]"
+              >
+                <AnimalMindLogo className="size-8 text-primary shrink-0" />
+                <span className="text-xl font-semibold tracking-tight">For Animals</span>
+              </button>
+            </div>
+          </header>
+          <main className="flex-1 mx-auto w-full max-w-2xl px-4 py-12 sm:py-16">
+            <h1 className="font-editorial text-2xl sm:text-3xl font-semibold text-foreground text-center mb-2">
+              For Animals
+            </h1>
+            <p className="text-center text-muted-foreground text-sm mb-10">
+              Pet owners or vet & clinical. Choose your path.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("consumer")}
+                className="flex flex-col rounded-xl border-2 border-border bg-card p-6 sm:p-8 shadow-sm hover:border-primary/30 hover:shadow-md transition-all text-left min-h-[44px]"
+              >
+                <span className="inline-flex items-center justify-center rounded-full bg-primary/10 w-12 h-12 mb-4">
+                  <Heart className="size-6 text-primary" aria-hidden />
+                </span>
+                <h2 className="font-editorial text-lg font-semibold text-foreground mb-1">Pet owners</h2>
+                <p className="text-sm text-muted-foreground">Resources for people who care for companion animals.</p>
+                <span className="mt-4 text-sm text-primary font-medium">Enter →</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("clinical")}
+                className="flex flex-col rounded-xl border-2 border-primary/30 bg-card p-6 sm:p-8 shadow-sm hover:border-primary/50 hover:shadow-md transition-all text-left min-h-[44px]"
+              >
+                <span className="inline-flex items-center justify-center rounded-full bg-primary/10 w-12 h-12 mb-4">
+                  <Stethoscope className="size-6 text-primary" aria-hidden />
+                </span>
+                <h2 className="font-editorial text-lg font-semibold text-foreground mb-1">Clinical</h2>
+                <p className="text-sm text-muted-foreground">Vet, clinical & research. Animal Research Network.</p>
+                <span className="mt-4 text-sm text-primary font-medium">Enter →</span>
+              </button>
+            </div>
+          </main>
+          <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
+            <p>Animal-focused. Evidence from public sources.</p>
+          </footer>
+        </>
+      )}
 
-      <main className="flex-1 mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 relative z-[1]">
-        {/* Hero */}
-        <section className="text-center space-y-6 pb-12">
-          <Badge
-            variant="secondary"
-            className="rounded-full px-3 py-1 text-xs font-medium gap-1.5"
-          >
-            <Shield className="size-3.5" aria-hidden />
-            Autonomous · Secure · Read-only
-          </Badge>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
-            Animal Research Network
-          </h1>
-          <p className="text-lg text-foreground max-w-2xl mx-auto font-medium leading-relaxed">
-            One place for animal health research and practice.
-          </p>
-          <a
-            href="#mission"
-            className={cn(buttonVariants({ size: "lg" }), "rounded-lg shadow-sm")}
-          >
-            How it works
-          </a>
-        </section>
+      {/* ——— Consumer: Pet owners page ——— */}
+      {view === "consumer" && (
+        <>
+          <header className="sticky top-0 z-10 border-b border-border bg-card">
+            <nav className="mx-auto max-w-4xl px-4 py-3 flex justify-between items-center">
+              <button
+                type="button"
+                onClick={() => navigate("")}
+                className="flex items-center gap-2 font-editorial text-foreground min-h-[44px]"
+              >
+                <AnimalMindLogo className="size-7 text-primary shrink-0" />
+                <span className="text-base font-semibold">For Animals</span>
+              </button>
+              <span className="text-sm text-muted-foreground font-medium">Pet owners</span>
+            </nav>
+          </header>
+          <main className="flex-1 mx-auto w-full max-w-2xl px-4 py-10">
+            <h1 className="font-editorial text-xl sm:text-2xl font-semibold text-foreground mb-4">
+              Pet owners
+            </h1>
+            <p className="text-muted-foreground mb-6">
+              We’re building resources for pet owners with data that runs autonomously—animal health and care, in plain language. Coming soon.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              <button type="button" onClick={() => navigate("")} className="text-primary hover:underline">
+                ← Back to For Animals
+              </button>
+            </p>
+          </main>
+          <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
+            <p>For Animals · Pet owners</p>
+          </footer>
+        </>
+      )}
 
-        {/* Mission & how it works */}
+      {/* ——— Clinical: Animal Research Network (vet, clinical, research) ——— */}
+      {view === "clinical" && (
+        <>
+          <header className="sticky top-0 z-10 border-b-2 border-primary/20 bg-card shadow-sm">
+            <nav className="mx-auto max-w-4xl px-4 py-3 sm:px-6 flex flex-wrap justify-between items-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate("")}
+                className="flex items-center gap-2 font-editorial text-foreground min-h-[44px] py-1 text-left"
+              >
+                <AnimalMindLogo className="size-7 sm:size-8 text-primary shrink-0" />
+                <span className="text-base sm:text-xl font-semibold tracking-tight">Animal Research Network</span>
+              </button>
+              <div className="flex flex-wrap items-center gap-0.5 sm:gap-2 text-sm">
+                <a href="#data" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Digest</a>
+                <a href="#pro-cta" className="px-2.5 py-2 rounded-md text-primary font-medium hover:bg-primary/10 min-h-[44px] flex items-center">Pro</a>
+                <a href="#mission" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Mission</a>
+                <a href="#topics" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Topics</a>
+                <a href="#track" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Sources</a>
+                <a href="#waitlist" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Newsletter</a>
+              </div>
+            </nav>
+            <div className="mx-auto max-w-4xl px-4 pb-2 sm:px-6 flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-0.5 text-xs text-muted-foreground">
+              <span className="truncate">Vet, clinical & research. Evidence from public sources.</span>
+              <span className="shrink-0">{editionDate}</span>
+            </div>
+          </header>
+
+          <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
+            {/* Pro CTA */}
         <section
-          id="mission"
-          aria-labelledby="mission-heading"
-          className="pb-12 space-y-6"
+          id="pro-cta"
+          aria-labelledby="pro-cta-heading"
+          className="mb-8 sm:mb-10 rounded-xl border-2 border-primary/20 bg-linear-to-b from-primary/5 to-transparent shadow-sm overflow-hidden"
         >
-          <h2 id="mission-heading" className="sr-only">
-            Mission and how it works
-          </h2>
-          <Card className="shadow-sm border-border bg-card/95">
-            <CardContent className="p-6 sm:p-8 space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Our mission
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  We exist to improve animal health. By bringing surveillance, literature,
-                  clinical, and vet practice resources into one research network, we help
-                  veterinarians, researchers, and one-health teams make better decisions—
-                  from outbreak awareness to oncology, imaging, and guidelines.
+          <div className="p-4 sm:p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
+              <div className="space-y-2 sm:space-y-3 max-w-xl min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center rounded-md bg-primary/10 p-1.5 shrink-0">
+                    <Sparkles className="size-4 text-primary" aria-hidden />
+                  </span>
+                  <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md">
+                    Pro
+                  </Badge>
+                </div>
+                <h2 id="pro-cta-heading" className="font-editorial text-lg sm:text-xl md:text-2xl font-semibold text-foreground leading-tight">
+                  Pro animal health insights
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  AI agents run autonomously—surveillance, literature, and clinical sources—so your digest stays current. Weekly insights when Pro launches.
                 </p>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  How we ingest data
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  We don’t yet “investigate by topic” on demand. Instead, autonomous agents
-                  run on a schedule with a fixed set of search terms and curated sources:
-                  PubMed (one health, veterinary oncology, case reports, clinical, small
-                  animal, equine), CDC travel notices, TCIA imaging, and curated links
-                  (AAHA, AVMA, Merck, etc.). They fetch, analyze, and organize; then push
-                  updates here. This site is read-only—you see the latest evidence and
-                  links; no credentials or PII are used here. We’re building toward
-                  topic-driven investigation over time.
-                </p>
+              <div className="shrink-0 w-full sm:w-auto">
+                {waitlistStatus === "success" ? (
+                  <p className="text-sm text-primary font-medium py-2">You’re on the list! We’ll notify you when Pro insights are ready.</p>
+                ) : proCtaExpanded ? (
+                  <form
+                    className="flex flex-col sm:flex-row gap-2"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const email = waitlistEmail.trim();
+                      if (!email) return;
+                      setWaitlistStatus("loading");
+                      setWaitlistError("");
+                      const result = await submitWaitlist(email);
+                      if (result.ok) {
+                        setWaitlistStatus("success");
+                        setWaitlistEmail("");
+                      } else if (result.error === "MAILTO") {
+                        window.location.href = `mailto:pro@animalmind.co?subject=Pro%20early%20access&body=${encodeURIComponent(`Please add me for early access.\nEmail: ${email}`)}`;
+                        setWaitlistStatus("success");
+                        setWaitlistEmail("");
+                      } else {
+                        setWaitlistStatus("error");
+                        setWaitlistError(result.error || "Something went wrong.");
+                      }
+                    }}
+                  >
+                    <input
+                      type="email"
+                      placeholder="Your email"
+                      value={waitlistEmail}
+                      onChange={(e) => setWaitlistEmail(e.target.value)}
+                      disabled={waitlistStatus === "loading"}
+                      className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
+                      aria-label="Email"
+                    />
+                    <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
+                      {waitlistStatus === "loading" ? "…" : "Notify me"}
+                    </Button>
+                  </form>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto rounded-md font-medium border-primary/30 bg-background min-h-[44px]"
+                    onClick={() => setProCtaExpanded(true)}
+                  >
+                    Get early access
+                  </Button>
+                )}
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Who it’s for
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Clinicians checking travel notices or differentials; researchers
-                  scanning literature and case data; educators and students building on
-                  current evidence. If your goal is better outcomes for animals, this
-                  network is for you.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Autonomous-Agent Topics: Clinical-Adjacent + Research & Discovery */}
-        <section
-          id="topics"
-          aria-labelledby="topics-heading"
-          className="pb-12 space-y-8"
-        >
-          <div>
-            <h2
-              id="topics-heading"
-              className="text-lg font-semibold text-foreground mb-2"
-            >
-              Autonomous-Agent Topics
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              Clinical-adjacent topics inform veterinary care today. Research topics explore biology, mechanisms, and long-term discovery.
+            </div>
+            {waitlistStatus === "error" && waitlistError && (
+              <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+            )}
+            <p className="mt-4 pt-4 border-t border-border/80 text-xs text-muted-foreground">
+              Powered by autonomous agents. Evidence from public sources only; not medical advice.
             </p>
           </div>
+        </section>
 
+        {/* Lead */}
+        <section className="pb-8 border-b border-border">
+          <p className="section-label mb-1">Editorial</p>
+          <h1 className="font-editorial text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
+            Animal health research and practice, in one place
+          </h1>
+          <p className="text-muted-foreground leading-relaxed max-w-2xl">
+            Autonomous agents aggregate CDC travel notices, PubMed literature, veterinary oncology, case reports, clinical and imaging sources, and guidelines. This digest is read-only; no credentials or PII are used.
+          </p>
+          <a href="#data" className={cn(buttonVariants({ size: "sm" }), "mt-4 rounded-md")}>
+            View today’s digest
+          </a>
+        </section>
+
+        {/* Mission */}
+        <section id="mission" aria-labelledby="mission-heading" className="pb-10">
+          <h2 id="mission-heading" className="section-label mb-3">Mission</h2>
+          <div className="space-y-6 text-muted-foreground leading-relaxed">
+            <p>
+              We exist to improve animal health. By bringing surveillance, literature, clinical, and vet practice resources into one research network, we help veterinarians, researchers, and one-health teams make better decisions—from outbreak awareness to oncology, imaging, and guidelines.
+            </p>
+            <p>
+              Autonomous agents run on a schedule with curated sources: PubMed (one health, veterinary oncology, case reports, clinical, small animal, equine), CDC travel notices, TCIA imaging, and curated links (AAHA, AVMA, Merck, etc.). This site is read-only. We’re building toward topic-driven investigation over time.
+            </p>
+            <p>
+              For clinicians checking travel notices or differentials; researchers scanning literature and case data; educators and students building on current evidence.
+            </p>
+          </div>
+        </section>
+
+        {/* Topics */}
+        <section id="topics" aria-labelledby="topics-heading" className="pb-10">
+          <h2 id="topics-heading" className="section-label mb-3">Autonomous-Agent Topics</h2>
+          <p className="text-sm text-muted-foreground max-w-2xl mb-6">
+            Clinical-adjacent topics inform veterinary care today. Research topics explore biology, mechanisms, and long-term discovery.
+          </p>
           <div className="space-y-6">
             <div>
               <h3 className="text-base font-semibold text-foreground mb-1">
@@ -400,65 +521,53 @@ export default function App() {
           </div>
         </section>
 
-        {/* Two-column: Live data + What the agents track */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-          {/* Live data */}
-          <section
-            id="data"
-            aria-labelledby="data-heading"
-            className="lg:col-span-7 space-y-4"
-          >
-            <h2
-              id="data-heading"
-              className="flex items-center gap-2 text-lg font-semibold text-foreground"
-            >
-              <BarChart3 className="size-5 text-primary" aria-hidden />
-              Live data (from autonomous ingest)
-            </h2>
-            <Card className="shadow-sm border-border">
-              <CardContent className="p-6">
+        {/* Today's digest + Topics side by side */}
+        <section id="data" aria-labelledby="data-heading" className="pb-10">
+          <h2 id="data-heading" className="section-label mb-2 flex items-center gap-2">
+            <BarChart3 className="size-4" aria-hidden />
+            Today’s digest
+          </h2>
+          <p className="text-xs text-muted-foreground mb-4">Latest from autonomous ingest. Data from public sources only.</p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+            {/* Left: Today's digest — counts + summary */}
+            <Card className="shadow-sm border-border border-l-4 border-l-primary/30 h-fit">
+              <CardContent className="p-4 sm:p-6">
                 {loading ? (
                   <p className="text-sm text-muted-foreground">Loading…</p>
                 ) : summary?.counts ? (
                   <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {DATA_ORDER.map((key) => {
                         const Icon = DATA_ICONS[key];
                         return (
                           <div
                             key={key}
-                            className="rounded-xl border border-border bg-muted/40 p-4 text-center transition-colors hover:bg-muted/70 hover:border-primary/20 shadow-sm"
+                            className="rounded-lg border border-border bg-muted/40 p-3 text-center"
                           >
-                            {Icon && (
-                              <Icon className="size-5 text-primary mx-auto mb-2 block" aria-hidden />
-                            )}
-                            <span className="block text-2xl font-bold text-foreground">
-                              {summary.counts[key] ?? 0}
-                            </span>
-                            <span className="mt-1 block text-xs text-muted-foreground">
-                              {LABELS[key] ?? key}
-                            </span>
+                            {Icon && <Icon className="size-4 text-primary mx-auto mb-1 block" aria-hidden />}
+                            <span className="block text-xl font-bold text-foreground">{summary.counts[key] ?? 0}</span>
+                            <span className="block text-[11px] text-muted-foreground">{LABELS[key] ?? key}</span>
                           </div>
                         );
                       })}
                     </div>
-                    <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                    <p className="mt-4 text-sm text-muted-foreground">
+                      {(() => {
+                        const total = Object.values(summary.counts).reduce((a, b) => a + b, 0);
+                        return `${total} items across surveillance, literature, clinical, and more. Links open original sources (CDC, PubMed, etc.).`;
+                      })()}
+                    </p>
+                    <div className="mt-4 pt-3 border-t border-border flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
                       {lastUpdated && (
                         <span className="flex items-center gap-2">
                           <Clock className="size-4" aria-hidden />
-                          Data as of {lastUpdated}
+                          As of {lastUpdated}
                         </span>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        disabled={refreshing}
-                        onClick={refreshData}
-                        aria-label="Refresh data"
-                      >
+                      <Button variant="outline" size="sm" className="gap-2 rounded-md" disabled={refreshing} onClick={loadData} aria-label="Refresh data">
                         <RefreshCw className={cn("size-4", refreshing && "animate-spin")} aria-hidden />
-                        {refreshing ? "Refreshing…" : "Refresh data"}
+                        {refreshing ? "Refreshing…" : "Refresh"}
                       </Button>
                     </div>
                   </>
@@ -469,106 +578,51 @@ export default function App() {
                 )}
               </CardContent>
             </Card>
-          </section>
 
-          {/* What the agents track */}
-          <section
-            id="track"
-            aria-labelledby="track-heading"
-            className="lg:col-span-5 space-y-4"
-          >
-            <h2
-              id="track-heading"
-              className="text-lg font-semibold text-foreground"
-            >
-              What the agents track
-            </h2>
-            <div className="space-y-3">
-              {TRACK_ITEMS.map((item) => (
-                <Card
-                  key={item.key}
-                  className="border border-border bg-card shadow-sm transition-shadow hover:shadow"
-                >
-                  <CardHeader className="p-4 pb-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-sm font-semibold">
-                        {item.title}
-                      </CardTitle>
-                      <Badge variant="secondary" className="text-[10px] font-medium shrink-0">
-                        {item.tag}
-                      </Badge>
-                    </div>
-                    <CardDescription className="text-xs">
-                      {item.desc}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        {/* Browse data (agent memory) */}
-        <section
-          id="memory"
-          aria-labelledby="memory-heading"
-          className="mt-12 space-y-4"
-        >
-          <h2 id="memory-heading" className="text-lg font-semibold text-foreground">
-            Browse data (agent memory)
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Latest items from autonomous ingest. Links open the source (CDC,
-            PubMed, etc.).
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => setMemoryOpen((o) => !o)}
-            aria-expanded={memoryOpen}
-            aria-controls="memory-panel"
-            className="rounded-lg shadow-sm"
-          >
-            {memoryOpen ? "Hide data" : "Show data"}
-          </Button>
-          {memoryOpen && (
-            <Card
-              id="memory-panel"
-              className="max-h-[70vh] overflow-y-auto shadow-sm border-border"
-            >
-              <CardContent className="p-4">
+            {/* Right: Topics — data by type */}
+            <Card id="memory-panel" className="shadow-sm border-border border-l-4 border-l-primary/20 max-h-[55vh] sm:max-h-[65vh] lg:max-h-[70vh] flex flex-col min-h-0">
+              <CardHeader className="p-3 sm:p-4 pb-2 border-b border-border shrink-0">
+                <CardTitle className="text-sm font-semibold">Topics</CardTitle>
+                <CardDescription className="text-xs">
+                  Items by source type. Click through to CDC, PubMed, and more.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0 flex-1 overflow-y-auto min-h-0 overscroll-contain">
                 {memoryLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading…</p>
+                  <div className="p-6">
+                    <p className="text-sm text-muted-foreground">Loading…</p>
+                  </div>
                 ) : memory && memory.length > 0 ? (
-                  <div className="space-y-6">
+                  <div className="divide-y divide-border">
                     {DATA_ORDER.map((type) => {
                       const items = memory.filter((r) => r.data_type === type);
                       if (items.length === 0) return null;
+                      const Icon = DATA_ICONS[type];
                       return (
-                        <div key={type}>
-                          <h3 className="text-sm font-semibold text-foreground mb-2">
-                            {LABELS[type] ?? type} ({items.length})
-                          </h3>
+                        <div key={type} className="p-4 bg-muted/15 first:bg-transparent">
+                          <div className="flex items-center gap-2 mb-2">
+                            {Icon && <Icon className="size-4 text-primary shrink-0" aria-hidden />}
+                            <h3 className="text-sm font-semibold text-foreground">
+                              {LABELS[type] ?? type}
+                            </h3>
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              {items.length}
+                            </span>
+                          </div>
                           <ul className="list-none space-y-2">
                             {items.map((item, i) => {
                               const href = safeHref(item.url);
                               return (
-                                <li key={i} className="text-sm">
+                                <li key={i} className="text-sm py-1.5 px-2 rounded border border-border/50 bg-card hover:border-primary/20">
                                   {href !== "#" ? (
-                                    <a
-                                      href={href}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-primary hover:underline"
-                                    >
+                                    <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline block">
                                       {item.title || "Untitled"}
                                     </a>
                                   ) : (
-                                    <span>{item.title || "Untitled"}</span>
+                                    <span className="text-foreground">{item.title || "Untitled"}</span>
                                   )}
                                   {item.condition_or_topic && (
-                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                      {item.condition_or_topic}
-                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">{item.condition_or_topic}</div>
                                   )}
                                 </li>
                               );
@@ -579,37 +633,105 @@ export default function App() {
                     })}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No data yet. Run ingest and push.
-                  </p>
+                  <div className="p-6">
+                    <p className="text-sm text-muted-foreground">No data yet. Run ingest and push.</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
+          </div>
+
+          {/* Sources (what the agents track) — full width below */}
+          <section id="track" aria-labelledby="track-heading" className="mt-8 space-y-3">
+            <h2 id="track-heading" className="section-label mb-2">Sources</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {TRACK_ITEMS.map((item) => (
+                <Card key={item.key} className="border border-border bg-card shadow-sm">
+                  <CardHeader className="p-3 pb-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-sm font-semibold">{item.title}</CardTitle>
+                      <Badge variant="secondary" className="text-[10px] shrink-0">{item.tag}</Badge>
+                    </div>
+                    <CardDescription className="text-xs">{item.desc}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          </section>
+        </section>
+
+        {/* Newsletter / Waitlist — Supabase or mailto */}
+        <section id="waitlist" aria-labelledby="waitlist-heading" className="py-12 border-t border-border">
+          <h2 id="waitlist-heading" className="section-label mb-2">Newsletter</h2>
+          <p className="font-editorial text-lg font-semibold text-foreground mb-1">Stay updated</p>
+          <p className="text-sm text-muted-foreground mb-4 max-w-md">
+            Get notified when we add new digests, Pro reports, or major updates. No spam.
+          </p>
+          {waitlistStatus === "success" ? (
+            <p className="text-sm text-primary font-medium">You’re on the list! We’ll notify you when we have updates.</p>
+          ) : (
+            <form
+              className="flex flex-col sm:flex-row gap-2 max-w-md"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const email = waitlistEmail.trim();
+                if (!email) return;
+                setWaitlistStatus("loading");
+                setWaitlistError("");
+                const result = await submitWaitlist(email);
+                if (result.ok) {
+                  setWaitlistStatus("success");
+                  setWaitlistEmail("");
+                } else if (result.error === "MAILTO") {
+                  window.location.href = `mailto:pro@animalmind.co?subject=Newsletter%20sign-up&body=${encodeURIComponent(`Please add me to the newsletter.\nEmail: ${email}`)}`;
+                  setWaitlistStatus("success");
+                  setWaitlistEmail("");
+                } else {
+                  setWaitlistStatus("error");
+                  setWaitlistError(result.error || "Something went wrong.");
+                }
+              }}
+            >
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={waitlistEmail}
+                onChange={(e) => setWaitlistEmail(e.target.value)}
+                disabled={waitlistStatus === "loading"}
+                className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                aria-label="Email for newsletter"
+              />
+              <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
+                {waitlistStatus === "loading" ? "Signing up…" : "Sign up"}
+              </Button>
+            </form>
+          )}
+          {waitlistStatus === "error" && waitlistError && (
+            <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+          )}
+          {!isSupabaseConfigured() && waitlistStatus === "idle" && (
+            <p className="mt-2 text-xs text-muted-foreground">Or email pro@animalmind.co with subject “Newsletter sign-up”.</p>
           )}
         </section>
 
-        {/* Discover more */}
-        <div className="mt-16 flex justify-center">
-          <a
-            href="#memory"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Discover more
-            <ChevronDown className="size-4" aria-hidden />
+        <div className="pt-8 flex justify-center">
+          <a href="#data" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Back to digest
+            <ChevronDown className="size-4 rotate-180" aria-hidden />
           </a>
         </div>
-      </main>
+          </main>
 
-      <footer className="border-t border-border bg-card/80 mt-auto py-6 text-center text-sm text-muted-foreground relative z-[1]">
-        <p>
-          Research engine for veterinarians and partners. Data from public
-          sources only.
-        </p>
-        <p className="mt-1 flex items-center justify-center gap-1.5 text-emerald-700 text-xs font-medium">
-          <Heart className="size-3.5" aria-hidden />
-          No credentials, API keys, or PII are exposed in this UI.
-        </p>
-      </footer>
+          <footer className="border-t-2 border-primary/10 bg-card mt-auto py-8 text-center text-sm text-muted-foreground relative z-1">
+            <p className="font-editorial font-semibold text-foreground">Animal Research Network</p>
+            <p className="mt-1">Vet, clinical & research. Evidence from public sources only.</p>
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-primary/80 text-xs">
+              <Heart className="size-3.5" aria-hidden />
+              No credentials or PII collected.
+            </p>
+          </footer>
+        </>
+      )}
     </div>
   );
 }
