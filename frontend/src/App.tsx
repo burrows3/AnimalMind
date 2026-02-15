@@ -385,6 +385,102 @@ function sourceHostLabel(url: string | undefined): string {
   }
 }
 
+function extractPubMedIdFromUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  const match = url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)\//i);
+  return match ? match[1] : null;
+}
+
+function collectPubMedIds(rows: IngestedRow[]): string[] {
+  const ids = new Set<string>();
+  for (const row of rows) {
+    const id = extractPubMedIdFromUrl(row.url);
+    if (id) ids.add(id);
+  }
+  return Array.from(ids);
+}
+
+function buildPubMedEfetchUrl(ids: string[]): string {
+  const joined = encodeURIComponent(ids.join(","));
+  return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${joined}&retmode=xml`;
+}
+
+function parsePubMedAbstractsXml(xml: string): Record<string, string> {
+  const map: Record<string, string> = {};
+  if (typeof DOMParser !== "undefined") {
+    const doc = new DOMParser().parseFromString(xml, "text/xml");
+    const parserErrors = doc.getElementsByTagName("parsererror");
+    if (parserErrors.length === 0) {
+      const articles = Array.from(doc.getElementsByTagName("PubmedArticle"));
+      for (const article of articles) {
+        const pmidNode = article.getElementsByTagName("PMID")[0];
+        const pmid = pmidNode?.textContent?.trim();
+        if (!pmid) continue;
+        const abstractNodes = Array.from(article.getElementsByTagName("AbstractText"));
+        const abstract = abstractNodes
+          .map((n) => (n.textContent || "").replace(/\s+/g, " ").trim())
+          .filter(Boolean)
+          .join(" ");
+        if (abstract) map[pmid] = abstract;
+      }
+      return map;
+    }
+  }
+  const blocks = xml.match(/<PubmedArticle>[\s\S]*?<\/PubmedArticle>/g) || [];
+  for (const block of blocks) {
+    const pmid = block.match(/<PMID[^>]*>(\d+)<\/PMID>/)?.[1];
+    if (!pmid) continue;
+    const abstracts = Array.from(block.matchAll(/<AbstractText[^>]*>([\s\S]*?)<\/AbstractText>/g))
+      .map((m) => m[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+    if (abstracts.length > 0) map[pmid] = abstracts.join(" ");
+  }
+  return map;
+}
+
+async function fetchPubMedAbstracts(ids: string[]): Promise<Record<string, string>> {
+  const unique = Array.from(new Set(ids.filter(Boolean)));
+  if (unique.length === 0) return {};
+  const out: Record<string, string> = {};
+  const chunkSize = 100;
+  for (let i = 0; i < unique.length; i += chunkSize) {
+    const batch = unique.slice(i, i + chunkSize);
+    const res = await fetch(buildPubMedEfetchUrl(batch), { cache: "no-store" });
+    if (!res.ok) continue;
+    const xml = await res.text();
+    Object.assign(out, parsePubMedAbstractsXml(xml));
+    // Respect NCBI unauthenticated rate limits.
+    if (i + chunkSize < unique.length) {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    }
+  }
+  return out;
+}
+
+const PUBMED_ABSTRACT_CACHE_KEY = "animalmind_pubmed_abstracts_v1";
+
+function readPubMedAbstractCache(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(PUBMED_ABSTRACT_CACHE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return {};
+    return parsed;
+  } catch {
+    return {};
+  }
+}
+
+function writePubMedAbstractCache(cache: Record<string, string>): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PUBMED_ABSTRACT_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Ignore quota/storage errors.
+  }
+}
+
 function relativeTime(iso: string | null | undefined): string {
   if (!iso) return "unknown";
   const ts = new Date(iso).getTime();
@@ -674,9 +770,13 @@ function petArticleTitle(row: IngestedRow): string {
 }
 
 /** One-sentence summary tied to this specific source for pet owners. */
-function petArticleSummary(row: IngestedRow): string {
+function petArticleSummary(row: IngestedRow, evidenceText = ""): string {
   const topic = articleTopicText(row);
   const hasTitle = (row.title || "").trim().length > 0;
+  const evidence = firstSentences(evidenceText, 1, 170);
+  if (evidence) {
+    return `What this research reports on ${topic}: ${evidence}`;
+  }
   if (hasTitle) {
     return `This source on ${topic} is relevant for pet owners. Here's what it may mean for you and your pet—read the source for full details.`;
   }
@@ -701,6 +801,39 @@ function shortHeadline(text: string, max = 96): string {
   return `${safe}…`;
 }
 
+function firstSentences(text: string, maxSentences = 2, maxChars = 320): string {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned) return "";
+  const matches = cleaned.match(/[^.!?]+[.!?]?/g) || [cleaned];
+  const picked: string[] = [];
+  let length = 0;
+  for (const s of matches) {
+    const sentence = s.trim();
+    if (!sentence) continue;
+    if (picked.length >= maxSentences) break;
+    if (length + sentence.length > maxChars && picked.length > 0) break;
+    picked.push(sentence);
+    length += sentence.length + 1;
+  }
+  const joined = picked.join(" ").trim();
+  return joined.length > maxChars ? `${joined.slice(0, maxChars - 1)}…` : joined;
+}
+
+function sourceEvidenceSnippet(rows: IngestedRow[], abstractByPmid: Record<string, string>): string {
+  const snippets: string[] = [];
+  for (const row of rows) {
+    const pmid = extractPubMedIdFromUrl(row.url);
+    if (!pmid) continue;
+    const abstract = abstractByPmid[pmid];
+    if (!abstract) continue;
+    const snippet = firstSentences(abstract, 1, 220);
+    if (!snippet) continue;
+    snippets.push(snippet);
+    if (snippets.length >= 2) break;
+  }
+  return snippets.join(" ");
+}
+
 function ensureThreeParagraphs(paragraphs: string[], topic: string): string[] {
   const cleaned = paragraphs
     .map((p) => p.trim())
@@ -712,7 +845,7 @@ function ensureThreeParagraphs(paragraphs: string[], topic: string): string[] {
 }
 
 /** Exactly three research-focused paragraphs per article card. */
-function petArticleParagraphs(row: IngestedRow): string[] {
+function petArticleParagraphs(row: IngestedRow, evidenceText = ""): string[] {
   const topic = articleTopicText(row);
   const text = `${row.title || ""} ${row.condition_or_topic || ""}`.toLowerCase();
   const sourceLabel = LABELS[row.data_type] ?? row.data_type.replace(/_/g, " ");
@@ -722,16 +855,20 @@ function petArticleParagraphs(row: IngestedRow): string[] {
     : "A newly ingested report is one of today’s strongest signals in this topic.";
 
   const intro = `Research desk: ${topic} is active in today’s ${sourceLabel} feed. ${headlineContext} This article summarizes what researchers are flagging and why the update is relevant to everyday pet care decisions.`;
-
-  let interpretation = `From a research perspective, this signal should be treated as a trend indicator rather than a diagnosis. The practical read is to monitor appetite, comfort, activity, and behavior over time, then compare changes against the source details and your veterinarian’s guidance.`;
-  if (/\b(surveillance|travel|outbreak|zoonotic|rabies|dengue|chikungunya)\b/.test(text) || row.data_type === "surveillance") {
-    interpretation = `This story intersects with surveillance research, where geography and timing can change risk quickly. The key reporting angle is location-specific exposure: check whether your region, travel plans, or species category appears directly in the source evidence.`;
-  } else if (/\b(poison|toxin|toxic|emergenc)\b/.test(text)) {
-    interpretation = `This signal points toward toxin or emergency relevance. Across published veterinary evidence, outcomes are strongly tied to early recognition and rapid escalation, so speed and preparation matter more than waiting to “see if it passes.”`;
-  } else if (/\b(vaccin|prevent|prophylaxis)\b/.test(text)) {
-    interpretation = `This update emphasizes prevention research. The recurring finding in this area is that timing, consistency, and individualized preventive planning with your veterinarian reduce avoidable complications and improve long-term protection.`;
-  } else if (/\b(cancer|oncolog|tumou|tumor|canine|feline)\b/.test(text)) {
-    interpretation = `This article intersects with oncology-related evidence, where trend detection and follow-up planning often shape both treatment options and quality-of-life outcomes. The research takeaway is to prioritize clear baselines and structured rechecks.`;
+  const evidenceSummary = firstSentences(evidenceText, 2, 360);
+  let interpretation = evidenceSummary
+    ? `What the study reports: ${evidenceSummary}`
+    : `From a research perspective, this signal should be treated as a trend indicator rather than a diagnosis. The practical read is to monitor appetite, comfort, activity, and behavior over time, then compare changes against the source details and your veterinarian’s guidance.`;
+  if (!evidenceSummary) {
+    if (/\b(surveillance|travel|outbreak|zoonotic|rabies|dengue|chikungunya)\b/.test(text) || row.data_type === "surveillance") {
+      interpretation = `This story intersects with surveillance research, where geography and timing can change risk quickly. The key reporting angle is location-specific exposure: check whether your region, travel plans, or species category appears directly in the source evidence.`;
+    } else if (/\b(poison|toxin|toxic|emergenc)\b/.test(text)) {
+      interpretation = `This signal points toward toxin or emergency relevance. Across published veterinary evidence, outcomes are strongly tied to early recognition and rapid escalation, so speed and preparation matter more than waiting to “see if it passes.”`;
+    } else if (/\b(vaccin|prevent|prophylaxis)\b/.test(text)) {
+      interpretation = `This update emphasizes prevention research. The recurring finding in this area is that timing, consistency, and individualized preventive planning with your veterinarian reduce avoidable complications and improve long-term protection.`;
+    } else if (/\b(cancer|oncolog|tumou|tumor|canine|feline)\b/.test(text)) {
+      interpretation = `This article intersects with oncology-related evidence, where trend detection and follow-up planning often shape both treatment options and quality-of-life outcomes. The research takeaway is to prioritize clear baselines and structured rechecks.`;
+    }
   }
 
   const action = `What this means for pets: use this report as context, not a substitute for care. If your pet shows symptoms related to ${topic}, contact your veterinarian promptly, and use the linked source to discuss risk factors, urgency, and next-step options.`;
@@ -739,7 +876,7 @@ function petArticleParagraphs(row: IngestedRow): string[] {
 }
 
 /** One article per source; image matches topic (dog→dog photo), distinct. Backup = same topic so no blanks. */
-function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] {
+function buildPetArticlesFromResearch(rows: IngestedRow[] | null, abstractByPmid: Record<string, string>): PetArticle[] {
   const petRows = toPetBriefItems(rows, 30);
   if (petRows.length === 0) return [];
   const topicUseCount: Record<PetTopicKey, number> = {
@@ -758,11 +895,13 @@ function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] 
     const useIndex = topicUseCount[topicKey];
     topicUseCount[topicKey] = useIndex + 1;
     const images = petTopicImageSet(topicKey, useIndex, usedPrimary);
+    const pmid = extractPubMedIdFromUrl(row.url);
+    const evidenceText = pmid ? abstractByPmid[pmid] || "" : "";
     return {
       id: stableArticleId(row),
       title: petArticleTitle(row),
-      summary: petArticleSummary(row),
-      points: petArticleParagraphs(row),
+      summary: petArticleSummary(row, evidenceText),
+      points: petArticleParagraphs(row, evidenceText),
       sources: [row],
       imageUrl: images.imageUrl,
       backupImageUrl: images.backupImageUrl,
@@ -823,7 +962,8 @@ function buildPetNewsParagraphs(
   topicRaw: string,
   topicKey: PetTopicKey,
   topicCount: number,
-  sourceRows: IngestedRow[]
+  sourceRows: IngestedRow[],
+  evidenceSummary: string
 ): string[] {
   const updatesLabel = topicCount === 1 ? "update" : "updates";
   const sourceMix = Array.from(
@@ -835,12 +975,14 @@ function buildPetNewsParagraphs(
     ? `Research desk lead: ${topicCount} ${updatesLabel} this cycle center on ${topicLabel.toLowerCase()}, with evidence drawn from ${sourceMixText}. One representative report is “${leadTitle}.”`
     : `Research desk lead: ${topicCount} ${updatesLabel} this cycle center on ${topicLabel.toLowerCase()}, with evidence drawn from ${sourceMixText}.`;
   const sourceText = `${topicRaw} ${sourceRows.map((row) => `${row.title || ""} ${row.condition_or_topic || ""}`).join(" ")}`.toLowerCase();
-  const researchAngle = petNewsResearchAngle(topicKey, sourceText);
+  const researchAngle = evidenceSummary
+    ? `What current studies report: ${evidenceSummary}`
+    : petNewsResearchAngle(topicKey, sourceText);
   const meaning = petNewsMeaningForPets(topicLabel, topicKey);
   return ensureThreeParagraphs([lead, researchAngle, meaning], topicLabel);
 }
 
-function buildPetNewsCards(rows: IngestedRow[] | null): PetNewsCard[] {
+function buildPetNewsCards(rows: IngestedRow[] | null, abstractByPmid: Record<string, string>): PetNewsCard[] {
   const petRows = toPetBriefItems(rows, 24);
   if (petRows.length === 0) return [];
   const topics = topTopics(petRows, 5);
@@ -864,7 +1006,8 @@ function buildPetNewsCards(rows: IngestedRow[] | null): PetNewsCard[] {
     topicUseCount[topicKey] = useIndex + 1;
     const images = petTopicImageSet(topicKey, useIndex + idx, usedPrimary);
     const label = friendlyPetTopic(topic.topic);
-    const paragraphs = buildPetNewsParagraphs(label, topic.topic, topicKey, topic.count, sourceRows);
+    const evidenceSummary = sourceEvidenceSnippet(sourceRows, abstractByPmid);
+    const paragraphs = buildPetNewsParagraphs(label, topic.topic, topicKey, topic.count, sourceRows, evidenceSummary);
     return {
       id: `pet-news-${idx}-${topic.topic}`,
       title: `${label}: new research signals pet owners should watch`,
@@ -885,6 +1028,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [pubmedAbstracts, setPubmedAbstracts] = useState<Record<string, string>>(() => readPubMedAbstractCache());
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [waitlistError, setWaitlistError] = useState("");
@@ -970,6 +1114,28 @@ export default function App() {
 
   const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const petBriefItems = useMemo(() => toPetBriefItems(memory), [memory]);
+  const petArticleSourceRows = useMemo(() => toPetBriefItems(memory, 30), [memory]);
+  const petPubMedIds = useMemo(() => collectPubMedIds(petArticleSourceRows), [petArticleSourceRows]);
+  const petPubMedIdsKey = petPubMedIds.join(",");
+  useEffect(() => {
+    if (petPubMedIds.length === 0) return;
+    const missing = petPubMedIds.filter((id) => !pubmedAbstracts[id]);
+    if (missing.length === 0) return;
+    let cancelled = false;
+    fetchPubMedAbstracts(missing)
+      .then((fetched) => {
+        if (cancelled || Object.keys(fetched).length === 0) return;
+        setPubmedAbstracts((prev) => {
+          const next = { ...prev, ...fetched };
+          writePubMedAbstractCache(next);
+          return next;
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [petPubMedIdsKey, pubmedAbstracts, petPubMedIds]);
   const petBriefCount = summary?.counts?.pet_owner ?? petBriefItems.length;
   const dailyBriefArticles = useMemo(() => buildDailyBriefArticles(memory), [memory]);
   const proBriefArticles = useMemo(
@@ -981,8 +1147,11 @@ export default function App() {
     [dailyBriefArticles]
   );
   /** One article per ingested research item, written for pet owners; each has its own image. */
-  const petArticlesFromResearch = useMemo(() => buildPetArticlesFromResearch(memory), [memory]);
-  const petNewsCards = useMemo(() => buildPetNewsCards(memory), [memory]);
+  const petArticlesFromResearch = useMemo(
+    () => buildPetArticlesFromResearch(memory, pubmedAbstracts),
+    [memory, pubmedAbstracts]
+  );
+  const petNewsCards = useMemo(() => buildPetNewsCards(memory, pubmedAbstracts), [memory, pubmedAbstracts]);
   const featuredPetNews = petNewsCards[0] ?? null;
   const morePetNews = petNewsCards.slice(1);
   const sourceHealthSummary = summary?.sourceHealthSummary ?? null;
