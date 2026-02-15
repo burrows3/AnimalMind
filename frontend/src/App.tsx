@@ -108,53 +108,27 @@ const CLINICAL_SECTION_HASHES = new Set([
   "waitlist",
   "memory-panel",
 ]);
-/** High-quality distinct photos per article. Each article gets a unique image from a deterministic URL. */
+/** High-quality distinct photo per article. Primary: Picsum (unique seed). Fallback: distinct SVG so no card is ever blank. */
 const PET_IMAGE_WIDTH = 480;
 const PET_IMAGE_HEIGHT = 300;
-/** Real animal/nature photos: Unsplash CDN (verified IDs). One per article index; fallback to Picsum then SVG. */
-const PET_ARTICLE_PHOTOS: string[] = [
-  "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1514888286974-6c03e2ca239d?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1574158622688-e89e3eaf0f74?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1458571037713-913d8b481dc6?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1474511324803-24c5926a8c78?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1583337133575-2d75733f19e0?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1587303853328-5f3b2c1a0d9e?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1583337133575-2d75733f19e0?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1511044568932-338cba0ad803?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1552053831-71594a27632d?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1530281700549-e82e7bf97421?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1583337133575-2d75733f19e0?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1568572933382-74d440642117?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1514888286974-6c03e2ca239d?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1574158622688-e89e3eaf0f74?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1458571037713-913d8b481dc6?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1474511324803-24c5926a8c78?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1583337133575-2d75733f19e0?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1587303853328-5f3b2c1a0d9e?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1511044568932-338cba0ad803?w=480&q=80&fit=crop",
-  "https://images.unsplash.com/photo-1552053831-71594a27632d?w=480&q=80&fit=crop",
-];
+/** One unique photo URL per article index (Picsum deterministic by seed). */
 function petImageUrlForArticle(_topicKey: string, articleIndex: number): string {
-  const url = PET_ARTICLE_PHOTOS[articleIndex % PET_ARTICLE_PHOTOS.length];
-  if (url) return url;
   return `https://picsum.photos/seed/pet-${articleIndex}/${PET_IMAGE_WIDTH}/${PET_IMAGE_HEIGHT}`;
+}
+/** Distinct fallback image per article index (no blanks: each card gets a unique visual). */
+function petFallbackImageUrl(articleIndex: number): string {
+  const h = (articleIndex * 47 + 137) % 360;
+  const bg = `hsl(${h}, 28%, 92%)`;
+  const fg = `hsl(${h}, 35%, 40%)`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PET_IMAGE_WIDTH} ${PET_IMAGE_HEIGHT}"><rect fill="${bg}" width="${PET_IMAGE_WIDTH}" height="${PET_IMAGE_HEIGHT}"/><ellipse cx="240" cy="140" rx="80" ry="50" fill="${fg}" opacity="0.25"/><text x="240" y="200" font-family="system-ui,sans-serif" font-size="13" fill="${fg}" text-anchor="middle" dominant-baseline="middle">Pet health</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 /** Map inferPetImageIndex (0–7) to topic key. */
 const PET_TOPIC_KEYS = ["cat", "turtle", "wildlife", "horse", "dog", "bird", "cattle", "wildlife"] as const;
 /** Featured/more cards: distinct photos. */
-const PET_FEATURED_IMAGES = PET_ARTICLE_PHOTOS.slice(0, 8);
-/** Fallback when image fails to load. */
-const PET_ARTICLE_IMAGE_FALLBACK = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300"><rect fill="#e2e8f0" width="480" height="300"/><text x="240" y="155" font-family="system-ui,sans-serif" font-size="14" fill="#64748b" text-anchor="middle" dominant-baseline="middle">Pet health</text></svg>')}`;
+const PET_FEATURED_IMAGES = Array.from({ length: 8 }, (_, i) => petImageUrlForArticle("dog", i));
+/** Generic fallback (should not be used when fallbackImageUrl is set per article). */
+const PET_ARTICLE_IMAGE_FALLBACK = petFallbackImageUrl(999);
 
 type DataSummary = {
   lastUpdated?: string | null;
@@ -233,8 +207,10 @@ type PetArticle = {
   summary: string;
   points: string[];
   sources: IngestedRow[];
-  /** Image URL chosen to match the article (e.g. dog for canine cancer). */
+  /** Primary image URL (distinct per article). */
   imageUrl: string;
+  /** Fallback image URL when primary fails (distinct per article so no blanks). */
+  fallbackImageUrl: string;
 };
 
 function safeHref(url: string | undefined): string {
@@ -595,21 +571,21 @@ function inferPetImageIndex(row: IngestedRow): number {
   return 4; // default dog for general pet
 }
 
-/** One article per source; each gets a different image (seed = global index so every card is unique). */
+/** One article per source; each gets a distinct image and a distinct fallback (no blanks). */
 function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] {
   const petRows = toPetBriefItems(rows, 30);
   if (petRows.length === 0) return [];
   return petRows.map((row, articleIndex) => {
     const imageIndex = inferPetImageIndex(row);
     const topicKey = PET_TOPIC_KEYS[imageIndex] ?? "dog";
-    const imageUrl = petImageUrlForArticle(topicKey, articleIndex);
     return {
       id: stableArticleId(row),
       title: petArticleTitle(row),
       summary: petArticleSummary(row),
       points: petArticlePoints(row),
       sources: [row],
-      imageUrl,
+      imageUrl: petImageUrlForArticle(topicKey, articleIndex),
+      fallbackImageUrl: petFallbackImageUrl(articleIndex),
     };
   });
 }
@@ -1212,8 +1188,9 @@ export default function App() {
                                 referrerPolicy="no-referrer"
                                 loading="lazy"
                                 onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src = PET_ARTICLE_IMAGE_FALLBACK;
+                                  const img = e.currentTarget;
+                                  img.onerror = null;
+                                  img.src = article.fallbackImageUrl;
                                 }}
                               />
                             </div>
