@@ -79,6 +79,18 @@ const BRAND_TAGLINE = "ANIMAL HEALTH NEWS";
 const BRAND_HEADLINE = "INTELLIGENCE FOR ANIMAL HEALTH";
 const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
 const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
+const PRO_MARKETING_HEADLINE = "AnimalMind Pro is the modern intelligence layer for veterinary medicine.";
+const PRO_MARKETING_VALUE =
+  "It monitors veterinary research and public health sources in real time, then delivers concise AI summaries of outbreak alerts, drug updates, regulatory changes, and clinical insights so teams can act quickly.";
+const PRO_MARKETING_BENEFITS = [
+  "Track new research, surveillance signals, and regulatory changes in one place.",
+  "Get prioritized outbreak alerts by region, species, and clinical relevance.",
+  "Stay current on drug approvals, safety signals, label changes, and withdrawals.",
+  "Focus on high-signal updates designed to reduce noise for busy clinicians.",
+  "Replace hours of manual review with brief updates you can scan in minutes.",
+];
+const PRO_MARKETING_CREDIBILITY =
+  "Built for veterinarians, researchers, and animal health professionals, with source-linked updates from trusted public data.";
 /** Your animal photos (cat, turtle, fox, horse, dog, parrot, cows, lemur). Each used at most once. */
 const PET_ARTICLE_IMAGES: string[] = [
   "/pet-images/pet-1.png",
@@ -618,7 +630,7 @@ export default function App() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Clinical & Research</p>
                   <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pro</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Daily autonomous brief for veterinary teams, researchers, and institutions.
+                    Real-time intelligence briefs with research, outbreak, drug, and regulatory updates.
                   </p>
                   <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
                     Enter Pro
@@ -1145,16 +1157,21 @@ export default function App() {
             <div className="lg:col-span-3 p-4 sm:p-6 flex flex-col justify-center order-1 lg:order-2">
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md text-muted-foreground border-0">
-                  Newsletter
+                  AnimalMind Pro
                 </Badge>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">AI agent–driven</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">AI research monitoring</span>
               </div>
               <h2 id="pro-cta-heading" className="text-lg sm:text-xl font-semibold text-foreground leading-tight mb-2">
-                Daily Autonomous Veterinary Intelligence Brief
+                {PRO_MARKETING_HEADLINE}
               </h2>
               <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                Autonomous AI agents monitor surveillance, literature, and clinical sources 24/7. This newsletter delivers a rapid, structured digest—outbreak signals, new research, drug updates—so you stay current on animal health.
+                {PRO_MARKETING_VALUE}
               </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-sm text-muted-foreground mb-4">
+                {PRO_MARKETING_BENEFITS.map((benefit) => (
+                  <li key={benefit}>{benefit}</li>
+                ))}
+              </ul>
               <div className="shrink-0 w-full sm:w-auto">
                 {waitlistStatus === "success" ? (
                   <p className="text-sm text-foreground font-medium py-2">You’re on the list. We’ll notify you when the daily brief launches.</p>
@@ -1211,18 +1228,18 @@ export default function App() {
             </div>
           </div>
           <p className="px-4 sm:px-6 py-3 border-t border-border/80 text-xs text-muted-foreground">
-            AnimalMind Pro: autonomous research engine. Evidence from public sources only; not medical advice.
+            {PRO_MARKETING_CREDIBILITY} Not medical advice.
           </p>
         </section>
 
         {/* Lead — newsletter edition with image */}
         <section className="pb-8 border-b border-border">
-          <p className="section-label mb-1">This edition</p>
+          <p className="section-label mb-1">AnimalMind Pro</p>
           <h1 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
-            {BRAND_HEADLINE}
+            Fast, concise intelligence for veterinary decision-making
           </h1>
           <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
-            {BRAND_SUBHEAD} Live ingest combines surveillance, literature, clinical, and guideline sources.
+            Review high-signal updates across research, outbreaks, drug changes, and regulatory shifts in minutes.
           </p>
           <div className="rounded-lg overflow-hidden border border-border bg-muted/20 max-w-2xl mb-6">
             <img
@@ -1238,7 +1255,7 @@ export default function App() {
 
         {/* Mission — how the newsletter works */}
         <section id="mission" aria-labelledby="mission-heading" className="pb-10">
-          <h2 id="mission-heading" className="section-label mb-3">How the newsletter works</h2>
+          <h2 id="mission-heading" className="section-label mb-3">Why teams use AnimalMind Pro</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div className="rounded-lg overflow-hidden border border-border bg-muted/20">
               <img
@@ -1249,14 +1266,14 @@ export default function App() {
             </div>
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
-                AnimalMind Pro is the clinical edition of our autonomous AI news engine.
+                {PRO_MARKETING_VALUE}
               </p>
-              <p>
-                Agents run on a schedule, monitor trusted public sources, and publish a concise daily brief with source links.
-              </p>
-              <p>
-                Built for clinicians, researchers, educators, and students.
-              </p>
+              <ul className="list-disc pl-5 space-y-1.5">
+                {PRO_MARKETING_BENEFITS.map((benefit) => (
+                  <li key={`mission-${benefit}`}>{benefit}</li>
+                ))}
+              </ul>
+              <p>{PRO_MARKETING_CREDIBILITY}</p>
             </div>
           </div>
         </section>
@@ -1613,7 +1630,7 @@ export default function App() {
 
           <footer className="border-t border-border bg-card mt-auto py-8 text-center text-sm text-muted-foreground relative z-1">
             <p className="font-semibold text-foreground">AnimalMind Pro</p>
-            <p className="mt-1">Run by autonomous agents. Reviewed by humans.</p>
+            <p className="mt-1">{PRO_MARKETING_CREDIBILITY}</p>
             <p className="mt-2 flex items-center justify-center gap-1.5 text-muted-foreground text-xs">
               No credentials or PII collected.
             </p>
