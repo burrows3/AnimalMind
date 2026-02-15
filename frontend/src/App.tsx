@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   BookOpen,
   Building2,
   ChevronDown,
   Clock,
+  ExternalLink,
   FileText,
   FlaskConical,
   Globe,
@@ -32,6 +33,7 @@ const DATA_ORDER = [
   "cancer",
   "case_data",
   "clinical",
+  "pet_owner",
   "imaging",
   "vet_practice",
 ] as const;
@@ -42,6 +44,7 @@ const LABELS: Record<string, string> = {
   cancer: "Cancer",
   case_data: "Case reports",
   clinical: "Clinical",
+  pet_owner: "Pet brief",
   imaging: "Imaging",
   vet_practice: "Vet practice",
 };
@@ -52,6 +55,7 @@ const TRACK_ITEMS: { key: string; title: string; desc: string; tag: string }[] =
   { key: "cancer", title: "Cancer", desc: "Veterinary oncology", tag: "Oncology" },
   { key: "case_data", title: "Case data", desc: "Veterinary case reports", tag: "Case reports" },
   { key: "clinical", title: "Clinical", desc: "Practice, small animal, equine", tag: "Clinical" },
+  { key: "pet_owner", title: "Pet owner brief", desc: "Companion-animal owner guidance", tag: "Pet" },
   { key: "imaging", title: "Imaging", desc: "TCIA, radiographs", tag: "TCIA" },
   { key: "vet_practice", title: "Vet practice", desc: "AAHA, AVMA, VIN, Merck", tag: "Guidelines" },
 ];
@@ -62,9 +66,27 @@ const DATA_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   cancer: FlaskConical,
   case_data: FileText,
   clinical: Stethoscope,
+  pet_owner: Heart,
   imaging: BarChart3,
   vet_practice: Building2,
 };
+
+const PET_OWNER_KEYWORDS = /\b(dog|dogs|canine|cat|cats|feline|pet|pets|puppy|kitten|owner|home care|triage|poison|toxin|flea|tick|vaccin|vomit|diarrhea|itch|cough|ear|dental|behavior)\b/i;
+const PET_OWNER_FALLBACK_TYPES = new Set(["clinical", "case_data", "vet_practice", "surveillance"]);
+const RESEARCH_TYPES = new Set(["literature", "clinical", "cancer", "case_data"]);
+const PRO_BRIEF_TYPES = new Set(["surveillance", "literature", "clinical", "cancer", "case_data", "imaging", "vet_practice"]);
+const BRAND_TAGLINE = "ANIMAL HEALTH NEWS";
+const BRAND_HEADLINE = "INTELLIGENCE FOR ANIMAL HEALTH";
+const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
+const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
+const PET_NEWS_IMAGE_POOL = [
+  "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200&q=80",
+  "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=1200&q=80",
+  "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1200&q=80",
+  "https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=1200&q=80",
+  "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=1200&q=80",
+  "https://images.unsplash.com/photo-1597633425046-08f5110420b5?w=1200&q=80",
+];
 
 type DataSummary = {
   lastUpdated?: string | null;
@@ -78,11 +100,41 @@ type IngestedRow = {
   url?: string;
 };
 
+type BriefAudience = "pro" | "pet" | "all";
+
+type BriefArticle = {
+  id: string;
+  audience: BriefAudience;
+  title: string;
+  summary: string;
+  points: string[];
+  sources: IngestedRow[];
+};
+
+type PetNewsCard = {
+  id: string;
+  title: string;
+  summary: string;
+  tip: string;
+  sources: IngestedRow[];
+};
+
 function safeHref(url: string | undefined): string {
   if (!url || typeof url !== "string") return "#";
   const u = String(url).trim();
   if (u.startsWith("http://") || u.startsWith("https://")) return u;
   return "#";
+}
+
+function sourceHostLabel(url: string | undefined): string {
+  const href = safeHref(url);
+  if (href === "#") return "Source";
+  try {
+    const host = new URL(href).hostname.replace(/^www\./, "");
+    return host || "Source";
+  } catch {
+    return "Source";
+  }
 }
 
 /** Animal Mind logo: animal head (profile) + mind dot. Same as favicon. */
@@ -126,10 +178,177 @@ async function fetchDashboard(): Promise<{
     fetch(`${base}/data/ingested.json`, { cache: "no-store" }),
   ]);
   const summary = summaryRes.ok ? await summaryRes.json() : null;
-  const ingested = ingestedRes.ok && Array.isArray(await ingestedRes.json())
-    ? await ingestedRes.json()
-    : null;
+  const ingestedPayload = ingestedRes.ok ? await ingestedRes.json() : null;
+  const ingested = Array.isArray(ingestedPayload) ? ingestedPayload : null;
   return { summary, ingested };
+}
+
+function toPetBriefItems(rows: IngestedRow[] | null, limit = 14): IngestedRow[] {
+  if (!rows || rows.length === 0) return [];
+  const explicit = rows.filter((r) => r.data_type === "pet_owner");
+  const fallback = rows.filter((r) => {
+    if (!PET_OWNER_FALLBACK_TYPES.has(r.data_type)) return false;
+    const text = `${r.title || ""} ${r.condition_or_topic || ""}`;
+    return PET_OWNER_KEYWORDS.test(text);
+  });
+  const combined = [...explicit, ...fallback];
+  const seen = new Set<string>();
+  const unique: IngestedRow[] = [];
+  for (const item of combined) {
+    const key = `${item.url || ""}|${item.title || ""}|${item.condition_or_topic || ""}|${item.data_type}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(item);
+    if (unique.length >= limit) break;
+  }
+  return unique;
+}
+
+function topTopics(rows: IngestedRow[], limit = 3): Array<{ topic: string; count: number }> {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const topic = (row.condition_or_topic || "General focus").trim() || "General focus";
+    counts.set(topic, (counts.get(topic) || 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([topic, count]) => ({ topic, count }))
+    .sort((a, b) => (b.count - a.count) || a.topic.localeCompare(b.topic))
+    .slice(0, limit);
+}
+
+function uniqueRows(rows: IngestedRow[], limit = 4): IngestedRow[] {
+  const seen = new Set<string>();
+  const selected: IngestedRow[] = [];
+  for (const row of rows) {
+    const key = `${row.url || ""}|${row.title || ""}|${row.condition_or_topic || ""}|${row.data_type}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    selected.push(row);
+    if (selected.length >= limit) break;
+  }
+  return selected;
+}
+
+function formatTopics(topics: Array<{ topic: string; count: number }>): string {
+  if (topics.length === 0) return "general updates";
+  if (topics.length === 1) return topics[0].topic;
+  if (topics.length === 2) return `${topics[0].topic} and ${topics[1].topic}`;
+  return `${topics[0].topic}, ${topics[1].topic}, and ${topics[2].topic}`;
+}
+
+function buildDailyBriefArticles(rows: IngestedRow[] | null): BriefArticle[] {
+  if (!rows || rows.length === 0) return [];
+  const surveillanceRows = rows.filter((r) => r.data_type === "surveillance");
+  const researchRows = rows.filter((r) => RESEARCH_TYPES.has(r.data_type));
+  const petRows = toPetBriefItems(rows, 18);
+  const proRows = rows.filter((r) => PRO_BRIEF_TYPES.has(r.data_type));
+  const articles: BriefArticle[] = [];
+
+  if (surveillanceRows.length > 0) {
+    const topics = topTopics(surveillanceRows, 3);
+    articles.push({
+      id: "surveillance-watchlist",
+      audience: "all",
+      title: "Surveillance watchlist: conditions to track now",
+      summary: `Current feed signals emphasize ${formatTopics(topics)}.`,
+      points: [
+        `Top tracked conditions: ${topics.map((t) => `${t.topic} (${t.count})`).join(", ")}.`,
+        "Use this watchlist for travel advice, triage preparation, and clinic communication.",
+        "Cross-check outbreak context before operational decisions.",
+      ],
+      sources: uniqueRows(surveillanceRows, 4),
+    });
+  }
+
+  if (researchRows.length > 0) {
+    const topics = topTopics(researchRows, 3);
+    articles.push({
+      id: "research-pulse",
+      audience: "pro",
+      title: "Research pulse: today’s strongest evidence signals",
+      summary: `New research activity clusters around ${formatTopics(topics)}.`,
+      points: [
+        `${researchRows.length} research-linked items are represented in today’s ingest slice.`,
+        "Use these signals to prioritize rounds, education updates, and literature review.",
+        "Focus first on topics that appear repeatedly across multiple source types.",
+      ],
+      sources: uniqueRows(researchRows, 4),
+    });
+  }
+
+  if (petRows.length > 0) {
+    const topics = topTopics(petRows, 3);
+    articles.push({
+      id: "pet-owner-practical",
+      audience: "pet",
+      title: "Pet news you can use today",
+      summary: `Friendly, source-backed updates focused on ${formatTopics(topics)}.`,
+      points: [
+        "What to watch at home today.",
+        "When to contact your veterinarian sooner.",
+        "Trusted links for deeper reading.",
+      ],
+      sources: uniqueRows(petRows, 4),
+    });
+  }
+
+  if (proRows.length > 0) {
+    const topics = topTopics(proRows, 3);
+    articles.push({
+      id: "operations-brief",
+      audience: "pro",
+      title: "Operations brief: what to monitor in the next cycle",
+      summary: `Cross-source monitoring currently centers on ${formatTopics(topics)}.`,
+      points: [
+        "Align care pathways and communication around repeated topic clusters.",
+        "Flag items that overlap surveillance and clinical evidence for team review.",
+        "Carry high-signal topics into the next daily brief for continuity.",
+      ],
+      sources: uniqueRows(proRows, 3),
+    });
+  }
+
+  return articles;
+}
+
+function hashText(text: string): number {
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function pickPetNewsImage(seed: string): string {
+  const idx = hashText(seed) % PET_NEWS_IMAGE_POOL.length;
+  return PET_NEWS_IMAGE_POOL[idx];
+}
+
+function friendlyPetTopic(topic: string): string {
+  const t = (topic || "").toLowerCase();
+  if (t.includes("household zoonotic")) return "Keeping pets and people healthy";
+  if (t.includes("poison")) return "Poison and toxin safety";
+  if (t.includes("prevent")) return "Prevention and routine care";
+  if (t.includes("when to see")) return "When to call the vet";
+  if (t.includes("pet owner guidance")) return "Everyday pet care";
+  return topic || "Everyday pet care";
+}
+
+function buildPetNewsCards(rows: IngestedRow[] | null): PetNewsCard[] {
+  const petRows = toPetBriefItems(rows, 24);
+  if (petRows.length === 0) return [];
+  const topics = topTopics(petRows, 5);
+  return topics.slice(0, 4).map((topic, idx) => {
+    const groupRows = petRows.filter((r) => (r.condition_or_topic || "Everyday pet care") === topic.topic);
+    const label = friendlyPetTopic(topic.topic);
+    return {
+      id: `pet-news-${idx}-${topic.topic}`,
+      title: `${label}: what pet owners should know`,
+      summary: `${topic.count} update${topic.count === 1 ? "" : "s"} in today’s brief.`,
+      tip: "If your pet seems worse, uncomfortable, or not eating/drinking normally, contact your vet.",
+      sources: uniqueRows(groupRows.length > 0 ? groupRows : petRows, 2),
+    };
+  });
 }
 
 export default function App() {
@@ -143,9 +362,8 @@ export default function App() {
   const [waitlistError, setWaitlistError] = useState("");
   const [proCtaExpanded, setProCtaExpanded] = useState(false);
 
-  const hashToView = (h: string) =>
-    h === "consumer" || h === "clinical" || h === "terms" || h === "privacy" ? h : "";
-  const [view, setView] = useState<"" | "consumer" | "clinical" | "terms" | "privacy">(() =>
+  const hashToView = (h: string) => (h === "consumer" || h === "clinical" ? h : "");
+  const [view, setView] = useState<"" | "consumer" | "clinical">(() =>
     hashToView(typeof window !== "undefined" ? window.location.hash.slice(1) : "")
   );
 
@@ -162,15 +380,11 @@ export default function App() {
         ? "AnimalMind Pet"
         : view === "clinical"
           ? "AnimalMind Pro"
-          : view === "terms"
-            ? "Terms of Service — AnimalMind"
-            : view === "privacy"
-              ? "Privacy Policy — AnimalMind"
-              : "AnimalMind — AI Infrastructure for Animal Health";
+          : "AnimalMind — AI Infrastructure for Animal Health";
     document.title = t;
   }, [view]);
 
-  const navigate = (v: "" | "consumer" | "clinical" | "terms" | "privacy") => {
+  const navigate = (v: "" | "consumer" | "clinical") => {
     window.location.hash = v;
     setView(v);
   };
@@ -220,6 +434,20 @@ export default function App() {
     : null;
 
   const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const petBriefItems = useMemo(() => toPetBriefItems(memory), [memory]);
+  const petBriefCount = summary?.counts?.pet_owner ?? petBriefItems.length;
+  const dailyBriefArticles = useMemo(() => buildDailyBriefArticles(memory), [memory]);
+  const proBriefArticles = useMemo(
+    () => dailyBriefArticles.filter((article) => article.audience !== "pet"),
+    [dailyBriefArticles]
+  );
+  const petBriefArticles = useMemo(
+    () => dailyBriefArticles.filter((article) => article.audience !== "pro"),
+    [dailyBriefArticles]
+  );
+  const petNewsCards = useMemo(() => buildPetNewsCards(memory), [memory]);
+  const featuredPetNews = petNewsCards[0] ?? null;
+  const morePetNews = petNewsCards.slice(1);
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
@@ -228,16 +456,18 @@ export default function App() {
         <>
           <header className="border-b border-border bg-card">
             <div className="mx-auto max-w-5xl px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => navigate("")}
-                className="flex items-center gap-2 text-foreground no-underline min-h-[44px]"
+                className="flex items-center gap-2 text-foreground no-underline h-11 px-2 -ml-2 text-left rounded-md"
               >
                 <AnimalMindLogo className="size-8 text-foreground shrink-0" />
                 <span className="text-xl font-semibold tracking-tight">AnimalMind</span>
-              </button>
+              </Button>
               <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
-                Autonomous AI News · Animal Health
+                {BRAND_TAGLINE}
               </p>
             </div>
           </header>
@@ -255,16 +485,16 @@ export default function App() {
                   <div className="absolute inset-0 bg-foreground/40" />
                   <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10">
                     <p className="text-xs uppercase tracking-[0.2em] text-white/90 font-semibold mb-2">
-                      Intelligence for animal health
+                      {BRAND_HEADLINE}
                     </p>
                     <h1 className="text-2xl sm:text-4xl md:text-[2.75rem] font-semibold text-white leading-tight max-w-2xl tracking-tight">
-                      Autonomous AI news and research. Two editions, one engine.
+                      {BRAND_SUBHEAD}
                     </h1>
                   </div>
                 </div>
               </div>
               <p className="mt-4 text-sm text-muted-foreground max-w-2xl">
-                AI agents run continuously on surveillance, literature, and clinical sources. We deliver a daily brief for professionals and research-backed guidance for pet owners.
+                {BRAND_ONE_LINER}
               </p>
             </section>
 
@@ -287,7 +517,7 @@ export default function App() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Clinical & Research</p>
                   <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pro</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Daily autonomous veterinary intelligence brief. Outbreak signals, new research, drug updates—for veterinarians, researchers, and institutions.
+                    Daily autonomous brief for veterinary teams, researchers, and institutions.
                   </p>
                   <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
                     Enter Pro
@@ -311,7 +541,7 @@ export default function App() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Pet Owners</p>
                   <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pet</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Research-backed guidance in plain language. Same intelligence as Pro—when to watch, when to see a vet, what the evidence says.
+                    Plain-language pet guidance from the same autonomous engine powering Pro.
                   </p>
                   <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
                     Enter Pet
@@ -326,143 +556,7 @@ export default function App() {
             </p>
           </main>
           <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
-            <p>AnimalMind · Autonomous AI News · Animal Health</p>
-            <p className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-              <button type="button" onClick={() => navigate("terms")} className="hover:text-foreground underline">
-                Terms of Service
-              </button>
-              <button type="button" onClick={() => navigate("privacy")} className="hover:text-foreground underline">
-                Privacy Policy
-              </button>
-            </p>
-          </footer>
-        </>
-      )}
-
-      {/* ——— Terms of Service ——— */}
-      {view === "terms" && (
-        <>
-          <header className="sticky top-0 z-10 border-b border-border bg-card">
-            <nav className="mx-auto max-w-3xl px-4 py-3 sm:px-6 flex justify-between items-center">
-              <button type="button" onClick={() => navigate("")} className="flex items-center gap-2 text-foreground min-h-[44px]">
-                <AnimalMindLogo className="size-7 text-foreground shrink-0" />
-                <span className="text-base font-semibold">AnimalMind</span>
-              </button>
-              <span className="text-sm text-muted-foreground">Terms of Service</span>
-            </nav>
-          </header>
-          <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-            <h1 className="text-xl font-semibold text-foreground mb-6">Terms of Service</h1>
-            <div className="prose prose-sm text-muted-foreground space-y-6 max-w-none">
-              <p className="text-sm leading-relaxed">
-                Last updated: {editionDate}. By using AnimalMind (“we”, “our”) websites and services, you agree to these terms.
-              </p>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Use of service</h2>
-                <p className="text-sm leading-relaxed">
-                  AnimalMind provides AI-driven news, digests, and research summaries for animal health. Our content is for informational purposes only and does not constitute medical, veterinary, or professional advice. Always consult a qualified veterinarian or professional for health decisions.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Acceptable use</h2>
-                <p className="text-sm leading-relaxed">
-                  You may not use our services for any illegal purpose, to harm others, or to attempt to gain unauthorized access to our systems or data. You may not scrape, resell, or redistribute our content beyond personal, non-commercial use without permission.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Intellectual property</h2>
-                <p className="text-sm leading-relaxed">
-                  AnimalMind’s name, branding, and original content are our property. Our digests and summaries are derived from public sources; we do not claim ownership of underlying source material. Links to external sources (e.g. CDC, PubMed) are provided for reference.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Disclaimer</h2>
-                <p className="text-sm leading-relaxed">
-                  We provide content “as is.” We do not warrant accuracy, completeness, or fitness for a particular purpose. We are not liable for any decisions or actions taken based on our content. Not a replacement for veterinary or professional care.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Changes</h2>
-                <p className="text-sm leading-relaxed">
-                  We may update these terms from time to time. Continued use of our services after changes constitutes acceptance. The “Last updated” date above reflects the most recent revision.
-                </p>
-              </section>
-              <p className="text-sm leading-relaxed pt-4">
-                Contact: pro@animalmind.co for questions about these terms.
-              </p>
-            </div>
-            <div className="mt-10 pt-6 border-t border-border">
-              <button type="button" onClick={() => navigate("")} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                ← Back to AnimalMind
-              </button>
-            </div>
-          </main>
-          <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
-            <p>AnimalMind · <button type="button" onClick={() => navigate("terms")} className="underline hover:text-foreground">Terms</button> · <button type="button" onClick={() => navigate("privacy")} className="underline hover:text-foreground">Privacy</button></p>
-          </footer>
-        </>
-      )}
-
-      {/* ——— Privacy Policy ——— */}
-      {view === "privacy" && (
-        <>
-          <header className="sticky top-0 z-10 border-b border-border bg-card">
-            <nav className="mx-auto max-w-3xl px-4 py-3 sm:px-6 flex justify-between items-center">
-              <button type="button" onClick={() => navigate("")} className="flex items-center gap-2 text-foreground min-h-[44px]">
-                <AnimalMindLogo className="size-7 text-foreground shrink-0" />
-                <span className="text-base font-semibold">AnimalMind</span>
-              </button>
-              <span className="text-sm text-muted-foreground">Privacy Policy</span>
-            </nav>
-          </header>
-          <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-            <h1 className="text-xl font-semibold text-foreground mb-6">Privacy Policy</h1>
-            <div className="prose prose-sm text-muted-foreground space-y-6 max-w-none">
-              <p className="text-sm leading-relaxed">
-                Last updated: {editionDate}. AnimalMind (“we”, “our”) respects your privacy. This policy describes what we collect and how we use it.
-              </p>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Information we collect</h2>
-                <p className="text-sm leading-relaxed">
-                  When you sign up for updates (e.g. waitlist, newsletter), we collect the email address you provide. We may collect technical data such as IP address and browser type when you visit our sites. Our digest and news content is generated from public sources; we do not collect health data about you or your animals for that content.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">How we use it</h2>
-                <p className="text-sm leading-relaxed">
-                  We use your email to send you the notifications you requested (e.g. launch alerts, newsletter). We may use technical data to operate and improve our services and for security. We do not sell your personal information.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Sharing</h2>
-                <p className="text-sm leading-relaxed">
-                  We do not share your personal information with third parties for their marketing. We may use service providers (e.g. email delivery, hosting) that process data on our behalf under confidentiality obligations.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Retention and your choices</h2>
-                <p className="text-sm leading-relaxed">
-                  We retain your email for as long as you are subscribed or as needed to fulfill the purpose. You can unsubscribe or request deletion by contacting us. You may have rights to access, correct, or delete your data depending on your jurisdiction.
-                </p>
-              </section>
-              <section>
-                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Changes</h2>
-                <p className="text-sm leading-relaxed">
-                  We may update this policy from time to time. The “Last updated” date above will change when we do. Continued use after changes constitutes acceptance.
-                </p>
-              </section>
-              <p className="text-sm leading-relaxed pt-4">
-                Contact: pro@animalmind.co for privacy questions or requests.
-              </p>
-            </div>
-            <div className="mt-10 pt-6 border-t border-border">
-              <button type="button" onClick={() => navigate("")} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                ← Back to AnimalMind
-              </button>
-            </div>
-          </main>
-          <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
-            <p>AnimalMind · <button type="button" onClick={() => navigate("terms")} className="underline hover:text-foreground">Terms</button> · <button type="button" onClick={() => navigate("privacy")} className="underline hover:text-foreground">Privacy</button></p>
+            <p>AnimalMind · Animal Health News</p>
           </footer>
         </>
       )}
@@ -472,16 +566,23 @@ export default function App() {
         <>
           <header className="sticky top-0 z-10 border-b border-border bg-card">
             <nav className="mx-auto max-w-4xl px-4 py-3 sm:px-6 flex justify-between items-center">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => navigate("")}
-                className="flex items-center gap-2 text-foreground min-h-[44px]"
+                className="flex items-center gap-2 text-foreground h-11 px-2 -ml-2 text-left rounded-md"
               >
                 <AnimalMindLogo className="size-7 text-foreground shrink-0" />
                 <span className="text-base font-semibold">AnimalMind</span>
-              </button>
-              <div className="flex items-center gap-4">
-                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Notify me</a>
+              </Button>
+              <div className="flex items-center gap-1">
+                <a href="#pet-brief" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex text-muted-foreground hover:text-foreground rounded-md no-underline")}>
+                  Today's brief
+                </a>
+                <a href="#pet-cta" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex text-muted-foreground hover:text-foreground rounded-md no-underline")}>
+                  Notify me
+                </a>
                 <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
               </div>
             </nav>
@@ -497,8 +598,8 @@ export default function App() {
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
                 <div className="lg:col-span-3 relative h-56 sm:h-64 lg:h-auto min-h-[220px]">
                   <img
-                    src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80"
-                    alt=""
+                    src="/featured-pet.png"
+                    alt="Pet and owner: research-backed guidance for pet owners"
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 </div>
@@ -507,10 +608,10 @@ export default function App() {
                     AnimalMind Pet
                   </Badge>
                   <h2 id="pet-cta-heading" className="text-lg sm:text-xl font-semibold text-foreground leading-tight mb-2">
-                    Research-backed guidance for pet owners
+                    {BRAND_HEADLINE}
                   </h2>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    Plain-language insights from the same intelligence that powers veterinary and clinical research. When to see a vet, what to watch for, and what the evidence says.
+                    AnimalMind Pet is the owner edition: plain-language guidance from the same autonomous engine as Pro.
                   </p>
                   {waitlistStatus === "success" ? (
                     <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when Pet launches.</p>
@@ -565,10 +666,10 @@ export default function App() {
             <section className="pb-8 border-b border-border">
               <p className="section-label mb-1">For pet owners</p>
               <h1 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
-                Clear, evidence-based guidance in one place
+                Friendly pet health news, every day
               </h1>
               <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
-                AnimalMind Pet turns the same autonomous research that professionals use into clear answers for people who care for companion animals—without replacing your veterinarian.
+                Get clear updates for real pet-owner questions: what to watch, what is likely routine, and when to call your vet.
               </p>
               <div className="rounded-lg overflow-hidden border border-border bg-muted/20 max-w-2xl">
                 <img
@@ -579,18 +680,222 @@ export default function App() {
               </div>
             </section>
 
+            <section id="pet-brief" aria-labelledby="pet-brief-heading" className="py-10 border-b border-border">
+              <h2 id="pet-brief-heading" className="section-label mb-2 flex items-center gap-2">
+                <Heart className="size-4" aria-hidden />
+                Today's pet brief
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
+                Same trusted engine as Pro, translated into plain language for pet parents.
+              </p>
+              <Card className="border border-border bg-card shadow-sm">
+                <CardHeader className="p-4 pb-2">
+                  <CardTitle className="text-base font-semibold">Pet news for today</CardTitle>
+                  <CardDescription className="text-xs">
+                    Quick, friendly updates with trusted links for deeper reading.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 pt-2">
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">Pet brief</Badge>
+                      <span className="text-sm text-muted-foreground">{petBriefCount} item(s)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {lastUpdated && (
+                        <span className="text-xs text-muted-foreground">As of {lastUpdated}</span>
+                      )}
+                      <Button variant="outline" size="sm" className="gap-2 rounded-md" disabled={refreshing} onClick={loadData} aria-label="Refresh pet brief">
+                        <RefreshCw className={cn("size-4", refreshing && "animate-spin")} aria-hidden />
+                        {refreshing ? "Refreshing…" : "Refresh"}
+                      </Button>
+                    </div>
+                  </div>
+                  {loading || memoryLoading ? (
+                    <p className="text-sm text-muted-foreground">Loading pet news…</p>
+                  ) : petNewsCards.length > 0 ? (
+                    <div className="space-y-4">
+                      {featuredPetNews && (
+                        <Card className="border border-border bg-muted/10 overflow-hidden shadow-sm">
+                          <div className="aspect-[16/8] overflow-hidden bg-muted/20 border-b border-border">
+                            <img
+                              src={pickPetNewsImage(`featured-${featuredPetNews.id}`)}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <CardHeader className="p-4 pb-2">
+                            <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Featured pet news</Badge>
+                            <CardTitle className="text-base font-semibold">{featuredPetNews.title}</CardTitle>
+                            <CardDescription className="text-sm">{featuredPetNews.summary}</CardDescription>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-0 space-y-3">
+                            <p className="text-sm text-muted-foreground">{featuredPetNews.tip}</p>
+                            {featuredPetNews.sources.length > 0 && (
+                              <div>
+                                <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Trusted sources</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {featuredPetNews.sources.slice(0, 3).map((source, idx) => {
+                                    const href = safeHref(source.url);
+                                    return href !== "#" ? (
+                                      <a
+                                        key={`featured-pet-source-${idx}`}
+                                        href={href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-xs font-medium text-foreground hover:bg-muted/40 hover:border-foreground/30"
+                                      >
+                                        <ExternalLink className="size-3.5" aria-hidden />
+                                        View source · {sourceHostLabel(source.url)}
+                                      </a>
+                                    ) : (
+                                      <span
+                                        key={`featured-pet-source-${idx}`}
+                                        className="inline-flex items-center rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-xs text-muted-foreground"
+                                      >
+                                        {source.title || "Source"}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )}
+                      {morePetNews.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {morePetNews.map((card) => (
+                            <Card key={card.id} className="border border-border bg-muted/10 overflow-hidden">
+                              <div className="aspect-[16/9] overflow-hidden bg-muted/20 border-b border-border">
+                                <img
+                                  src={pickPetNewsImage(`pet-news-${card.id}`)}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <CardHeader className="p-3 pb-2">
+                                <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Pet news</Badge>
+                                <CardTitle className="text-sm font-semibold">{card.title}</CardTitle>
+                                <CardDescription className="text-xs">{card.summary}</CardDescription>
+                              </CardHeader>
+                              <CardContent className="p-3 pt-0 space-y-2">
+                                <p className="text-xs text-muted-foreground">{card.tip}</p>
+                                {card.sources.length > 0 && (
+                                  <div className="space-y-2">
+                                    {card.sources.slice(0, 2).map((source, idx) => {
+                                      const href = safeHref(source.url);
+                                      return href !== "#" ? (
+                                        <a
+                                          key={`pet-news-source-${card.id}-${idx}`}
+                                          href={href}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex w-full items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-xs font-medium text-foreground hover:bg-muted/40 hover:border-foreground/30"
+                                        >
+                                          <span className="truncate">View source · {sourceHostLabel(source.url)}</span>
+                                          <ExternalLink className="size-3.5 shrink-0" aria-hidden />
+                                        </a>
+                                      ) : (
+                                        <span
+                                          key={`pet-news-source-${card.id}-${idx}`}
+                                          className="inline-flex w-full items-center rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-xs text-muted-foreground"
+                                        >
+                                          {source.title || "Source"}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Pet brief data will appear after the next autonomous ingest and push.
+                    </p>
+                  )}
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Educational only. AnimalMind Pet does not replace veterinary diagnosis or emergency care.
+                  </p>
+                  {petBriefArticles.length > 0 && (
+                    <div className="mt-6 border-t border-border pt-4">
+                      <h3 className="text-sm font-semibold text-foreground mb-3">Pet-friendly stories from today’s brief</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {petBriefArticles.map((article) => (
+                          <Card key={`pet-article-${article.id}`} className="border border-border bg-muted/10 overflow-hidden">
+                            <div className="h-28 overflow-hidden bg-muted/20 border-b border-border">
+                              <img
+                                src={pickPetNewsImage(`pet-story-${article.id}`)}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <CardHeader className="p-3 pb-2">
+                              <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Story</Badge>
+                              <CardTitle className="text-sm font-semibold">{article.title}</CardTitle>
+                              <CardDescription className="text-xs">{article.summary}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-3 pt-0 space-y-2">
+                              <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+                                {article.points.slice(0, 2).map((point, idx) => (
+                                  <li key={`pet-point-${article.id}-${idx}`}>{point}</li>
+                                ))}
+                              </ul>
+                              {article.sources.length > 0 && (
+                                <div>
+                                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Sources</p>
+                                  <div className="space-y-2">
+                                    {article.sources.slice(0, 2).map((source, idx) => {
+                                      const href = safeHref(source.url);
+                                      return href !== "#" ? (
+                                        <a
+                                          key={`pet-source-${article.id}-${idx}`}
+                                          href={href}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex w-full items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-xs font-medium text-foreground hover:bg-muted/40 hover:border-foreground/30"
+                                        >
+                                          <span className="truncate">View source · {sourceHostLabel(source.url)}</span>
+                                          <ExternalLink className="size-3.5 shrink-0" aria-hidden />
+                                        </a>
+                                      ) : (
+                                        <span
+                                          key={`pet-source-${article.id}-${idx}`}
+                                          className="inline-flex w-full items-center rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-xs text-muted-foreground"
+                                        >
+                                          {source.title || "Source"}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
+
             {/* Mission / What we do */}
             <section id="pet-mission" aria-labelledby="pet-mission-heading" className="pb-10">
               <h2 id="pet-mission-heading" className="section-label mb-3">What to expect</h2>
               <div className="space-y-6 text-muted-foreground leading-relaxed">
                 <p>
-                  AnimalMind Pet gives you structured, research-backed guidance: what the literature and veterinary sources say about common concerns, when to monitor at home, and when to seek a vet. We always recommend escalation to a veterinarian when appropriate.
+                  AnimalMind Pet turns autonomous research into simple daily guidance for pet owners.
                 </p>
                 <p>
-                  Content is derived from AnimalMind Pro—the same autonomous intelligence that monitors veterinary literature, outbreak data, and clinical research. Simplified for clarity; accurate and evidence-based.
+                  You get clear signals on what to watch, what is likely routine, and when to contact a veterinarian.
                 </p>
                 <p>
-                  For pet owners who want to understand the evidence without replacing professional care. Clear, reassuring, and professional.
+                  Educational only; never a replacement for professional veterinary care.
                 </p>
               </div>
             </section>
@@ -681,20 +986,16 @@ export default function App() {
             </section>
 
             <div className="pt-6 flex justify-center">
-              <button type="button" onClick={() => navigate("")} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Button type="button" variant="outline" size="sm" onClick={() => navigate("")} className="rounded-md gap-2">
                 ← Back to AnimalMind
-              </button>
+              </Button>
             </div>
           </main>
 
           <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
             <p className="font-semibold text-foreground">AnimalMind Pet</p>
-            <p className="mt-1">Research-backed guidance for pet owners. Powered by AnimalMind Pro.</p>
+            <p className="mt-1">Run by autonomous agents. Reviewed by humans.</p>
             <p className="mt-2 text-xs">Not a replacement for veterinary care. When in doubt, see your vet.</p>
-            <p className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
-              <button type="button" onClick={() => navigate("terms")} className="hover:text-foreground underline">Terms of Service</button>
-              <button type="button" onClick={() => navigate("privacy")} className="hover:text-foreground underline">Privacy Policy</button>
-            </p>
           </footer>
         </>
       )}
@@ -704,25 +1005,42 @@ export default function App() {
         <>
           <header className="sticky top-0 z-10 border-b border-border bg-card">
             <nav className="mx-auto max-w-4xl px-4 py-3 sm:px-6 flex flex-wrap justify-between items-center gap-2">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => navigate("")}
-                className="flex items-center gap-2 text-foreground min-h-[44px] py-1 text-left"
+                className="flex items-center gap-2 text-foreground h-11 px-2 -ml-2 text-left rounded-md"
               >
                 <AnimalMindLogo className="size-7 sm:size-8 text-foreground shrink-0" />
                 <span className="text-base sm:text-xl font-semibold tracking-tight">AnimalMind Pro</span>
-              </button>
-              <div className="flex flex-wrap items-center gap-0.5 sm:gap-2 text-sm">
-                <a href="#data" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Digest</a>
-                <a href="#pro-cta" className="px-2.5 py-2 rounded-md text-foreground font-medium hover:bg-muted/50 min-h-[44px] flex items-center">Brief</a>
-                <a href="#mission" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Mission</a>
-                <a href="#topics" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Topics</a>
-                <a href="#track" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Sources</a>
-                <a href="#waitlist" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Updates</a>
+              </Button>
+              <div className="flex flex-wrap items-center gap-0.5 sm:gap-1 text-sm">
+                <a href="#data" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
+                  Digest
+                </a>
+                <a href="#pro-cta" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-md text-foreground font-medium min-h-[44px] no-underline")}>
+                  Brief
+                </a>
+                <a href="#brief-articles" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
+                  Articles
+                </a>
+                <a href="#mission" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
+                  Mission
+                </a>
+                <a href="#topics" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
+                  Topics
+                </a>
+                <a href="#track" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
+                  Sources
+                </a>
+                <a href="#waitlist" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
+                  Updates
+                </a>
               </div>
             </nav>
             <div className="mx-auto max-w-4xl px-4 pb-2 sm:px-6 flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-0.5 text-xs text-muted-foreground">
-              <span className="truncate">Rapid autonomous AI agent news · Animal health</span>
+              <span className="truncate">{BRAND_TAGLINE}</span>
               <span className="shrink-0">{editionDate}</span>
             </div>
           </header>
@@ -819,10 +1137,10 @@ export default function App() {
         <section className="pb-8 border-b border-border">
           <p className="section-label mb-1">This edition</p>
           <h1 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
-            Rapid autonomous AI agent news for animal health
+            {BRAND_HEADLINE}
           </h1>
           <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
-            AI agents ingest CDC travel notices, PubMed literature, veterinary oncology, case reports, clinical and imaging sources, and guidelines on a schedule. This digest is the live output—read-only; no credentials or PII.
+            {BRAND_SUBHEAD} Live ingest combines surveillance, literature, clinical, and guideline sources.
           </p>
           <div className="rounded-lg overflow-hidden border border-border bg-muted/20 max-w-2xl mb-6">
             <img
@@ -842,20 +1160,20 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
             <div className="rounded-lg overflow-hidden border border-border bg-muted/20">
               <img
-                src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&q=80"
+                src="https://images.pexels.com/photos/6235666/pexels-photo-6235666.jpeg?auto=compress&cs=tinysrgb&w=1200"
                 alt=""
                 className="w-full h-48 object-cover"
               />
             </div>
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
-                AnimalMind Pro is a rapid, AI agent–driven newsletter focused on animal health. Autonomous agents run on a schedule: they monitor veterinary literature, outbreak data, drug signals, and clinical research, then synthesize a daily brief.
+                AnimalMind Pro is the clinical edition of our autonomous AI news engine.
               </p>
               <p>
-                Curated sources: PubMed (one health, oncology, case reports, clinical, small animal, equine), CDC travel notices, TCIA imaging, and guidelines (AAHA, AVMA, Merck, etc.). Read-only; we publish the digest as the core product.
+                Agents run on a schedule, monitor trusted public sources, and publish a concise daily brief with source links.
               </p>
               <p>
-                For clinicians, researchers, educators, and students. Newsletter-style delivery; infrastructure-level AI.
+                Built for clinicians, researchers, educators, and students.
               </p>
             </div>
           </div>
@@ -1062,6 +1380,74 @@ export default function App() {
             </Card>
           </div>
 
+          <section id="brief-articles" aria-labelledby="brief-articles-heading" className="mt-8">
+            <h2 id="brief-articles-heading" className="section-label mb-2">Daily brief articles</h2>
+            <p className="text-xs text-muted-foreground mb-4">
+              Auto-generated article drafts from today’s ingest, with direct source links for review.
+            </p>
+            {proBriefArticles.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {proBriefArticles.map((article) => (
+                  <Card key={`pro-article-${article.id}`} className="border border-border bg-card shadow-sm">
+                    <CardHeader className="p-4 pb-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
+                          {article.audience === "all" ? "All audiences" : "Pro"}
+                        </Badge>
+                      </div>
+                      <CardTitle className="text-base font-semibold">{article.title}</CardTitle>
+                      <CardDescription className="text-sm">{article.summary}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0 space-y-3">
+                      <ul className="list-disc pl-4 space-y-1 text-sm text-muted-foreground">
+                        {article.points.map((point, idx) => (
+                          <li key={`pro-point-${article.id}-${idx}`}>{point}</li>
+                        ))}
+                      </ul>
+                      {article.sources.length > 0 && (
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Source links</p>
+                          <div className="space-y-2">
+                            {article.sources.map((source, idx) => {
+                              const href = safeHref(source.url);
+                              return href !== "#" ? (
+                                <a
+                                  key={`pro-source-${article.id}-${idx}`}
+                                  href={href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex w-full items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-sm font-medium text-foreground hover:bg-muted/40 hover:border-foreground/30"
+                                >
+                                  <span className="truncate">View source · {sourceHostLabel(source.url)}</span>
+                                  <ExternalLink className="size-3.5 shrink-0" aria-hidden />
+                                </a>
+                              ) : (
+                                <span
+                                  key={`pro-source-${article.id}-${idx}`}
+                                  className="inline-flex w-full items-center rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-sm text-muted-foreground"
+                                >
+                                  {source.title || "Source"}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="border border-border bg-card">
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">
+                    Article drafts will appear after ingest data is available.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+
           {/* Sources (what the agents track) — full width below */}
           <section id="track" aria-labelledby="track-heading" className="mt-8 space-y-3">
             <h2 id="track-heading" className="section-label mb-2">Sources</h2>
@@ -1136,7 +1522,7 @@ export default function App() {
         </section>
 
         <div className="pt-8 flex justify-center">
-          <a href="#data" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <a href="#data" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-md gap-2 inline-flex items-center no-underline")}>
             Back to digest
             <ChevronDown className="size-4 rotate-180" aria-hidden />
           </a>
@@ -1145,13 +1531,9 @@ export default function App() {
 
           <footer className="border-t border-border bg-card mt-auto py-8 text-center text-sm text-muted-foreground relative z-1">
             <p className="font-semibold text-foreground">AnimalMind Pro</p>
-            <p className="mt-1">Autonomous research intelligence. Evidence from public sources only.</p>
+            <p className="mt-1">Run by autonomous agents. Reviewed by humans.</p>
             <p className="mt-2 flex items-center justify-center gap-1.5 text-muted-foreground text-xs">
               No credentials or PII collected.
-            </p>
-            <p className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
-              <button type="button" onClick={() => navigate("terms")} className="hover:text-foreground underline">Terms of Service</button>
-              <button type="button" onClick={() => navigate("privacy")} className="hover:text-foreground underline">Privacy Policy</button>
             </p>
           </footer>
         </>
