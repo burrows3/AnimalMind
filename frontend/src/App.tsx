@@ -108,92 +108,81 @@ const CLINICAL_SECTION_HASHES = new Set([
   "waitlist",
   "memory-panel",
 ]);
-/** Animal images that match article topic (dog → dog photo, cat → cat photo). Each topic has multiple URLs so each card is distinct. */
+/** Animal images are generated per topic from research data so cards stay relevant and never drift to non-animal scenes. */
 const PET_IMAGE_WIDTH = 480;
 const PET_IMAGE_HEIGHT = 300;
-const U = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${PET_IMAGE_WIDTH}&q=80`;
-/** Unsplash CDN URLs by animal topic. Use topic-specific photos so research about dogs shows a dog, etc. */
-const PET_IMAGES_BY_TOPIC: Record<string, string[]> = {
-  dog: [
-    "1552053831-71594a27632d",
-    "1583511655857-d19b40a7a54e",
-    "1568572933382-74d440642117",
-    "1548199973-03cce0bbc87b",
-    "1458571037713-913d8b481dc6",
-    "1587300003388-59208cc962cb",
-    "1576086213369-97a306d36557",
-    "1532187863486-abf9dbad1b69",
-  ].map(U),
-  cat: [
-    "1514888286974-6c03e2ca1dba",
-    "1573865526739-10659fec78a5",
-    "1543852786-1cf6624b9987",
-    "1587300003388-59208cc962cb",
-    "1552053831-71594a27632d",
-    "1458571037713-913d8b481dc6",
-    "1568572933382-74d440642117",
-    "1532187863486-abf9dbad1b69",
-  ].map(U),
-  bird: [
-    "1548199973-03cce0bbc87b",
-    "1458571037713-913d8b481dc6",
-    "1568572933382-74d440642117",
-    "1587300003388-59208cc962cb",
-    "1532187863486-abf9dbad1b69",
-    "1576086213369-97a306d36557",
-    "1552053831-71594a27632d",
-    "1461988320302-91bde64fc8e4",
-  ].map(U),
-  horse: [
-    "1461988320302-91bde64fc8e4",
-    "1568572933382-74d440642117",
-    "1587300003388-59208cc962cb",
-    "1458571037713-913d8b481dc6",
-    "1552053831-71594a27632d",
-    "1548199973-03cce0bbc87b",
-    "1532187863486-abf9dbad1b69",
-    "1576086213369-97a306d36557",
-  ].map(U),
-  cattle: [
-    "1461988320302-91bde64fc8e4",
-    "1552053831-71594a27632d",
-    "1587300003388-59208cc962cb",
-    "1458571037713-913d8b481dc6",
-    "1568572933382-74d440642117",
-    "1548199973-03cce0bbc87b",
-    "1532187863486-abf9dbad1b69",
-    "1576086213369-97a306d36557",
-  ].map(U),
-  wildlife: [
-    "1532187863486-abf9dbad1b69",
-    "1576086213369-97a306d36557",
-    "1587300003388-59208cc962cb",
-    "1548199973-03cce0bbc87b",
-    "1458571037713-913d8b481dc6",
-    "1552053831-71594a27632d",
-    "1568572933382-74d440642117",
-    "1461988320302-91bde64fc8e4",
-  ].map(U),
-  turtle: [
-    "1573865526739-10659fec78a5",
-    "1543852786-1cf6624b9987",
-    "1587300003388-59208cc962cb",
-    "1458571037713-913d8b481dc6",
-    "1548199973-03cce0bbc87b",
-    "1552053831-71594a27632d",
-    "1568572933382-74d440642117",
-    "1514888286974-6c03e2ca1dba",
-  ].map(U),
-  general: [
-    "1587300003388-59208cc962cb",
-    "1514888286974-6c03e2ca1dba",
-    "1548199973-03cce0bbc87b",
-    "1552053831-71594a27632d",
-    "1576086213369-97a306d36557",
-    "1532187863486-abf9dbad1b69",
-    "1543852786-1cf6624b9987",
-    "1573865526739-10659fec78a5",
-  ].map(U),
+const PET_TOPICS = ["dog", "cat", "bird", "horse", "cattle", "wildlife", "turtle", "general"] as const;
+type PetTopicKey = (typeof PET_TOPICS)[number];
+const PET_TOPIC_LABEL: Record<PetTopicKey, string> = {
+  dog: "Canine",
+  cat: "Feline",
+  bird: "Avian",
+  horse: "Equine",
+  cattle: "Bovine",
+  wildlife: "Wildlife",
+  turtle: "Reptile",
+  general: "Pet care",
+};
+const PET_TOPIC_BASE_HUE: Record<PetTopicKey, number> = {
+  dog: 28,
+  cat: 285,
+  bird: 195,
+  horse: 32,
+  cattle: 16,
+  wildlife: 132,
+  turtle: 166,
+  general: 210,
+};
+
+function petTopicShapeSvg(topicKey: PetTopicKey, fill: string, stroke: string): string {
+  if (topicKey === "cat") {
+    return `<path d="M240 86 L205 56 L190 90 L240 98 Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/><path d="M240 86 L275 56 L290 90 L240 98 Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="240" cy="138" r="52" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="220" cy="132" rx="8" ry="11" fill="${stroke}"/><ellipse cx="260" cy="132" rx="8" ry="11" fill="${stroke}"/><circle cx="240" cy="148" r="5" fill="${stroke}"/>`;
+  }
+  if (topicKey === "bird") {
+    return `<ellipse cx="240" cy="148" rx="70" ry="48" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="188" cy="118" r="28" fill="${fill}" stroke="${stroke}" stroke-width="2"/><path d="M160 118 L134 106 L134 130 Z" fill="${stroke}"/><ellipse cx="256" cy="148" rx="34" ry="24" fill="rgba(255,255,255,0.22)" stroke="${stroke}" stroke-width="1.5"/><circle cx="196" cy="112" r="4" fill="${stroke}"/>`;
+  }
+  if (topicKey === "horse") {
+    return `<ellipse cx="235" cy="162" rx="88" ry="42" fill="${fill}" stroke="${stroke}" stroke-width="2"/><rect x="278" y="112" width="34" height="70" rx="14" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="314" cy="122" rx="34" ry="24" fill="${fill}" stroke="${stroke}" stroke-width="2"/><path d="M336 103 L346 88 L328 93 Z" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/><rect x="180" y="188" width="10" height="32" rx="5" fill="${stroke}"/><rect x="222" y="188" width="10" height="32" rx="5" fill="${stroke}"/><rect x="258" y="188" width="10" height="32" rx="5" fill="${stroke}"/><rect x="294" y="188" width="10" height="32" rx="5" fill="${stroke}"/>`;
+  }
+  if (topicKey === "cattle") {
+    return `<ellipse cx="235" cy="162" rx="90" ry="44" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="318" cy="138" rx="40" ry="30" fill="${fill}" stroke="${stroke}" stroke-width="2"/><path d="M283 124 Q266 102 250 122" fill="none" stroke="${stroke}" stroke-width="4" stroke-linecap="round"/><path d="M353 124 Q370 102 386 122" fill="none" stroke="${stroke}" stroke-width="4" stroke-linecap="round"/><ellipse cx="334" cy="146" rx="7" ry="6" fill="${stroke}"/><rect x="182" y="192" width="10" height="28" rx="5" fill="${stroke}"/><rect x="224" y="192" width="10" height="28" rx="5" fill="${stroke}"/><rect x="266" y="192" width="10" height="28" rx="5" fill="${stroke}"/><rect x="308" y="192" width="10" height="28" rx="5" fill="${stroke}"/>`;
+  }
+  if (topicKey === "wildlife") {
+    return `<path d="M240 86 L200 54 L186 98 L240 108 Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/><path d="M240 86 L280 54 L294 98 L240 108 Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="240" cy="144" r="54" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="219" cy="136" rx="7" ry="10" fill="${stroke}"/><ellipse cx="261" cy="136" rx="7" ry="10" fill="${stroke}"/><path d="M212 164 Q240 182 268 164" fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  if (topicKey === "turtle") {
+    return `<ellipse cx="238" cy="148" rx="78" ry="54" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="320" cy="146" r="22" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="189" cy="126" rx="16" ry="10" fill="rgba(255,255,255,0.24)"/><ellipse cx="238" cy="121" rx="16" ry="10" fill="rgba(255,255,255,0.24)"/><ellipse cx="287" cy="126" rx="16" ry="10" fill="rgba(255,255,255,0.24)"/><ellipse cx="213" cy="165" rx="16" ry="10" fill="rgba(255,255,255,0.24)"/><ellipse cx="262" cy="170" rx="16" ry="10" fill="rgba(255,255,255,0.24)"/><ellipse cx="190" cy="176" rx="18" ry="12" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="286" cy="176" rx="18" ry="12" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+  }
+  if (topicKey === "general") {
+    return `<circle cx="194" cy="128" r="18" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="236" cy="114" r="16" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="278" cy="128" r="18" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="236" cy="170" rx="52" ry="34" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+  }
+  return `<ellipse cx="240" cy="170" rx="84" ry="36" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="240" cy="126" rx="58" ry="50" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="240" cy="76" rx="36" ry="38" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="204" cy="64" rx="18" ry="28" fill="${fill}" stroke="${stroke}" stroke-width="2" transform="rotate(-28 204 64)"/><ellipse cx="276" cy="64" rx="18" ry="28" fill="${fill}" stroke="${stroke}" stroke-width="2" transform="rotate(28 276 64)"/><circle cx="224" cy="76" r="6" fill="${stroke}"/><circle cx="256" cy="76" r="6" fill="${stroke}"/><ellipse cx="240" cy="90" rx="8" ry="6" fill="${stroke}"/>`;
+}
+
+function petTopicSvgImage(topicKey: PetTopicKey, variant = 0): string {
+  const baseHue = PET_TOPIC_BASE_HUE[topicKey];
+  const hue = (baseHue + variant * 19) % 360;
+  const bg = `hsl(${hue}, 48%, 95%)`;
+  const fill = `hsl(${hue}, 44%, 74%)`;
+  const stroke = `hsl(${hue}, 34%, 30%)`;
+  const shape = petTopicShapeSvg(topicKey, fill, stroke);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PET_IMAGE_WIDTH} ${PET_IMAGE_HEIGHT}" fill="none"><rect width="${PET_IMAGE_WIDTH}" height="${PET_IMAGE_HEIGHT}" fill="${bg}"/>${shape}<text x="${PET_IMAGE_WIDTH / 2}" y="${PET_IMAGE_HEIGHT - 20}" font-family="system-ui,sans-serif" font-size="13" fill="${stroke}" text-anchor="middle" dominant-baseline="middle">${PET_TOPIC_LABEL[topicKey]}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function buildPetTopicImagePool(topicKey: PetTopicKey, size = 10): string[] {
+  return Array.from({ length: size }, (_, idx) => petTopicSvgImage(topicKey, idx));
+}
+
+const PET_IMAGES_BY_TOPIC: Record<PetTopicKey, string[]> = {
+  dog: buildPetTopicImagePool("dog"),
+  cat: buildPetTopicImagePool("cat"),
+  bird: buildPetTopicImagePool("bird"),
+  horse: buildPetTopicImagePool("horse"),
+  cattle: buildPetTopicImagePool("cattle"),
+  wildlife: buildPetTopicImagePool("wildlife"),
+  turtle: buildPetTopicImagePool("turtle"),
+  general: buildPetTopicImagePool("general"),
 };
 /** Distinct fallback image per article index (no blanks). */
 function petFallbackImageUrl(articleIndex: number): string {
@@ -203,8 +192,6 @@ function petFallbackImageUrl(articleIndex: number): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PET_IMAGE_WIDTH} ${PET_IMAGE_HEIGHT}"><rect fill="${bg}" width="${PET_IMAGE_WIDTH}" height="${PET_IMAGE_HEIGHT}"/><ellipse cx="240" cy="140" rx="80" ry="50" fill="${fg}" opacity="0.25"/><text x="240" y="200" font-family="system-ui,sans-serif" font-size="13" fill="${fg}" text-anchor="middle" dominant-baseline="middle">Pet health</text></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
-type PetTopicKey = keyof typeof PET_IMAGES_BY_TOPIC;
-
 const PET_PLACEHOLDER_IMAGES = [
   "/pet-placeholder-1.svg",
   "/pet-placeholder-2.svg",
@@ -214,16 +201,6 @@ const PET_PLACEHOLDER_IMAGES = [
   "/pet-placeholder-6.svg",
 ];
 const PET_ARTICLE_IMAGE_FALLBACK = PET_PLACEHOLDER_IMAGES[0] ?? petFallbackImageUrl(999);
-const PET_PLACEHOLDER_BY_TOPIC_INDEX: Record<PetTopicKey, number> = {
-  cat: 0,
-  turtle: 1,
-  wildlife: 2,
-  horse: 3,
-  dog: 4,
-  bird: 5,
-  cattle: 3,
-  general: 4,
-};
 
 function inferPetTopicKeyFromText(text: string): PetTopicKey {
   const t = text.toLowerCase();
@@ -244,9 +221,7 @@ function inferPetTopicKey(row: { title?: string; condition_or_topic?: string }):
 }
 
 function petTopicPlaceholderImage(topicKey: PetTopicKey, offset = 0): string {
-  const baseIndex = PET_PLACEHOLDER_BY_TOPIC_INDEX[topicKey] ?? PET_PLACEHOLDER_BY_TOPIC_INDEX.general;
-  const index = (baseIndex + offset) % PET_PLACEHOLDER_IMAGES.length;
-  return PET_PLACEHOLDER_IMAGES[index] ?? PET_ARTICLE_IMAGE_FALLBACK;
+  return petTopicSvgImage(topicKey, 100 + offset);
 }
 
 function pickDistinctImage(pool: string[], startIndex: number, used: Set<string>): string {
