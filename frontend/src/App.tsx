@@ -1387,40 +1387,6 @@ export default function App() {
               </div>
             </section>
 
-            {/* Topics we cover — cards with professional images */}
-            <section id="pet-topics" aria-labelledby="pet-topics-heading" className="pb-10">
-              <h2 id="pet-topics-heading" className="section-label mb-3">What we cover</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Card className="border border-border bg-card overflow-hidden">
-                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
-                    <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=80" alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-base font-semibold">Dogs & cats</CardTitle>
-                    <CardDescription className="text-sm">Companion animal health, behavior, and care—backed by current research.</CardDescription>
-                  </CardHeader>
-                </Card>
-                <Card className="border border-border bg-card overflow-hidden">
-                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
-                    <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=80" alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-base font-semibold">When to see a vet</CardTitle>
-                    <CardDescription className="text-sm">Signs to watch for and when to seek professional care.</CardDescription>
-                  </CardHeader>
-                </Card>
-                <Card className="border border-border bg-card overflow-hidden">
-                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
-                    <img src="https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&q=80" alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-base font-semibold">Evidence in plain language</CardTitle>
-                    <CardDescription className="text-sm">What studies and guidelines say—without the jargon.</CardDescription>
-                  </CardHeader>
-                </Card>
-              </div>
-            </section>
-
             {/* Updates */}
             <section id="pet-updates" aria-labelledby="pet-updates-heading" className="py-12 border-t border-border">
               <h2 id="pet-updates-heading" className="section-label mb-2">Updates</h2>
