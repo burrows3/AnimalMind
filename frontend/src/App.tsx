@@ -108,22 +108,53 @@ const CLINICAL_SECTION_HASHES = new Set([
   "waitlist",
   "memory-panel",
 ]);
-/** Unique image per article: inline SVG data URI so no external requests and no blocking. Each card gets a different color. */
+/** High-quality distinct photos per article. Each article gets a unique image from a deterministic URL. */
 const PET_IMAGE_WIDTH = 480;
 const PET_IMAGE_HEIGHT = 300;
-function petImageUrlForArticle(topicKey: string, articleIndex: number): string {
-  const h = (articleIndex * 47 + topicKey.length * 31) % 360;
-  const bg = `hsl(${h}, 25%, 94%)`;
-  const fg = `hsl(${h}, 30%, 45%)`;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PET_IMAGE_WIDTH} ${PET_IMAGE_HEIGHT}"><rect fill="${bg}" width="${PET_IMAGE_WIDTH}" height="${PET_IMAGE_HEIGHT}"/><circle cx="${PET_IMAGE_WIDTH / 2}" cy="${PET_IMAGE_HEIGHT / 2 - 20}" r="40" fill="${fg}" opacity="0.4"/><text x="${PET_IMAGE_WIDTH / 2}" y="${PET_IMAGE_HEIGHT / 2 + 45}" font-family="system-ui,sans-serif" font-size="14" fill="${fg}" text-anchor="middle" dominant-baseline="middle">Pet health</text></svg>`;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+/** Real animal/nature photos: Unsplash CDN (verified IDs). One per article index; fallback to Picsum then SVG. */
+const PET_ARTICLE_PHOTOS: string[] = [
+  "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1514888286974-6c03e2ca239d?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1574158622688-e89e3eaf0f74?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1458571037713-913d8b481dc6?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1474511324803-24c5926a8c78?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1583337133575-2d75733f19e0?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1587303853328-5f3b2c1a0d9e?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1583337133575-2d75733f19e0?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1511044568932-338cba0ad803?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1552053831-71594a27632d?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1530281700549-e82e7bf97421?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1583337133575-2d75733f19e0?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1568572933382-74d440642117?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1514888286974-6c03e2ca239d?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1574158622688-e89e3eaf0f74?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1458571037713-913d8b481dc6?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1474511324803-24c5926a8c78?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1583337133575-2d75733f19e0?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1587303853328-5f3b2c1a0d9e?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1511044568932-338cba0ad803?w=480&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1552053831-71594a27632d?w=480&q=80&fit=crop",
+];
+function petImageUrlForArticle(_topicKey: string, articleIndex: number): string {
+  const url = PET_ARTICLE_PHOTOS[articleIndex % PET_ARTICLE_PHOTOS.length];
+  if (url) return url;
+  return `https://picsum.photos/seed/pet-${articleIndex}/${PET_IMAGE_WIDTH}/${PET_IMAGE_HEIGHT}`;
 }
 /** Map inferPetImageIndex (0–7) to topic key. */
 const PET_TOPIC_KEYS = ["cat", "turtle", "wildlife", "horse", "dog", "bird", "cattle", "wildlife"] as const;
-/** Featured/more cards: one distinct image per topic. */
-const PET_FEATURED_IMAGES = PET_TOPIC_KEYS.map((topic, i) => petImageUrlForArticle(topic, i));
-/** Fallback when image fails to load (should not happen with data URIs). */
-const PET_ARTICLE_IMAGE_FALLBACK = petImageUrlForArticle("general", 999);
+/** Featured/more cards: distinct photos. */
+const PET_FEATURED_IMAGES = PET_ARTICLE_PHOTOS.slice(0, 8);
+/** Fallback when image fails to load. */
+const PET_ARTICLE_IMAGE_FALLBACK = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300"><rect fill="#e2e8f0" width="480" height="300"/><text x="240" y="155" font-family="system-ui,sans-serif" font-size="14" fill="#64748b" text-anchor="middle" dominant-baseline="middle">Pet health</text></svg>')}`;
 
 type DataSummary = {
   lastUpdated?: string | null;
@@ -1178,6 +1209,8 @@ export default function App() {
                                 src={article.imageUrl}
                                 alt=""
                                 className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                                loading="lazy"
                                 onError={(e) => {
                                   e.currentTarget.onerror = null;
                                   e.currentTarget.src = PET_ARTICLE_IMAGE_FALLBACK;
