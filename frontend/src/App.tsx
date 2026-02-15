@@ -143,8 +143,9 @@ export default function App() {
   const [waitlistError, setWaitlistError] = useState("");
   const [proCtaExpanded, setProCtaExpanded] = useState(false);
 
-  const hashToView = (h: string) => (h === "consumer" || h === "clinical" ? h : "");
-  const [view, setView] = useState<"" | "consumer" | "clinical">(() =>
+  const hashToView = (h: string) =>
+    h === "consumer" || h === "clinical" || h === "terms" || h === "privacy" ? h : "";
+  const [view, setView] = useState<"" | "consumer" | "clinical" | "terms" | "privacy">(() =>
     hashToView(typeof window !== "undefined" ? window.location.hash.slice(1) : "")
   );
 
@@ -158,14 +159,18 @@ export default function App() {
     if (typeof document === "undefined") return;
     const t =
       view === "consumer"
-        ? "Animal Health Newsletter — Pet Owners"
+        ? "AnimalMind Pet"
         : view === "clinical"
-          ? "Animal Health Newsletter — Clinical"
-          : "Animal Health Newsletter";
+          ? "AnimalMind Pro"
+          : view === "terms"
+            ? "Terms of Service — AnimalMind"
+            : view === "privacy"
+              ? "Privacy Policy — AnimalMind"
+              : "AnimalMind — AI Infrastructure for Animal Health";
     document.title = t;
   }, [view]);
 
-  const navigate = (v: "" | "consumer" | "clinical") => {
+  const navigate = (v: "" | "consumer" | "clinical" | "terms" | "privacy") => {
     window.location.hash = v;
     setView(v);
   };
@@ -218,173 +223,541 @@ export default function App() {
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
-      {/* ——— Landing: mission, imagery, two paths ——— */}
+      {/* ——— Landing: WSJ-style editorial, hero image, two distinct editions ——— */}
       {view === "" && (
         <>
-          <header className="border-b border-border bg-card/80 backdrop-blur-sm">
-            <div className="mx-auto max-w-3xl px-4 py-3 flex justify-center">
+          <header className="border-b border-border bg-card">
+            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <button
                 type="button"
                 onClick={() => navigate("")}
-                className="flex items-center gap-2 font-editorial text-foreground no-underline min-h-[44px]"
+                className="flex items-center gap-2 text-foreground no-underline min-h-[44px]"
               >
-                <AnimalMindLogo className="size-8 text-primary shrink-0" />
-                <span className="text-xl font-semibold tracking-tight">Animal Health Newsletter</span>
+                <AnimalMindLogo className="size-8 text-foreground shrink-0" />
+                <span className="text-xl font-semibold tracking-tight">AnimalMind</span>
               </button>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+                Autonomous AI News · Animal Health
+              </p>
             </div>
           </header>
-          <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
-            {/* Mission */}
-            <p className="font-editorial text-center text-lg sm:text-xl text-foreground/90 mb-2">
-              Rapid insights from animal sources.
-            </p>
-            <p className="text-center text-muted-foreground text-sm sm:text-base mb-8">
-              In one place—for clinicians and pet owners.
-            </p>
-
-            {/* Hero image */}
-            <div className="rounded-2xl overflow-hidden border border-border shadow-sm mb-10 bg-muted/30">
-              <img
-                src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80"
-                alt=""
-                className="w-full h-48 sm:h-56 object-cover"
-                fetchPriority="high"
-              />
-            </div>
-
-            <p className="text-center text-muted-foreground text-sm mb-6">Choose your edition.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => navigate("consumer")}
-                className="group flex flex-col rounded-xl border-2 border-border bg-card p-6 shadow-sm hover:border-primary/30 hover:shadow-md transition-all text-left min-h-[44px] overflow-hidden"
-              >
-                <div className="rounded-lg overflow-hidden mb-4 h-24 -mx-1 bg-muted/50">
+          <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 sm:py-12">
+            {/* Hero: editorial image + headline */}
+            <section className="mb-10 sm:mb-14">
+              <div className="rounded-none overflow-hidden border border-border bg-card shadow-sm">
+                <div className="relative aspect-[16/9] sm:aspect-[21/9] min-h-[200px]">
                   <img
-                    src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80"
+                    src="https://images.unsplash.com/photo-1576086213369-97a306d36557?w=1200&q=85"
                     alt=""
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    fetchPriority="high"
                   />
+                  <div className="absolute inset-0 bg-foreground/40" />
+                  <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10">
+                    <p className="text-xs uppercase tracking-[0.2em] text-white/90 font-semibold mb-2">
+                      Intelligence for animal health
+                    </p>
+                    <h1 className="text-2xl sm:text-4xl md:text-[2.75rem] font-semibold text-white leading-tight max-w-2xl tracking-tight">
+                      Autonomous AI news and research. Two editions, one engine.
+                    </h1>
+                  </div>
                 </div>
-                <h2 className="font-editorial text-lg font-semibold text-foreground mb-1">Pet Owners</h2>
-                <p className="text-sm text-muted-foreground">Plain-language insights for people who care for companion animals.</p>
-                <span className="mt-4 text-sm text-primary font-medium">Enter →</span>
-              </button>
+              </div>
+              <p className="mt-4 text-sm text-muted-foreground max-w-2xl">
+                AI agents run continuously on surveillance, literature, and clinical sources. We deliver a daily brief for professionals and research-backed guidance for pet owners.
+              </p>
+            </section>
+
+            {/* Two editions: distinct cards with pictures */}
+            <p className="section-label mb-4">Our editions</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
               <button
                 type="button"
                 onClick={() => navigate("clinical")}
-                className="group flex flex-col rounded-xl border-2 border-primary/30 bg-card p-6 shadow-sm hover:border-primary/50 hover:shadow-md transition-all text-left min-h-[44px] overflow-hidden"
+                className="group text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
               >
-                <div className="rounded-lg overflow-hidden mb-4 h-24 -mx-1 bg-muted/50">
+                <div className="aspect-[16/10] overflow-hidden bg-muted/30">
                   <img
-                    src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=80"
+                    src="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&q=85"
                     alt=""
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
                   />
                 </div>
-                <h2 className="font-editorial text-lg font-semibold text-foreground mb-1">Clinical</h2>
-                <p className="text-sm text-muted-foreground">Vet, clinical & research. Surveillance, literature, guidelines.</p>
-                <span className="mt-4 text-sm text-primary font-medium">Enter →</span>
+                <div className="p-5 sm:p-6 border-t border-border">
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Clinical & Research</p>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pro</h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Daily autonomous veterinary intelligence brief. Outbreak signals, new research, drug updates—for veterinarians, researchers, and institutions.
+                  </p>
+                  <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
+                    Enter Pro
+                    <span className="inline-block group-hover:translate-x-1 transition-transform">→</span>
+                  </p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("consumer")}
+                className="group text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
+              >
+                <div className="aspect-[16/10] overflow-hidden bg-muted/30">
+                  <img
+                    src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=85"
+                    alt=""
+                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                  />
+                </div>
+                <div className="p-5 sm:p-6 border-t border-border">
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Pet Owners</p>
+                  <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pet</h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Research-backed guidance in plain language. Same intelligence as Pro—when to watch, when to see a vet, what the evidence says.
+                  </p>
+                  <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
+                    Enter Pet
+                    <span className="inline-block group-hover:translate-x-1 transition-transform">→</span>
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            <p className="mt-10 pt-8 border-t border-border text-center text-xs text-muted-foreground max-w-xl mx-auto">
+              AI infrastructure for animal health. Evidence from public sources. Not medical advice.
+            </p>
+          </main>
+          <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
+            <p>AnimalMind · Autonomous AI News · Animal Health</p>
+            <p className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+              <button type="button" onClick={() => navigate("terms")} className="hover:text-foreground underline">
+                Terms of Service
+              </button>
+              <button type="button" onClick={() => navigate("privacy")} className="hover:text-foreground underline">
+                Privacy Policy
+              </button>
+            </p>
+          </footer>
+        </>
+      )}
+
+      {/* ——— Terms of Service ——— */}
+      {view === "terms" && (
+        <>
+          <header className="sticky top-0 z-10 border-b border-border bg-card">
+            <nav className="mx-auto max-w-3xl px-4 py-3 sm:px-6 flex justify-between items-center">
+              <button type="button" onClick={() => navigate("")} className="flex items-center gap-2 text-foreground min-h-[44px]">
+                <AnimalMindLogo className="size-7 text-foreground shrink-0" />
+                <span className="text-base font-semibold">AnimalMind</span>
+              </button>
+              <span className="text-sm text-muted-foreground">Terms of Service</span>
+            </nav>
+          </header>
+          <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+            <h1 className="text-xl font-semibold text-foreground mb-6">Terms of Service</h1>
+            <div className="prose prose-sm text-muted-foreground space-y-6 max-w-none">
+              <p className="text-sm leading-relaxed">
+                Last updated: {editionDate}. By using AnimalMind (“we”, “our”) websites and services, you agree to these terms.
+              </p>
+              <section>
+                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Use of service</h2>
+                <p className="text-sm leading-relaxed">
+                  AnimalMind provides AI-driven news, digests, and research summaries for animal health. Our content is for informational purposes only and does not constitute medical, veterinary, or professional advice. Always consult a qualified veterinarian or professional for health decisions.
+                </p>
+              </section>
+              <section>
+                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Acceptable use</h2>
+                <p className="text-sm leading-relaxed">
+                  You may not use our services for any illegal purpose, to harm others, or to attempt to gain unauthorized access to our systems or data. You may not scrape, resell, or redistribute our content beyond personal, non-commercial use without permission.
+                </p>
+              </section>
+              <section>
+                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Intellectual property</h2>
+                <p className="text-sm leading-relaxed">
+                  AnimalMind’s name, branding, and original content are our property. Our digests and summaries are derived from public sources; we do not claim ownership of underlying source material. Links to external sources (e.g. CDC, PubMed) are provided for reference.
+                </p>
+              </section>
+              <section>
+                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Disclaimer</h2>
+                <p className="text-sm leading-relaxed">
+                  We provide content “as is.” We do not warrant accuracy, completeness, or fitness for a particular purpose. We are not liable for any decisions or actions taken based on our content. Not a replacement for veterinary or professional care.
+                </p>
+              </section>
+              <section>
+                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Changes</h2>
+                <p className="text-sm leading-relaxed">
+                  We may update these terms from time to time. Continued use of our services after changes constitutes acceptance. The “Last updated” date above reflects the most recent revision.
+                </p>
+              </section>
+              <p className="text-sm leading-relaxed pt-4">
+                Contact: pro@animalmind.co for questions about these terms.
+              </p>
+            </div>
+            <div className="mt-10 pt-6 border-t border-border">
+              <button type="button" onClick={() => navigate("")} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                ← Back to AnimalMind
               </button>
             </div>
           </main>
           <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
-            <p>Animal-focused. Evidence from public sources.</p>
+            <p>AnimalMind · <button type="button" onClick={() => navigate("terms")} className="underline hover:text-foreground">Terms</button> · <button type="button" onClick={() => navigate("privacy")} className="underline hover:text-foreground">Privacy</button></p>
           </footer>
         </>
       )}
 
-      {/* ——— Consumer: Animal Health Newsletter — Pet Owners ——— */}
+      {/* ——— Privacy Policy ——— */}
+      {view === "privacy" && (
+        <>
+          <header className="sticky top-0 z-10 border-b border-border bg-card">
+            <nav className="mx-auto max-w-3xl px-4 py-3 sm:px-6 flex justify-between items-center">
+              <button type="button" onClick={() => navigate("")} className="flex items-center gap-2 text-foreground min-h-[44px]">
+                <AnimalMindLogo className="size-7 text-foreground shrink-0" />
+                <span className="text-base font-semibold">AnimalMind</span>
+              </button>
+              <span className="text-sm text-muted-foreground">Privacy Policy</span>
+            </nav>
+          </header>
+          <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+            <h1 className="text-xl font-semibold text-foreground mb-6">Privacy Policy</h1>
+            <div className="prose prose-sm text-muted-foreground space-y-6 max-w-none">
+              <p className="text-sm leading-relaxed">
+                Last updated: {editionDate}. AnimalMind (“we”, “our”) respects your privacy. This policy describes what we collect and how we use it.
+              </p>
+              <section>
+                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Information we collect</h2>
+                <p className="text-sm leading-relaxed">
+                  When you sign up for updates (e.g. waitlist, newsletter), we collect the email address you provide. We may collect technical data such as IP address and browser type when you visit our sites. Our digest and news content is generated from public sources; we do not collect health data about you or your animals for that content.
+                </p>
+              </section>
+              <section>
+                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">How we use it</h2>
+                <p className="text-sm leading-relaxed">
+                  We use your email to send you the notifications you requested (e.g. launch alerts, newsletter). We may use technical data to operate and improve our services and for security. We do not sell your personal information.
+                </p>
+              </section>
+              <section>
+                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Sharing</h2>
+                <p className="text-sm leading-relaxed">
+                  We do not share your personal information with third parties for their marketing. We may use service providers (e.g. email delivery, hosting) that process data on our behalf under confidentiality obligations.
+                </p>
+              </section>
+              <section>
+                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Retention and your choices</h2>
+                <p className="text-sm leading-relaxed">
+                  We retain your email for as long as you are subscribed or as needed to fulfill the purpose. You can unsubscribe or request deletion by contacting us. You may have rights to access, correct, or delete your data depending on your jurisdiction.
+                </p>
+              </section>
+              <section>
+                <h2 className="text-base font-semibold text-foreground mt-6 mb-2">Changes</h2>
+                <p className="text-sm leading-relaxed">
+                  We may update this policy from time to time. The “Last updated” date above will change when we do. Continued use after changes constitutes acceptance.
+                </p>
+              </section>
+              <p className="text-sm leading-relaxed pt-4">
+                Contact: pro@animalmind.co for privacy questions or requests.
+              </p>
+            </div>
+            <div className="mt-10 pt-6 border-t border-border">
+              <button type="button" onClick={() => navigate("")} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                ← Back to AnimalMind
+              </button>
+            </div>
+          </main>
+          <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
+            <p>AnimalMind · <button type="button" onClick={() => navigate("terms")} className="underline hover:text-foreground">Terms</button> · <button type="button" onClick={() => navigate("privacy")} className="underline hover:text-foreground">Privacy</button></p>
+          </footer>
+        </>
+      )}
+
+      {/* ——— AnimalMind Pet: same format as Pro, pet-owner focus, more imagery ——— */}
       {view === "consumer" && (
         <>
           <header className="sticky top-0 z-10 border-b border-border bg-card">
-            <nav className="mx-auto max-w-4xl px-4 py-3 flex justify-between items-center">
+            <nav className="mx-auto max-w-4xl px-4 py-3 sm:px-6 flex justify-between items-center">
               <button
                 type="button"
                 onClick={() => navigate("")}
-                className="flex items-center gap-2 font-editorial text-foreground min-h-[44px]"
+                className="flex items-center gap-2 text-foreground min-h-[44px]"
               >
-                <AnimalMindLogo className="size-7 text-primary shrink-0" />
-                <span className="text-base font-semibold">Animal Health Newsletter</span>
+                <AnimalMindLogo className="size-7 text-foreground shrink-0" />
+                <span className="text-base font-semibold">AnimalMind</span>
               </button>
-              <span className="text-sm text-muted-foreground font-medium">Pet Owners</span>
+              <div className="flex items-center gap-4">
+                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Notify me</a>
+                <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
+              </div>
             </nav>
           </header>
-          <main className="flex-1 mx-auto w-full max-w-2xl px-4 py-10">
-            <h1 className="font-editorial text-xl sm:text-2xl font-semibold text-foreground mb-4">
-              Animal Health Newsletter — Pet Owners
-            </h1>
-            <p className="text-muted-foreground mb-6">
-              Resources for people who care for companion animals. We’re building this edition with data that runs autonomously—animal health and care in plain language. Coming soon.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              <button type="button" onClick={() => navigate("")} className="text-primary hover:underline">
-                ← Back to Animal Health Newsletter
+
+          <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
+            {/* Hero CTA — image + headline + waitlist */}
+            <section
+              id="pet-cta"
+              aria-labelledby="pet-cta-heading"
+              className="mb-8 sm:mb-10 rounded-lg border border-border bg-muted/30 overflow-hidden"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
+                <div className="lg:col-span-3 relative h-56 sm:h-64 lg:h-auto min-h-[220px]">
+                  <img
+                    src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80"
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+                <div className="lg:col-span-2 p-4 sm:p-6 flex flex-col justify-center">
+                  <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md text-muted-foreground border-0 w-fit mb-2">
+                    AnimalMind Pet
+                  </Badge>
+                  <h2 id="pet-cta-heading" className="text-lg sm:text-xl font-semibold text-foreground leading-tight mb-2">
+                    Research-backed guidance for pet owners
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                    Plain-language insights from the same intelligence that powers veterinary and clinical research. When to see a vet, what to watch for, and what the evidence says.
+                  </p>
+                  {waitlistStatus === "success" ? (
+                    <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when Pet launches.</p>
+                  ) : (
+                    <form
+                      className="flex flex-col sm:flex-row gap-2"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const email = waitlistEmail.trim();
+                        if (!email) return;
+                        setWaitlistStatus("loading");
+                        setWaitlistError("");
+                        const result = await submitWaitlist(email);
+                        if (result.ok) {
+                          setWaitlistStatus("success");
+                          setWaitlistEmail("");
+                        } else if (result.error === "MAILTO") {
+                          window.location.href = `mailto:pro@animalmind.co?subject=AnimalMind%20Pet%20updates&body=${encodeURIComponent(`Please add me for Pet owner updates.\nEmail: ${email}`)}`;
+                          setWaitlistStatus("success");
+                          setWaitlistEmail("");
+                        } else {
+                          setWaitlistStatus("error");
+                          setWaitlistError(result.error || "Something went wrong.");
+                        }
+                      }}
+                    >
+                      <input
+                        type="email"
+                        placeholder="Your email"
+                        value={waitlistEmail}
+                        onChange={(e) => setWaitlistEmail(e.target.value)}
+                        disabled={waitlistStatus === "loading"}
+                        className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
+                        aria-label="Email"
+                      />
+                      <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
+                        {waitlistStatus === "loading" ? "…" : "Notify me"}
+                      </Button>
+                    </form>
+                  )}
+                  {waitlistStatus === "error" && waitlistError && (
+                    <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+                  )}
+                </div>
+              </div>
+              <p className="p-4 pt-0 sm:px-6 text-xs text-muted-foreground border-t border-border/80 mt-0">
+                Powered by AnimalMind Pro. Not a replacement for veterinary care. When in doubt, see your vet.
+              </p>
+            </section>
+
+            {/* Lead */}
+            <section className="pb-8 border-b border-border">
+              <p className="section-label mb-1">For pet owners</p>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
+                Clear, evidence-based guidance in one place
+              </h1>
+              <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
+                AnimalMind Pet turns the same autonomous research that professionals use into clear answers for people who care for companion animals—without replacing your veterinarian.
+              </p>
+              <div className="rounded-lg overflow-hidden border border-border bg-muted/20 max-w-2xl">
+                <img
+                  src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=700&q=80"
+                  alt=""
+                  className="w-full h-48 object-cover"
+                />
+              </div>
+            </section>
+
+            {/* Mission / What we do */}
+            <section id="pet-mission" aria-labelledby="pet-mission-heading" className="pb-10">
+              <h2 id="pet-mission-heading" className="section-label mb-3">What to expect</h2>
+              <div className="space-y-6 text-muted-foreground leading-relaxed">
+                <p>
+                  AnimalMind Pet gives you structured, research-backed guidance: what the literature and veterinary sources say about common concerns, when to monitor at home, and when to seek a vet. We always recommend escalation to a veterinarian when appropriate.
+                </p>
+                <p>
+                  Content is derived from AnimalMind Pro—the same autonomous intelligence that monitors veterinary literature, outbreak data, and clinical research. Simplified for clarity; accurate and evidence-based.
+                </p>
+                <p>
+                  For pet owners who want to understand the evidence without replacing professional care. Clear, reassuring, and professional.
+                </p>
+              </div>
+            </section>
+
+            {/* Topics we cover — cards with professional images */}
+            <section id="pet-topics" aria-labelledby="pet-topics-heading" className="pb-10">
+              <h2 id="pet-topics-heading" className="section-label mb-3">What we cover</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card className="border border-border bg-card overflow-hidden">
+                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
+                    <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=80" alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base font-semibold">Dogs & cats</CardTitle>
+                    <CardDescription className="text-sm">Companion animal health, behavior, and care—backed by current research.</CardDescription>
+                  </CardHeader>
+                </Card>
+                <Card className="border border-border bg-card overflow-hidden">
+                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
+                    <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=80" alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base font-semibold">When to see a vet</CardTitle>
+                    <CardDescription className="text-sm">Signs to watch for and when to seek professional care.</CardDescription>
+                  </CardHeader>
+                </Card>
+                <Card className="border border-border bg-card overflow-hidden">
+                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
+                    <img src="https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&q=80" alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base font-semibold">Evidence in plain language</CardTitle>
+                    <CardDescription className="text-sm">What studies and guidelines say—without the jargon.</CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+            </section>
+
+            {/* Updates */}
+            <section id="pet-updates" aria-labelledby="pet-updates-heading" className="py-12 border-t border-border">
+              <h2 id="pet-updates-heading" className="section-label mb-2">Updates</h2>
+              <p className="text-lg font-semibold text-foreground mb-1">Get notified</p>
+              <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                We’ll email you when AnimalMind Pet launches and when we add new guidance. No spam.
+              </p>
+              {waitlistStatus === "success" ? (
+                <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when we have updates.</p>
+              ) : (
+                <form
+                  className="flex flex-col sm:flex-row gap-2 max-w-md"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const email = waitlistEmail.trim();
+                    if (!email) return;
+                    setWaitlistStatus("loading");
+                    setWaitlistError("");
+                    const result = await submitWaitlist(email);
+                    if (result.ok) {
+                      setWaitlistStatus("success");
+                      setWaitlistEmail("");
+                    } else if (result.error === "MAILTO") {
+                      window.location.href = `mailto:pro@animalmind.co?subject=AnimalMind%20Pet%20updates&body=${encodeURIComponent(`Please add me for Pet updates.\nEmail: ${email}`)}`;
+                      setWaitlistStatus("success");
+                      setWaitlistEmail("");
+                    } else {
+                      setWaitlistStatus("error");
+                      setWaitlistError(result.error || "Something went wrong.");
+                    }
+                  }}
+                >
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={waitlistEmail}
+                    onChange={(e) => setWaitlistEmail(e.target.value)}
+                    disabled={waitlistStatus === "loading"}
+                    className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                    aria-label="Email for updates"
+                  />
+                  <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
+                    {waitlistStatus === "loading" ? "…" : "Notify me"}
+                  </Button>
+                </form>
+              )}
+              {waitlistStatus === "error" && waitlistError && (
+                <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+              )}
+            </section>
+
+            <div className="pt-6 flex justify-center">
+              <button type="button" onClick={() => navigate("")} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                ← Back to AnimalMind
               </button>
-            </p>
+            </div>
           </main>
-          <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-            <p>Animal Health Newsletter — Pet Owners</p>
+
+          <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
+            <p className="font-semibold text-foreground">AnimalMind Pet</p>
+            <p className="mt-1">Research-backed guidance for pet owners. Powered by AnimalMind Pro.</p>
+            <p className="mt-2 text-xs">Not a replacement for veterinary care. When in doubt, see your vet.</p>
+            <p className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
+              <button type="button" onClick={() => navigate("terms")} className="hover:text-foreground underline">Terms of Service</button>
+              <button type="button" onClick={() => navigate("privacy")} className="hover:text-foreground underline">Privacy Policy</button>
+            </p>
           </footer>
         </>
       )}
 
-      {/* ——— Clinical: Animal Health Newsletter — Clinical ——— */}
+      {/* ——— AnimalMind Pro: autonomous research intelligence ——— */}
       {view === "clinical" && (
         <>
-          <header className="sticky top-0 z-10 border-b-2 border-primary/20 bg-card shadow-sm">
+          <header className="sticky top-0 z-10 border-b border-border bg-card">
             <nav className="mx-auto max-w-4xl px-4 py-3 sm:px-6 flex flex-wrap justify-between items-center gap-2">
               <button
                 type="button"
                 onClick={() => navigate("")}
-                className="flex items-center gap-2 font-editorial text-foreground min-h-[44px] py-1 text-left"
+                className="flex items-center gap-2 text-foreground min-h-[44px] py-1 text-left"
               >
-                <AnimalMindLogo className="size-7 sm:size-8 text-primary shrink-0" />
-                <span className="text-base sm:text-xl font-semibold tracking-tight">Animal Health Newsletter — Clinical</span>
+                <AnimalMindLogo className="size-7 sm:size-8 text-foreground shrink-0" />
+                <span className="text-base sm:text-xl font-semibold tracking-tight">AnimalMind Pro</span>
               </button>
               <div className="flex flex-wrap items-center gap-0.5 sm:gap-2 text-sm">
                 <a href="#data" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Digest</a>
-                <a href="#pro-cta" className="px-2.5 py-2 rounded-md text-primary font-medium hover:bg-primary/10 min-h-[44px] flex items-center">Pro</a>
+                <a href="#pro-cta" className="px-2.5 py-2 rounded-md text-foreground font-medium hover:bg-muted/50 min-h-[44px] flex items-center">Brief</a>
                 <a href="#mission" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Mission</a>
                 <a href="#topics" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Topics</a>
                 <a href="#track" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Sources</a>
-                <a href="#waitlist" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Newsletter</a>
+                <a href="#waitlist" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Updates</a>
               </div>
             </nav>
             <div className="mx-auto max-w-4xl px-4 pb-2 sm:px-6 flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-0.5 text-xs text-muted-foreground">
-              <span className="truncate">Vet, clinical & research. Evidence from public sources.</span>
+              <span className="truncate">Rapid autonomous AI agent news · Animal health</span>
               <span className="shrink-0">{editionDate}</span>
             </div>
           </header>
 
           <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
-            {/* Pro CTA */}
+            {/* Pro CTA — newsletter hero with image */}
         <section
           id="pro-cta"
           aria-labelledby="pro-cta-heading"
-          className="mb-8 sm:mb-10 rounded-xl border-2 border-primary/20 bg-linear-to-b from-primary/5 to-transparent shadow-sm overflow-hidden"
+          className="mb-8 sm:mb-10 rounded-lg border border-border bg-muted/30 overflow-hidden"
         >
-          <div className="p-4 sm:p-6 md:p-8">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
-              <div className="space-y-2 sm:space-y-3 max-w-xl min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center rounded-md bg-primary/10 p-1.5 shrink-0">
-                    <Sparkles className="size-4 text-primary" aria-hidden />
-                  </span>
-                  <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md">
-                    Pro
-                  </Badge>
-                </div>
-                <h2 id="pro-cta-heading" className="font-editorial text-lg sm:text-xl md:text-2xl font-semibold text-foreground leading-tight">
-                  Pro animal health insights
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  AI agents run autonomously—surveillance, literature, and clinical sources—so your digest stays current. Weekly insights when Pro launches.
-                </p>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
+            <div className="lg:col-span-2 relative h-48 sm:h-56 lg:min-h-[240px] order-2 lg:order-1">
+              <img
+                src="https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80"
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+            <div className="lg:col-span-3 p-4 sm:p-6 flex flex-col justify-center order-1 lg:order-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md text-muted-foreground border-0">
+                  Newsletter
+                </Badge>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">AI agent–driven</span>
               </div>
+              <h2 id="pro-cta-heading" className="text-lg sm:text-xl font-semibold text-foreground leading-tight mb-2">
+                Daily Autonomous Veterinary Intelligence Brief
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                Autonomous AI agents monitor surveillance, literature, and clinical sources 24/7. This newsletter delivers a rapid, structured digest—outbreak signals, new research, drug updates—so you stay current on animal health.
+              </p>
               <div className="shrink-0 w-full sm:w-auto">
                 {waitlistStatus === "success" ? (
-                  <p className="text-sm text-primary font-medium py-2">You’re on the list! We’ll notify you when Pro insights are ready.</p>
+                  <p className="text-sm text-foreground font-medium py-2">You’re on the list. We’ll notify you when the daily brief launches.</p>
                 ) : proCtaExpanded ? (
                   <form
                     className="flex flex-col sm:flex-row gap-2"
@@ -425,50 +798,66 @@ export default function App() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full sm:w-auto rounded-md font-medium border-primary/30 bg-background min-h-[44px]"
+                    className="w-full sm:w-auto rounded-md font-medium border-border bg-background min-h-[44px]"
                     onClick={() => setProCtaExpanded(true)}
                   >
-                    Get early access
+                    Early access to the brief
                   </Button>
                 )}
               </div>
+              {waitlistStatus === "error" && waitlistError && (
+                <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+              )}
             </div>
-            {waitlistStatus === "error" && waitlistError && (
-              <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
-            )}
-            <p className="mt-4 pt-4 border-t border-border/80 text-xs text-muted-foreground">
-              Powered by autonomous agents. Evidence from public sources only; not medical advice.
-            </p>
           </div>
+          <p className="px-4 sm:px-6 py-3 border-t border-border/80 text-xs text-muted-foreground">
+            AnimalMind Pro: autonomous research engine. Evidence from public sources only; not medical advice.
+          </p>
         </section>
 
-        {/* Lead */}
+        {/* Lead — newsletter edition with image */}
         <section className="pb-8 border-b border-border">
-          <p className="section-label mb-1">Editorial</p>
-          <h1 className="font-editorial text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
-            Animal health research and practice, in one place
+          <p className="section-label mb-1">This edition</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
+            Rapid autonomous AI agent news for animal health
           </h1>
-          <p className="text-muted-foreground leading-relaxed max-w-2xl">
-            Autonomous agents aggregate CDC travel notices, PubMed literature, veterinary oncology, case reports, clinical and imaging sources, and guidelines. This digest is read-only; no credentials or PII are used.
+          <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
+            AI agents ingest CDC travel notices, PubMed literature, veterinary oncology, case reports, clinical and imaging sources, and guidelines on a schedule. This digest is the live output—read-only; no credentials or PII.
           </p>
-          <a href="#data" className={cn(buttonVariants({ size: "sm" }), "mt-4 rounded-md")}>
+          <div className="rounded-lg overflow-hidden border border-border bg-muted/20 max-w-2xl mb-6">
+            <img
+              src="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=700&q=80"
+              alt=""
+              className="w-full h-44 object-cover"
+            />
+          </div>
+          <a href="#data" className={cn(buttonVariants({ variant: "default", size: "sm" }), "rounded-md")}>
             View today’s digest
           </a>
         </section>
 
-        {/* Mission */}
+        {/* Mission — how the newsletter works */}
         <section id="mission" aria-labelledby="mission-heading" className="pb-10">
-          <h2 id="mission-heading" className="section-label mb-3">Mission</h2>
-          <div className="space-y-6 text-muted-foreground leading-relaxed">
-            <p>
-              We exist to improve animal health. By bringing surveillance, literature, clinical, and vet practice resources into one research network, we help veterinarians, researchers, and one-health teams make better decisions—from outbreak awareness to oncology, imaging, and guidelines.
-            </p>
-            <p>
-              Autonomous agents run on a schedule with curated sources: PubMed (one health, veterinary oncology, case reports, clinical, small animal, equine), CDC travel notices, TCIA imaging, and curated links (AAHA, AVMA, Merck, etc.). This site is read-only. We’re building toward topic-driven investigation over time.
-            </p>
-            <p>
-              For clinicians checking travel notices or differentials; researchers scanning literature and case data; educators and students building on current evidence.
-            </p>
+          <h2 id="mission-heading" className="section-label mb-3">How the newsletter works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <div className="rounded-lg overflow-hidden border border-border bg-muted/20">
+              <img
+                src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=500&q=80"
+                alt=""
+                className="w-full h-48 object-cover"
+              />
+            </div>
+            <div className="space-y-4 text-muted-foreground leading-relaxed">
+              <p>
+                AnimalMind Pro is a rapid, AI agent–driven newsletter focused on animal health. Autonomous agents run on a schedule: they monitor veterinary literature, outbreak data, drug signals, and clinical research, then synthesize a daily brief.
+              </p>
+              <p>
+                Curated sources: PubMed (one health, oncology, case reports, clinical, small animal, equine), CDC travel notices, TCIA imaging, and guidelines (AAHA, AVMA, Merck, etc.). Read-only; we publish the digest as the core product.
+              </p>
+              <p>
+                For clinicians, researchers, educators, and students. Newsletter-style delivery; infrastructure-level AI.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -553,17 +942,17 @@ export default function App() {
           </div>
         </section>
 
-        {/* Today's digest + Topics side by side */}
+        {/* Today's digest + Topics — agent output */}
         <section id="data" aria-labelledby="data-heading" className="pb-10">
           <h2 id="data-heading" className="section-label mb-2 flex items-center gap-2">
             <BarChart3 className="size-4" aria-hidden />
             Today’s digest
           </h2>
-          <p className="text-xs text-muted-foreground mb-4">Latest from autonomous ingest. Data from public sources only.</p>
+          <p className="text-xs text-muted-foreground mb-4">Rapid autonomous ingest. Surveillance, literature, clinical—public sources only.</p>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Left: Today's digest — counts + summary */}
-            <Card className="shadow-sm border-border border-l-4 border-l-primary/30 h-fit">
+            <Card className="shadow-sm border-border border-l-4 border-l-foreground/20 h-fit">
               <CardContent className="p-4 sm:p-6">
                 {loading ? (
                   <p className="text-sm text-muted-foreground">Loading…</p>
@@ -577,7 +966,7 @@ export default function App() {
                             key={key}
                             className="rounded-lg border border-border bg-muted/40 p-3 text-center"
                           >
-                            {Icon && <Icon className="size-4 text-primary mx-auto mb-1 block" aria-hidden />}
+                            {Icon && <Icon className="size-4 text-foreground mx-auto mb-1 block" aria-hidden />}
                             <span className="block text-xl font-bold text-foreground">{summary.counts[key] ?? 0}</span>
                             <span className="block text-[11px] text-muted-foreground">{LABELS[key] ?? key}</span>
                           </div>
@@ -612,7 +1001,7 @@ export default function App() {
             </Card>
 
             {/* Right: Topics — data by type */}
-            <Card id="memory-panel" className="shadow-sm border-border border-l-4 border-l-primary/20 max-h-[55vh] sm:max-h-[65vh] lg:max-h-[70vh] flex flex-col min-h-0">
+            <Card id="memory-panel" className="shadow-sm border-border border-l-4 border-l-foreground/20 max-h-[55vh] sm:max-h-[65vh] lg:max-h-[70vh] flex flex-col min-h-0">
               <CardHeader className="p-3 sm:p-4 pb-2 border-b border-border shrink-0">
                 <CardTitle className="text-sm font-semibold">Topics</CardTitle>
                 <CardDescription className="text-xs">
@@ -633,7 +1022,7 @@ export default function App() {
                       return (
                         <div key={type} className="p-4 bg-muted/15 first:bg-transparent">
                           <div className="flex items-center gap-2 mb-2">
-                            {Icon && <Icon className="size-4 text-primary shrink-0" aria-hidden />}
+                            {Icon && <Icon className="size-4 text-foreground shrink-0" aria-hidden />}
                             <h3 className="text-sm font-semibold text-foreground">
                               {LABELS[type] ?? type}
                             </h3>
@@ -645,9 +1034,9 @@ export default function App() {
                             {items.map((item, i) => {
                               const href = safeHref(item.url);
                               return (
-                                <li key={i} className="text-sm py-1.5 px-2 rounded border border-border/50 bg-card hover:border-primary/20">
+                                <li key={i} className="text-sm py-1.5 px-2 rounded border border-border/50 bg-card hover:border-foreground/20">
                                   {href !== "#" ? (
-                                    <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline block">
+                                    <a href={href} target="_blank" rel="noopener noreferrer" className="text-foreground hover:underline block">
                                       {item.title || "Untitled"}
                                     </a>
                                   ) : (
@@ -692,15 +1081,15 @@ export default function App() {
           </section>
         </section>
 
-        {/* Newsletter / Waitlist — Supabase or mailto */}
+        {/* Updates / Waitlist — Supabase or mailto */}
         <section id="waitlist" aria-labelledby="waitlist-heading" className="py-12 border-t border-border">
-          <h2 id="waitlist-heading" className="section-label mb-2">Newsletter</h2>
-          <p className="font-editorial text-lg font-semibold text-foreground mb-1">Stay updated</p>
+          <h2 id="waitlist-heading" className="section-label mb-2">Updates</h2>
+          <p className="text-lg font-semibold text-foreground mb-1">Notify me</p>
           <p className="text-sm text-muted-foreground mb-4 max-w-md">
-            Get notified when we add new digests, Pro reports, or major updates. No spam.
+            Get notified when we add new digests, daily briefs, or major updates. No spam.
           </p>
           {waitlistStatus === "success" ? (
-            <p className="text-sm text-primary font-medium">You’re on the list! We’ll notify you when we have updates.</p>
+            <p className="text-sm text-foreground font-medium">You’re on the list! We’ll notify you when we have updates.</p>
           ) : (
             <form
               className="flex flex-col sm:flex-row gap-2 max-w-md"
@@ -731,10 +1120,10 @@ export default function App() {
                 onChange={(e) => setWaitlistEmail(e.target.value)}
                 disabled={waitlistStatus === "loading"}
                 className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
-                aria-label="Email for newsletter"
+                aria-label="Email for updates"
               />
               <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
-                {waitlistStatus === "loading" ? "Signing up…" : "Sign up"}
+                {waitlistStatus === "loading" ? "…" : "Notify me"}
               </Button>
             </form>
           )}
@@ -742,7 +1131,7 @@ export default function App() {
             <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
           )}
           {!isSupabaseConfigured() && waitlistStatus === "idle" && (
-            <p className="mt-2 text-xs text-muted-foreground">Or email pro@animalmind.co with subject “Newsletter sign-up”.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Or email pro@animalmind.co with subject “AnimalMind Pro updates”.</p>
           )}
         </section>
 
@@ -754,12 +1143,15 @@ export default function App() {
         </div>
           </main>
 
-          <footer className="border-t-2 border-primary/10 bg-card mt-auto py-8 text-center text-sm text-muted-foreground relative z-1">
-            <p className="font-editorial font-semibold text-foreground">Animal Health Newsletter — Clinical</p>
-            <p className="mt-1">Vet, clinical & research. Evidence from public sources only.</p>
-            <p className="mt-2 flex items-center justify-center gap-1.5 text-primary/80 text-xs">
-              <Heart className="size-3.5" aria-hidden />
+          <footer className="border-t border-border bg-card mt-auto py-8 text-center text-sm text-muted-foreground relative z-1">
+            <p className="font-semibold text-foreground">AnimalMind Pro</p>
+            <p className="mt-1">Autonomous research intelligence. Evidence from public sources only.</p>
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-muted-foreground text-xs">
               No credentials or PII collected.
+            </p>
+            <p className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
+              <button type="button" onClick={() => navigate("terms")} className="hover:text-foreground underline">Terms of Service</button>
+              <button type="button" onClick={() => navigate("privacy")} className="hover:text-foreground underline">Privacy Policy</button>
             </p>
           </footer>
         </>

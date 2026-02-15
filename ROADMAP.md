@@ -11,7 +11,7 @@
 | **Data ingest** (PubMed + CDC) | **Every hour** (Windows Task Scheduler) | Keeps the DB and GitHub up to date with latest literature and surveillance. |
 | **Dependabot** (dependency updates) | **Weekly** (GitHub) | Opens PRs for npm and GitHub Actions updates; no secrets needed. |
 
-So: **ingest = hourly**; **Dependabot = weekly**. The research engine's data is refreshed every hour.
+So: **ingest = every 12 hours**; **Dependabot = weekly**. The research engine's data is refreshed twice per day.
 
 ---
 
@@ -21,7 +21,7 @@ So: **ingest = hourly**; **Dependabot = weekly**. The research engine's data is 
 2. **Opportunities API** – Expose "new this week," "by condition," "by data type" so ChatVet's app or frontend can query alerts, research questions, and partnership leads.
 3. **Branding** – Product name: **Animal Research Network** (built by ChatVet). Keep ARN/parent wallet (chatvet.base.eth) for funding; optional "Sign in with Moltbook" for agents.
 4. **Summaries (optional)** – Use an LLM or extractive summarization on new papers/notices so the engine suggests one-line "insights" or "opportunities" instead of only raw links.
-5. **Alerts / notifications** – When new high-impact notices or papers match a topic, notify (email, Telegram, or in-app) so ChatVet users see timely signals.
+5. **Alerts / notifications** – When new high-impact notices or papers match a topic, notify (email or in-app) so ChatVet users see timely signals.
 
 ---
 

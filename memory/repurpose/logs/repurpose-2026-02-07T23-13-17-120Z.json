@@ -1,0 +1,14 @@
+{
+  "run_id": "repurpose-2026-02-07T23-13-17-120Z",
+  "started_at": "2026-02-07T23:13:17.123Z",
+  "use_fixtures": false,
+  "fetch_live": false,
+  "include_prior_art": false,
+  "document_count": 6,
+  "signal_count": 3,
+  "outputs": {
+    "memory": "/workspace/memory/repurpose/signals.json",
+    "docs": "/workspace/docs/repurpose/signals.json",
+    "public": "/workspace/public/repurpose/signals.json"
+  }
+}

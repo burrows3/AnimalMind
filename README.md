@@ -4,7 +4,7 @@
 
 ## Focus
 
-- **Autonomous research** – Agents run periodically (data ingest every 1 hour) to collect data and surface **insights into animal health risks, opportunities, and partnerships**.
+- **Autonomous research** – Agents run periodically (data ingest every 12 hours) to collect data and surface **insights into animal health risks, opportunities, and partnerships**.
 - **Animal health** – One-health, zoonotic spillover, climate impact on wildlife and livestock, habitat loss, biodiversity, welfare in supply chains, and data gaps.
 - **Collaboration** – Agents post and engage on platforms like Moltbook, mention other agents, comment on relevant work, and use DMs for deeper collaboration.
 - **Funding research** – A token (ARN) and parent wallet support funding for this research; agents can launch and represent the project on agent networks.
@@ -17,13 +17,13 @@ Animal Research Network is built by ChatVet. Run it locally to browse ingested d
 npm run start
 ```
 
-Then open **http://localhost:3000** (or the port shown; if 3000 is in use, the server tries 3001, 3002, …). The dashboard is in **`public/`**—run `npm start` from the repo root. If you see "address already in use", free the port or run `set PORT=3001 && npm start`. The dashboard shows **surveillance** (CDC), **literature** (PubMed), **cancer** (animal/veterinary oncology), **case data** (veterinary case reports), and **imaging** (TCIA, curated datasets) grouped by condition/topic. Data is refreshed every 1 hour.
+Then open **http://localhost:3000** (or the port shown; if 3000 is in use, the server tries 3001, 3002, …). The dashboard is in **`public/`**—run `npm start` from the repo root. If you see "address already in use", free the port or run `set PORT=3001 && npm start`. The dashboard shows **surveillance** (CDC), **literature** (PubMed), **cancer** (animal/veterinary oncology), **case data** (veterinary case reports), and **imaging** (TCIA, curated datasets) grouped by condition/topic. Data is refreshed every 12 hours.
 
 See [ROADMAP.md](./ROADMAP.md) for end goal, improvements, and next steps. **What runs when you sleep, and how it "thinks" on its own:** [WHAT-RUNS-WHEN-YOU-SLEEP.md](./WHAT-RUNS-WHEN-YOU-SLEEP.md). **Multiple autonomous agents (reviewers + synthesizer) that think between agents to find opportunities:** [AGENTS.md](./AGENTS.md).
 
-## Autonomous run every 1 hour (Windows)
+## Autonomous run every 12 hours (Windows)
 
-Run **once:** `scripts\setup-hourly-task.cmd` — that creates a Windows scheduled task so the ingest runs every 1 hour. See [SCHEDULE-WINDOWS.md](./SCHEDULE-WINDOWS.md). Each run refreshes PubMed and CDC Travel Notices data in `memory/data-sources/` for agent insights (risks, opportunities, partnerships).
+Run **once:** `scripts\setup-hourly-task.cmd` — that creates a Windows scheduled task so the ingest runs every 12 hours. See [SCHEDULE-WINDOWS.md](./SCHEDULE-WINDOWS.md). Each run refreshes PubMed and CDC Travel Notices data in `memory/data-sources/` for agent insights (risks, opportunities, partnerships).
 
 ## Compute and funding
 
@@ -36,8 +36,31 @@ To protect from hackers and bad actors: secrets stay in `.env` (never committed)
 ## For developers
 
 - **Sign in with Moltbook** – AI agents can authenticate to your app using their Moltbook identity. See [MOLTBOOK-AUTH.md](./MOLTBOOK-AUTH.md) for setup (env `MOLTBOOK_APP_KEY`) and usage.
-- **Telegram** – [SETUP-TELEGRAM.md](./SETUP-TELEGRAM.md) for Telegram integration.
+
+## Veterinary Drug Repurpose Engine (research-only)
+
+This project includes a veterinary drug repurpose discovery engine that produces
+research hypotheses with evidence trails. It is **not** a clinical recommendation
+tool and provides **no dosing guidance**.
+
+Run it locally:
+
+```bash
+npm run repurpose
+```
+
+Outputs:
+- `memory/repurpose/signals.json`
+- `docs/repurpose/signals.json`
+- `public/repurpose/signals.json`
+
+To generate example outputs:
+
+```bash
+REPURPOSE_USE_FIXTURES=1 npm run repurpose
+```
 
 ## Repo
 
-- [GitHub – YOUR_ORG/AnimalMind](https://github.com/YOUR_ORG/AnimalMind) (replace with your repo)
+- This project is intended to be private and access-controlled. Share the repo only with authorized collaborators.
+- **Deploy:** Always push to `main`. animalmind.co serves from `main` (e.g. GitHub Pages `docs/`).

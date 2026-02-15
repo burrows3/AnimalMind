@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VetEvidenceBundle",
+  "type": "object",
+  "required": ["compound", "target_species", "target_condition", "evidence_items", "overall_strength"],
+  "properties": {
+    "compound": { "type": "string" },
+    "target_species": { "type": "string" },
+    "target_condition": { "type": "string" },
+    "evidence_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "finding", "sample_size", "evidence_doc_ids", "strength_grade"],
+        "properties": {
+          "type": { "type": "string" },
+          "finding": { "type": "string" },
+          "sample_size": { "type": "string" },
+          "evidence_doc_ids": { "type": "array", "items": { "type": "string" } },
+          "strength_grade": { "type": "string", "enum": ["weak", "moderate", "strong"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "overall_strength": { "type": "string", "enum": ["weak", "moderate", "strong"] }
+  },
+  "additionalProperties": false
+}

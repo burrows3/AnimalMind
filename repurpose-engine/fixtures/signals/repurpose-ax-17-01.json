@@ -1,0 +1,66 @@
+{
+  "signal_id": "repurpose-ax-17-01",
+  "compound": "Compound AX-17 (example)",
+  "proposed_species": ["canine"],
+  "proposed_condition": "Osteoarthritis",
+  "summary_hypothesis": "Research hypothesis: Compound AX-17 may warrant evaluation for osteoarthritis in canine populations.",
+  "why_failed_originally": {
+    "summary": "Primary endpoint did not reach statistical significance in the human OA trial, with late-stage enrollment limiting responsiveness.",
+    "failure_type": "efficacy",
+    "key_points": [
+      "Primary endpoint did not reach statistical significance in target population.",
+      "Enrollment skewed toward late-stage disease, limiting responsiveness."
+    ]
+  },
+  "why_it_might_work_in_animals": {
+    "summary": "Canine inflammatory profiles may respond differently to short-term modulation, with veterinary endpoints focused on mobility gains.",
+    "key_points": [
+      "Species differences in inflammatory mediator profiles and activity patterns.",
+      "Veterinary clinical endpoints emphasize mobility improvements."
+    ]
+  },
+  "evidence": {
+    "vet_strength": "weak",
+    "key_docs": ["pmid:EXAMPLE-VET-101", "ctgov:EXAMPLE-OA-001"],
+    "notes": "Evidence is research-only and requires validation."
+  },
+  "risk": {
+    "overall_risk": 35,
+    "key_flags": ["GI intolerance risk (severity 2)"]
+  },
+  "novelty_vectors": ["new_species", "new_indication"],
+  "confidence_score": 46,
+  "addressability_score": 70,
+  "translation_risk": 30,
+  "score_breakdown": {
+    "vet_evidence": 12,
+    "species_rationale": 14,
+    "addressability": 14,
+    "recency_volume": 6,
+    "risk_penalty": 0
+  },
+  "recommended_next_steps": ["retrospective_review", "in_vitro", "pilot_study"],
+  "provenance": {
+    "agent_run_ids": ["fixture-run-ax-17"],
+    "timestamps": ["2026-02-04T00:00:00.000Z"]
+  },
+  "reasoning_summaries": {
+    "executive_summary": [
+      "Compound AX-17: human OA trial did not meet efficacy endpoints; late-stage enrollment likely reduced responsiveness.",
+      "Canine inflammatory profiles and mobility-focused endpoints may create a different response window.",
+      "Veterinary evidence is weak and limited to a single illustrative case report.",
+      "Risk profile is moderate with GI intolerance considerations."
+    ],
+    "failure_summary": "Human OA trial failed to meet primary efficacy endpoints; failure type: efficacy.",
+    "species_benefit_summary": [
+      {
+        "species": "canine",
+        "summary": "Species differences in inflammatory profiles may allow a response window aligned with mobility endpoints."
+      }
+    ],
+    "evidence_summary": "Veterinary evidence is weak with limited case-level support and requires validation.",
+    "risk_summary": "Risk profile is moderate (35/100) with GI intolerance flags; additional safety review needed.",
+    "next_steps_summary": "Next steps: retrospective_review, in_vitro, pilot_study (research-only)."
+  },
+  "disclaimer": "Research hypothesis only; not medical advice."
+}

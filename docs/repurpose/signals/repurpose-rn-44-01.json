@@ -1,0 +1,83 @@
+{
+  "signal_id": "repurpose-rn-44-01",
+  "compound": "Compound RN-44 (example)",
+  "proposed_species": [
+    "feline"
+  ],
+  "proposed_condition": "Chronic kidney disease",
+  "summary_hypothesis": "Research hypothesis: Compound RN-44 may warrant evaluation for feline CKD fibrosis pathways.",
+  "why_failed_originally": {
+    "summary": "Human CKD trial reported insufficient bioavailability within the planned dosing window.",
+    "failure_type": "pk",
+    "key_points": [
+      "Insufficient bioavailability at planned dosing window."
+    ]
+  },
+  "why_it_might_work_in_animals": {
+    "summary": "Feline CKD progression windows and management context may support alternative dosing strategies under research protocols.",
+    "key_points": [
+      "Different progression tempo and management context in cats.",
+      "Potential for earlier intervention windows."
+    ]
+  },
+  "evidence": {
+    "vet_strength": "moderate",
+    "key_docs": [
+      "pmid:EXAMPLE-VET-202",
+      "ctgov:EXAMPLE-CKD-002"
+    ],
+    "notes": "Evidence is research-only and requires validation."
+  },
+  "risk": {
+    "overall_risk": 55,
+    "key_flags": [
+      "Renal clearance uncertainty (severity 3)"
+    ]
+  },
+  "novelty_vectors": [
+    "new_species",
+    "new_indication"
+  ],
+  "confidence_score": 50,
+  "addressability_score": 60,
+  "translation_risk": 40,
+  "score_breakdown": {
+    "vet_evidence": 22,
+    "species_rationale": 13,
+    "addressability": 12,
+    "recency_volume": 4,
+    "risk_penalty": 1
+  },
+  "recommended_next_steps": [
+    "retrospective_review",
+    "in_vitro",
+    "pilot_study"
+  ],
+  "provenance": {
+    "agent_run_ids": [
+      "fixture-run-rn-44"
+    ],
+    "timestamps": [
+      "2026-02-04T00:00:00.000Z"
+    ]
+  },
+  "reasoning_summaries": {
+    "executive_summary": [
+      "Compound RN-44: human CKD trial limited by PK/bioavailability.",
+      "Feline CKD progression windows may allow alternative research dosing strategies.",
+      "Veterinary evidence is moderate but limited to retrospective signals.",
+      "Risk profile is moderate and requires renal safety review."
+    ],
+    "failure_summary": "Human CKD trial showed insufficient bioavailability; failure type: pk.",
+    "species_benefit_summary": [
+      {
+        "species": "feline",
+        "summary": "Feline CKD progression tempo may permit alternative research dosing windows."
+      }
+    ],
+    "evidence_summary": "Veterinary evidence is moderate with retrospective signals; limitations remain.",
+    "risk_summary": "Risk profile is moderate (55/100) with renal clearance uncertainty.",
+    "next_steps_summary": "Next steps: retrospective_review, in_vitro, pilot_study (research-only)."
+  },
+  "disclaimer": "Research hypothesis only; not medical advice."
+}

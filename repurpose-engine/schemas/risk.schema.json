@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RiskBundle",
+  "type": "object",
+  "required": ["compound", "target_species", "risk_flags", "overall_risk"],
+  "properties": {
+    "compound": { "type": "string" },
+    "target_species": { "type": "string" },
+    "risk_flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["flag", "severity", "evidence_doc_ids"],
+        "properties": {
+          "flag": { "type": "string" },
+          "severity": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "evidence_doc_ids": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "overall_risk": { "type": "number", "minimum": 0, "maximum": 100 }
+  },
+  "additionalProperties": false
+}

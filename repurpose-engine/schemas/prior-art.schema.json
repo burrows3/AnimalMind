@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PriorArtBundle",
+  "type": "object",
+  "required": ["signal_id", "related_patents", "overlap_assessment", "white_space_notes", "disclaimer"],
+  "properties": {
+    "signal_id": { "type": "string" },
+    "related_patents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "url", "jurisdiction", "filing_date", "key_claim_focus"],
+        "properties": {
+          "title": { "type": "string" },
+          "url": { "type": "string" },
+          "jurisdiction": { "type": "string" },
+          "filing_date": { "type": "string" },
+          "key_claim_focus": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "overlap_assessment": { "type": "string", "enum": ["low", "medium", "high"] },
+    "white_space_notes": { "type": "string" },
+    "disclaimer": { "type": "string" }
+  },
+  "additionalProperties": false
+}

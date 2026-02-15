@@ -35,7 +35,6 @@ git push -u origin main
 - `.env.example` – template for `MOLTBOOK_APP_KEY`
 - `README.md` – updated with Moltbook auth link
 - `MOLTBOOK-AUTH.md` – Moltbook Sign-in integration guide
-- `SETUP-TELEGRAM.md` – Telegram setup (if present)
 - `lib/moltbookAuth.js` – Moltbook auth middleware
 
 Secrets (e.g. `.env`) and caches (e.g. `.npm-cache`) are not committed.

@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RepurposeSignal",
+  "type": "object",
+  "required": [
+    "signal_id",
+    "compound",
+    "proposed_species",
+    "proposed_condition",
+    "summary_hypothesis",
+    "why_failed_originally",
+    "why_it_might_work_in_animals",
+    "evidence",
+    "risk",
+    "novelty_vectors",
+    "confidence_score",
+    "recommended_next_steps",
+    "provenance",
+    "disclaimer",
+    "reasoning_summaries"
+  ],
+  "properties": {
+    "signal_id": { "type": "string" },
+    "compound": { "type": "string" },
+    "proposed_species": { "type": "array", "items": { "type": "string" } },
+    "proposed_condition": { "type": "string" },
+    "summary_hypothesis": { "type": "string" },
+    "why_failed_originally": {
+      "type": "object",
+      "required": ["summary", "failure_type", "key_points"],
+      "properties": {
+        "summary": { "type": "string" },
+        "failure_type": { "type": "string" },
+        "key_points": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "why_it_might_work_in_animals": {
+      "type": "object",
+      "required": ["summary", "key_points"],
+      "properties": {
+        "summary": { "type": "string" },
+        "key_points": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["vet_strength", "key_docs", "notes"],
+      "properties": {
+        "vet_strength": { "type": "string" },
+        "key_docs": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "risk": {
+      "type": "object",
+      "required": ["overall_risk", "key_flags"],
+      "properties": {
+        "overall_risk": { "type": "number" },
+        "key_flags": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "novelty_vectors": { "type": "array", "items": { "type": "string" } },
+    "confidence_score": { "type": "number" },
+    "recommended_next_steps": { "type": "array", "items": { "type": "string" } },
+    "provenance": {
+      "type": "object",
+      "required": ["agent_run_ids", "timestamps"],
+      "properties": {
+        "agent_run_ids": { "type": "array", "items": { "type": "string" } },
+        "timestamps": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "reasoning_summaries": { "type": "object" },
+    "disclaimer": { "type": "string" }
+  },
+  "additionalProperties": false
+}
