@@ -195,12 +195,6 @@ const PET_IMAGES_BY_TOPIC: Record<string, string[]> = {
     "1573865526739-10659fec78a5",
   ].map(U),
 };
-/** Pick image for article: topic (dog/cat/bird etc) + index within topic so each card is distinct and matches content. */
-function petImageUrlForArticle(topicKey: string, useIndexWithinTopic: number): string {
-  const pool = PET_IMAGES_BY_TOPIC[topicKey] ?? PET_IMAGES_BY_TOPIC.general;
-  const url = pool[useIndexWithinTopic % pool.length];
-  return url ?? PET_IMAGES_BY_TOPIC.general[useIndexWithinTopic % PET_IMAGES_BY_TOPIC.general.length];
-}
 /** Distinct fallback image per article index (no blanks). */
 function petFallbackImageUrl(articleIndex: number): string {
   const h = (articleIndex * 47 + 137) % 360;
@@ -209,14 +203,8 @@ function petFallbackImageUrl(articleIndex: number): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PET_IMAGE_WIDTH} ${PET_IMAGE_HEIGHT}"><rect fill="${bg}" width="${PET_IMAGE_WIDTH}" height="${PET_IMAGE_HEIGHT}"/><ellipse cx="240" cy="140" rx="80" ry="50" fill="${fg}" opacity="0.25"/><text x="240" y="200" font-family="system-ui,sans-serif" font-size="13" fill="${fg}" text-anchor="middle" dominant-baseline="middle">Pet health</text></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
-/** Map inferPetImageIndex (0–7) to topic key. */
-const PET_TOPIC_KEYS = ["cat", "turtle", "wildlife", "horse", "dog", "bird", "cattle", "wildlife"] as const;
-/** Featured/more cards: one animal image per topic. */
-const PET_FEATURED_IMAGES: string[] = PET_TOPIC_KEYS.map(
-  (topic) => PET_IMAGES_BY_TOPIC[topic]?.[0] ?? PET_IMAGES_BY_TOPIC.general[0]
-);
-/** Generic fallback. */
-const PET_ARTICLE_IMAGE_FALLBACK = petFallbackImageUrl(999);
+type PetTopicKey = keyof typeof PET_IMAGES_BY_TOPIC;
+
 const PET_PLACEHOLDER_IMAGES = [
   "/pet-placeholder-1.svg",
   "/pet-placeholder-2.svg",
@@ -225,15 +213,94 @@ const PET_PLACEHOLDER_IMAGES = [
   "/pet-placeholder-5.svg",
   "/pet-placeholder-6.svg",
 ];
+const PET_ARTICLE_IMAGE_FALLBACK = PET_PLACEHOLDER_IMAGES[0] ?? petFallbackImageUrl(999);
+const PET_PLACEHOLDER_BY_TOPIC_INDEX: Record<PetTopicKey, number> = {
+  cat: 0,
+  turtle: 1,
+  wildlife: 2,
+  horse: 3,
+  dog: 4,
+  bird: 5,
+  cattle: 3,
+  general: 4,
+};
 
-function petPlaceholderImage(index: number): string {
-  return PET_PLACEHOLDER_IMAGES[index % PET_PLACEHOLDER_IMAGES.length] ?? PET_ARTICLE_IMAGE_FALLBACK;
+function inferPetTopicKeyFromText(text: string): PetTopicKey {
+  const t = text.toLowerCase();
+  if (/\b(canine|dog|puppy|puppies)\b/.test(t)) return "dog";
+  if (/\b(feline|cat|kitten|kittens)\b/.test(t)) return "cat";
+  if (/\b(bird|avian|parrot|poultry|budgie)\b/.test(t)) return "bird";
+  if (/\b(equine|horse|pony|foal)\b/.test(t)) return "horse";
+  if (/\b(cattle|cow|cows|livestock|bovine)\b/.test(t)) return "cattle";
+  if (/\b(marine|turtle|aquatic|reptile)\b/.test(t)) return "turtle";
+  if (/\b(wildlife|fox|exotic|lemur|zoonotic|rabies|dengue|chikungunya|outbreak|travel|surveillance)\b/.test(t)) {
+    return "wildlife";
+  }
+  return "dog";
 }
 
-function applyImgFallback(img: HTMLImageElement, fallbackSrc: string): void {
-  if (img.getAttribute("data-fallback-applied")) return;
-  img.setAttribute("data-fallback-applied", "1");
-  img.src = fallbackSrc;
+function inferPetTopicKey(row: { title?: string; condition_or_topic?: string }): PetTopicKey {
+  return inferPetTopicKeyFromText(`${row.title ?? ""} ${row.condition_or_topic ?? ""}`);
+}
+
+function petTopicPlaceholderImage(topicKey: PetTopicKey, offset = 0): string {
+  const baseIndex = PET_PLACEHOLDER_BY_TOPIC_INDEX[topicKey] ?? PET_PLACEHOLDER_BY_TOPIC_INDEX.general;
+  const index = (baseIndex + offset) % PET_PLACEHOLDER_IMAGES.length;
+  return PET_PLACEHOLDER_IMAGES[index] ?? PET_ARTICLE_IMAGE_FALLBACK;
+}
+
+function pickDistinctImage(pool: string[], startIndex: number, used: Set<string>): string {
+  if (pool.length === 0) return PET_ARTICLE_IMAGE_FALLBACK;
+  for (let i = 0; i < pool.length; i += 1) {
+    const candidate = pool[(startIndex + i) % pool.length];
+    if (!used.has(candidate)) {
+      used.add(candidate);
+      return candidate;
+    }
+  }
+  const fallback = pool[startIndex % pool.length] ?? pool[0];
+  used.add(fallback);
+  return fallback;
+}
+
+function pickBackupImage(pool: string[], startIndex: number, primary: string): string {
+  if (pool.length === 0) return primary;
+  for (let i = 0; i < pool.length; i += 1) {
+    const candidate = pool[(startIndex + i) % pool.length];
+    if (candidate !== primary) return candidate;
+  }
+  return primary;
+}
+
+function petTopicImageSet(topicKey: PetTopicKey, useIndex: number, usedPrimary: Set<string>) {
+  const pool = PET_IMAGES_BY_TOPIC[topicKey] ?? PET_IMAGES_BY_TOPIC.general;
+  const primary = pickDistinctImage(pool, useIndex, usedPrimary);
+  const backup = pickBackupImage(pool, useIndex + 1, primary);
+  return {
+    imageUrl: primary,
+    backupImageUrl: backup,
+    fallbackImageUrl: petTopicPlaceholderImage(topicKey, useIndex),
+  };
+}
+
+function applyTopicImageFallback(img: HTMLImageElement, backupSrc: string, fallbackSrc: string): void {
+  const stage = img.getAttribute("data-image-fallback-stage");
+  if (stage === "backup") {
+    img.setAttribute("data-image-fallback-stage", "fallback");
+    img.src = fallbackSrc || PET_ARTICLE_IMAGE_FALLBACK;
+    return;
+  }
+  if (stage === "fallback") {
+    img.setAttribute("data-image-fallback-stage", "final");
+    img.src = PET_ARTICLE_IMAGE_FALLBACK;
+    return;
+  }
+  if (stage === "final") {
+    img.onerror = null;
+    return;
+  }
+  img.setAttribute("data-image-fallback-stage", "backup");
+  img.src = backupSrc || fallbackSrc || PET_ARTICLE_IMAGE_FALLBACK;
 }
 
 type DataSummary = {
@@ -304,6 +371,9 @@ type PetNewsCard = {
   summary: string;
   tip: string;
   sources: IngestedRow[];
+  imageUrl: string;
+  backupImageUrl: string;
+  fallbackImageUrl: string;
 };
 
 /** One article per research item, written for pet owners, with image that matches content. */
@@ -317,7 +387,7 @@ type PetArticle = {
   imageUrl: string;
   /** Backup image URL (same topic, tried when primary fails to avoid blanks). */
   backupImageUrl: string;
-  /** Final fallback when both primary and backup fail (distinct SVG). */
+  /** Final fallback when both primary and backup fail (local animal placeholder). */
   fallbackImageUrl: string;
 };
 
@@ -665,55 +735,37 @@ function petArticlePoints(row: IngestedRow): string[] {
   return points.slice(0, 3);
 }
 
-/** Choose image index (0–7) that matches article content: dog, cat, bird, horse, etc. */
-function inferPetImageIndex(row: IngestedRow): number {
-  const t = `${(row.title ?? "")} ${(row.condition_or_topic ?? "")}`.toLowerCase();
-  if (/\b(canine|dog|puppy|puppies)\b/.test(t)) return 4; // pet-5 dog
-  if (/\b(feline|cat|kitten|kittens)\b/.test(t)) return 0; // pet-1 cat
-  if (/\b(bird|avian|parrot|poultry|budgie)\b/.test(t)) return 5; // pet-6 parrot
-  if (/\b(equine|horse|pony|foal)\b/.test(t)) return 3; // pet-4 horse
-  if (/\b(cattle|cow|cows|livestock)\b/.test(t)) return 6; // pet-7 cows
-  if (/\b(wildlife|fox|exotic|lemur)\b/.test(t)) return 7; // pet-8 lemur
-  if (/\b(marine|turtle|aquatic)\b/.test(t)) return 1; // pet-2 turtle
-  if (/\b(surveillance|travel|outbreak)\b/.test(t)) return 2; // pet-3 fox (travel/wildlife)
-  return 4; // default dog for general pet
-}
-
 /** One article per source; image matches topic (dog→dog photo), distinct. Backup = same topic so no blanks. */
 function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] {
   const petRows = toPetBriefItems(rows, 30);
   if (petRows.length === 0) return [];
-  const topicUseCount: Record<string, number> = {};
+  const topicUseCount: Record<PetTopicKey, number> = {
+    cat: 0,
+    turtle: 0,
+    wildlife: 0,
+    horse: 0,
+    dog: 0,
+    bird: 0,
+    cattle: 0,
+    general: 0,
+  };
+  const usedPrimary = new Set<string>();
   return petRows.map((row, articleIndex) => {
-    const imageIndex = inferPetImageIndex(row);
-    const topicKey = PET_TOPIC_KEYS[imageIndex] ?? "dog";
-    const useIndex = topicUseCount[topicKey] ?? 0;
+    const topicKey = inferPetTopicKey(row);
+    const useIndex = topicUseCount[topicKey];
     topicUseCount[topicKey] = useIndex + 1;
-    const pool = PET_IMAGES_BY_TOPIC[topicKey] ?? PET_IMAGES_BY_TOPIC.general;
-    const primary = pool[useIndex % pool.length] ?? pool[0];
-    const backup = pool[(useIndex + 1) % pool.length] ?? pool[0];
+    const images = petTopicImageSet(topicKey, useIndex, usedPrimary);
     return {
       id: stableArticleId(row),
       title: petArticleTitle(row),
       summary: petArticleSummary(row),
       points: petArticlePoints(row),
       sources: [row],
-      imageUrl: primary,
-      backupImageUrl: backup,
-      fallbackImageUrl: petFallbackImageUrl(articleIndex),
+      imageUrl: images.imageUrl,
+      backupImageUrl: images.backupImageUrl,
+      fallbackImageUrl: images.fallbackImageUrl || petTopicPlaceholderImage(topicKey, articleIndex),
     };
   });
-}
-
-/** Pick image by seed (for featured/more pet news cards). */
-function pickPetNewsImage(seed: string): string {
-  const idx = hashText(seed) % PET_FEATURED_IMAGES.length;
-  return PET_FEATURED_IMAGES[idx];
-}
-
-/** Image for research article at index (featured/more cards). */
-function petArticleImage(index: number): string {
-  return index < PET_FEATURED_IMAGES.length ? PET_FEATURED_IMAGES[index] : PET_ARTICLE_IMAGE_FALLBACK;
 }
 
 function friendlyPetTopic(topic: string): string {
@@ -735,15 +787,35 @@ function buildPetNewsCards(rows: IngestedRow[] | null): PetNewsCard[] {
   const petRows = toPetBriefItems(rows, 24);
   if (petRows.length === 0) return [];
   const topics = topTopics(petRows, 5);
+  const topicUseCount: Record<PetTopicKey, number> = {
+    cat: 0,
+    turtle: 0,
+    wildlife: 0,
+    horse: 0,
+    dog: 0,
+    bird: 0,
+    cattle: 0,
+    general: 0,
+  };
+  const usedPrimary = new Set<string>();
   return topics.slice(0, 4).map((topic, idx) => {
     const groupRows = petRows.filter((r) => (r.condition_or_topic || "Everyday pet care") === topic.topic);
+    const sourceRows = uniqueRows(groupRows.length > 0 ? groupRows : petRows, 2);
+    const topicSignals = [topic.topic, ...sourceRows.map((row) => `${row.title || ""} ${row.condition_or_topic || ""}`)].join(" ");
+    const topicKey = inferPetTopicKeyFromText(topicSignals);
+    const useIndex = topicUseCount[topicKey];
+    topicUseCount[topicKey] = useIndex + 1;
+    const images = petTopicImageSet(topicKey, useIndex + idx, usedPrimary);
     const label = friendlyPetTopic(topic.topic);
     return {
       id: `pet-news-${idx}-${topic.topic}`,
       title: `${label}: what pet owners should know`,
       summary: `${topic.count} update${topic.count === 1 ? "" : "s"} in today’s brief.`,
       tip: "If your pet seems worse, uncomfortable, or not eating/drinking normally, contact your vet.",
-      sources: uniqueRows(groupRows.length > 0 ? groupRows : petRows, 2),
+      sources: sourceRows,
+      imageUrl: images.imageUrl,
+      backupImageUrl: images.backupImageUrl,
+      fallbackImageUrl: images.fallbackImageUrl,
     };
   });
 }
@@ -1185,11 +1257,17 @@ export default function App() {
                         <Card className="border border-border bg-muted/10 overflow-hidden shadow-sm">
                           <div className="aspect-[16/8] overflow-hidden bg-muted/20 border-b border-border">
                             <img
-                              src={petArticleImage(0)}
+                              src={featuredPetNews.imageUrl}
                               alt=""
                               className="w-full h-full object-cover"
                               loading="lazy"
-                              onError={(e) => applyImgFallback(e.currentTarget, petPlaceholderImage(0))}
+                              onError={(e) =>
+                                applyTopicImageFallback(
+                                  e.currentTarget,
+                                  featuredPetNews.backupImageUrl,
+                                  featuredPetNews.fallbackImageUrl
+                                )
+                              }
                             />
                           </div>
                           <CardHeader className="p-4 pb-2">
@@ -1237,14 +1315,15 @@ export default function App() {
                             <Card key={card.id} className="border border-border bg-muted/10 overflow-hidden">
                               <div className="aspect-[16/9] overflow-hidden bg-muted/20 border-b border-border">
                                 <img
-                                  src={petArticleImage(featuredPetNews ? 1 + moreIndex : moreIndex)}
+                                  src={card.imageUrl}
                                   alt=""
                                   className="w-full h-full object-cover"
                                   loading="lazy"
                                   onError={(e) =>
-                                    applyImgFallback(
+                                    applyTopicImageFallback(
                                       e.currentTarget,
-                                      petPlaceholderImage(featuredPetNews ? 1 + moreIndex : moreIndex)
+                                      card.backupImageUrl,
+                                      card.fallbackImageUrl
                                     )
                                   }
                                 />
@@ -1311,16 +1390,13 @@ export default function App() {
                                 className="w-full h-full object-cover"
                                 referrerPolicy="no-referrer"
                                 loading="lazy"
-                                onError={(e) => {
-                                  const img = e.currentTarget;
-                                  img.onerror = null;
-                                  if (!img.getAttribute("data-tried-backup")) {
-                                    img.setAttribute("data-tried-backup", "1");
-                                    img.src = article.backupImageUrl;
-                                  } else {
-                                    img.src = article.fallbackImageUrl;
-                                  }
-                                }}
+                                onError={(e) =>
+                                  applyTopicImageFallback(
+                                    e.currentTarget,
+                                    article.backupImageUrl,
+                                    article.fallbackImageUrl
+                                  )
+                                }
                               />
                             </div>
                             <CardHeader className="p-3 pb-2">
