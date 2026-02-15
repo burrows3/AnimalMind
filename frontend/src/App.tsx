@@ -139,50 +139,50 @@ const PET_IMAGES_BY_TOPIC: Record<string, string[]> = {
     "1552728089-57bdde30b3f6",
     "1474511324803-24c5926a8c78",
     "1518614767937-1e4a515d838e",
-    "1425082661705-1834bfd09dca",
-    "1543466835-00a7907e9de1",
-    "1548199973-03cce0bbc87b",
-    "1474511324803-24c5926a8c78",
+    "1587300003388-59208cc962cb",
+    "1535591273668-578e31182d5e",
+    "1458571037713-913d8b481dc6",
+    "1568572933382-74d440642117",
   ].map(U),
   horse: [
-    "1553284965-e0e9b4e8b4e8",
-    "1564349683136-77e3d4901f1a",
     "1535591273668-578e31182d5e",
-    "1553284966-f0f0c5f9c5f9",
-    "1564349683137-88f4e4912f2b",
+    "1568572933382-74d440642117",
     "1587300003388-59208cc962cb",
     "1458571037713-913d8b481dc6",
-    "1535591273668-578e31182d5e",
+    "1587303853328-5f3b2c1a0d9e",
+    "1530281700549-e82e7bf97421",
+    "1548199973-03cce0bbc87b",
+    "1461988320302-91bde64fc8e4",
   ].map(U),
   cattle: [
     "1461988320302-91bde64fc8e4",
-    "1553284965-e0e9b4e8b4e8",
-    "1564349683136-77e3d4901f1a",
     "1535591273668-578e31182d5e",
     "1587300003388-59208cc962cb",
     "1458571037713-913d8b481dc6",
-    "1548199973-03cce0bbc87b",
     "1568572933382-74d440642117",
+    "1587303853328-5f3b2c1a0d9e",
+    "1548199973-03cce0bbc87b",
+    "1530281700549-e82e7bf97421",
   ].map(U),
   wildlife: [
     "1535591273668-578e31182d5e",
-    "1564349683136-77e3d4901f1a",
-    "1564349683137-88f4e4912f2b",
-    "1425082661705-1834bfd09dca",
-    "1543466835-00a7907e9de1",
+    "1568572933382-74d440642117",
     "1587300003388-59208cc962cb",
     "1552728089-57bdde30b3f6",
-    "1511044568932-338cba0ad803",
+    "1548199973-03cce0bbc87b",
+    "1458571037713-913d8b481dc6",
+    "1530281700549-e82e7bf97421",
+    "1587303853328-5f3b2c1a0d9e",
   ].map(U),
   turtle: [
-    "1425082661705-1834bfd09dca",
-    "1543466835-00a7907e9de1",
-    "1587300003388-59208cc962cb",
-    "1535591273668-578e31182d5e",
-    "1564349683136-77e3d4901f1a",
-    "1458571037713-913d8b481dc6",
     "1548199973-03cce0bbc87b",
     "1518614767937-1e4a515d838e",
+    "1587300003388-59208cc962cb",
+    "1535591273668-578e31182d5e",
+    "1574158622688-e89e3eaf0f74",
+    "1458571037713-913d8b481dc6",
+    "1548199973-03cce0bbc87b",
+    "1587303853328-5f3b2c1a0d9e",
   ].map(U),
   general: [
     "1587300003388-59208cc962cb",
@@ -295,9 +295,11 @@ type PetArticle = {
   summary: string;
   points: string[];
   sources: IngestedRow[];
-  /** Primary image URL (distinct per article). */
+  /** Primary image URL (topic-matched animal photo). */
   imageUrl: string;
-  /** Fallback image URL when primary fails (distinct per article so no blanks). */
+  /** Backup image URL (same topic, tried when primary fails to avoid blanks). */
+  backupImageUrl: string;
+  /** Final fallback when both primary and backup fail (distinct SVG). */
   fallbackImageUrl: string;
 };
 
@@ -659,7 +661,7 @@ function inferPetImageIndex(row: IngestedRow): number {
   return 4; // default dog for general pet
 }
 
-/** One article per source; image matches topic (dog→dog photo) and is distinct within that topic. */
+/** One article per source; image matches topic (dog→dog photo), distinct. Backup = same topic so no blanks. */
 function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] {
   const petRows = toPetBriefItems(rows, 30);
   if (petRows.length === 0) return [];
@@ -669,13 +671,17 @@ function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] 
     const topicKey = PET_TOPIC_KEYS[imageIndex] ?? "dog";
     const useIndex = topicUseCount[topicKey] ?? 0;
     topicUseCount[topicKey] = useIndex + 1;
+    const pool = PET_IMAGES_BY_TOPIC[topicKey] ?? PET_IMAGES_BY_TOPIC.general;
+    const primary = pool[useIndex % pool.length] ?? pool[0];
+    const backup = pool[(useIndex + 1) % pool.length] ?? pool[0];
     return {
       id: stableArticleId(row),
       title: petArticleTitle(row),
       summary: petArticleSummary(row),
       points: petArticlePoints(row),
       sources: [row],
-      imageUrl: petImageUrlForArticle(topicKey, useIndex),
+      imageUrl: primary,
+      backupImageUrl: backup,
       fallbackImageUrl: petFallbackImageUrl(articleIndex),
     };
   });
@@ -1281,7 +1287,12 @@ export default function App() {
                                 onError={(e) => {
                                   const img = e.currentTarget;
                                   img.onerror = null;
-                                  img.src = article.fallbackImageUrl;
+                                  if (!img.getAttribute("data-tried-backup")) {
+                                    img.setAttribute("data-tried-backup", "1");
+                                    img.src = article.backupImageUrl;
+                                  } else {
+                                    img.src = article.fallbackImageUrl;
+                                  }
                                 }}
                               />
                             </div>
