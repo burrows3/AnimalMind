@@ -345,6 +345,7 @@ type PetNewsCard = {
   title: string;
   summary: string;
   tip: string;
+  paragraphs: string[];
   sources: IngestedRow[];
   imageUrl: string;
   backupImageUrl: string;
@@ -690,6 +691,16 @@ function articleTopicText(row: IngestedRow): string {
   return cleaned || "pet health";
 }
 
+function shortHeadline(text: string, max = 96): string {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned) return "";
+  if (cleaned.length <= max) return cleaned;
+  const clipped = cleaned.slice(0, max);
+  const breakAt = clipped.lastIndexOf(" ");
+  const safe = breakAt > 50 ? clipped.slice(0, breakAt) : clipped;
+  return `${safe}…`;
+}
+
 function ensureThreeParagraphs(paragraphs: string[], topic: string): string[] {
   const cleaned = paragraphs
     .map((p) => p.trim())
@@ -705,21 +716,25 @@ function petArticleParagraphs(row: IngestedRow): string[] {
   const topic = articleTopicText(row);
   const text = `${row.title || ""} ${row.condition_or_topic || ""}`.toLowerCase();
   const sourceLabel = LABELS[row.data_type] ?? row.data_type.replace(/_/g, " ");
+  const citedTitle = shortHeadline(row.title || "", 110);
+  const headlineContext = citedTitle
+    ? `A new report titled “${citedTitle}” is one of today’s strongest signals in this topic.`
+    : "A newly ingested report is one of today’s strongest signals in this topic.";
 
-  const intro = `This research article centers on ${topic}. AnimalMind pulled it from the ${sourceLabel} stream and translated the signal into plain language so pet owners can understand what the topic means in real-world care.`;
+  const intro = `Research desk: ${topic} is active in today’s ${sourceLabel} feed. ${headlineContext} This article summarizes what researchers are flagging and why the update is relevant to everyday pet care decisions.`;
 
-  let interpretation = `The core takeaway for ${topic} is to watch for pattern changes in appetite, comfort, energy, and behavior over time, then compare what you see with the source details and your veterinarian's guidance.`;
+  let interpretation = `From a research perspective, this signal should be treated as a trend indicator rather than a diagnosis. The practical read is to monitor appetite, comfort, activity, and behavior over time, then compare changes against the source details and your veterinarian’s guidance.`;
   if (/\b(surveillance|travel|outbreak|zoonotic|rabies|dengue|chikungunya)\b/.test(text) || row.data_type === "surveillance") {
-    interpretation = `This topic is linked to surveillance signals, so context matters: location, recent spread, and species-specific risk can change quickly. Use the source to verify whether your region or pet type is directly affected.`;
+    interpretation = `This story intersects with surveillance research, where geography and timing can change risk quickly. The key reporting angle is location-specific exposure: check whether your region, travel plans, or species category appears directly in the source evidence.`;
   } else if (/\b(poison|toxin|toxic|emergenc)\b/.test(text)) {
-    interpretation = `The research signal points to toxin or emergency relevance. For this topic, rapid symptom recognition and fast escalation are the biggest drivers of outcome, so preparation and early action are critical.`;
+    interpretation = `This signal points toward toxin or emergency relevance. Across published veterinary evidence, outcomes are strongly tied to early recognition and rapid escalation, so speed and preparation matter more than waiting to “see if it passes.”`;
   } else if (/\b(vaccin|prevent|prophylaxis)\b/.test(text)) {
-    interpretation = `This update emphasizes prevention and risk reduction. Research around ${topic} often shows that timing, consistency, and individualized plans with your vet improve protection and reduce avoidable complications.`;
+    interpretation = `This update emphasizes prevention research. The recurring finding in this area is that timing, consistency, and individualized preventive planning with your veterinarian reduce avoidable complications and improve long-term protection.`;
   } else if (/\b(cancer|oncolog|tumou|tumor|canine|feline)\b/.test(text)) {
-    interpretation = `This article intersects with oncology-related evidence. In this topic area, early trend detection, staged diagnostics, and follow-up planning are usually the key factors that shape treatment options and quality of life.`;
+    interpretation = `This article intersects with oncology-related evidence, where trend detection and follow-up planning often shape both treatment options and quality-of-life outcomes. The research takeaway is to prioritize clear baselines and structured rechecks.`;
   }
 
-  const action = `Use this as educational context for ${topic}, then open the source for full methodology and limitations. If your pet has symptoms related to this topic, contact your veterinarian promptly for case-specific advice.`;
+  const action = `What this means for pets: use this report as context, not a substitute for care. If your pet shows symptoms related to ${topic}, contact your veterinarian promptly, and use the linked source to discuss risk factors, urgency, and next-step options.`;
   return ensureThreeParagraphs([intro, interpretation, action], topic);
 }
 
@@ -771,6 +786,60 @@ function friendlyPetTopic(topic: string): string {
   return topic || "Everyday pet care";
 }
 
+function petNewsResearchAngle(topicKey: PetTopicKey, sourceText: string): string {
+  if (/\b(surveillance|travel|outbreak|zoonotic|rabies|dengue|chikungunya)\b/.test(sourceText) || topicKey === "wildlife") {
+    return "Research context: this cluster is tied to surveillance-style reporting, where geography and timing can move faster than weekly care routines. Read source locations carefully before assuming risk applies to your household.";
+  }
+  if (/\b(poison|toxin|toxic|emergenc)\b/.test(sourceText)) {
+    return "Research context: toxin and emergency literature consistently shows that earlier recognition improves outcomes. The most useful lens here is rapid symptom tracking and early escalation, not delayed observation.";
+  }
+  if (/\b(vaccin|prevent|prophylaxis|tick|flea)\b/.test(sourceText)) {
+    return "Research context: prevention-focused evidence tends to reward consistency and timing. These updates are best interpreted as risk-reduction guidance to review with your veterinarian, not one-size-fits-all instructions.";
+  }
+  if (/\b(cancer|oncolog|tumou|tumor)\b/.test(sourceText)) {
+    return "Research context: oncology updates often emphasize early trend detection and structured follow-up. The practical reporting angle is whether this signal changes what to monitor between routine exams.";
+  }
+  if (topicKey === "bird" || topicKey === "turtle") {
+    return "Research context: species-specific care signals can be easy to miss because early signs are subtle. The evidence value here is in pattern tracking over time, especially appetite, activity, and behavior shifts.";
+  }
+  return "Research context: this topic appears repeatedly across today’s ingested sources, suggesting a meaningful signal rather than a one-off headline. Use the linked reports to check scope, methods, and limitations.";
+}
+
+function petNewsMeaningForPets(topicLabel: string, topicKey: PetTopicKey): string {
+  if (topicKey === "wildlife") {
+    return `What this means for pets: keep vaccines and parasite prevention current, and reduce high-risk exposure settings while this ${topicLabel.toLowerCase()} signal is active in public reporting.`;
+  }
+  if (topicKey === "dog" || topicKey === "cat") {
+    return `What this means for pets: for ${topicLabel.toLowerCase()}, watch for changes in appetite, comfort, energy, and behavior, and bring source-backed notes to your next veterinary conversation.`;
+  }
+  if (topicKey === "bird" || topicKey === "turtle") {
+    return `What this means for pets: in ${topicLabel.toLowerCase()} topics, subtle early signs matter; if your pet's baseline changes, contact your veterinarian sooner and share the source context.`;
+  }
+  return `What this means for pets: treat this ${topicLabel.toLowerCase()} coverage as decision support. Use it to ask better questions at your next vet visit, especially around risk factors and prevention timing.`;
+}
+
+function buildPetNewsParagraphs(
+  topicLabel: string,
+  topicRaw: string,
+  topicKey: PetTopicKey,
+  topicCount: number,
+  sourceRows: IngestedRow[]
+): string[] {
+  const updatesLabel = topicCount === 1 ? "update" : "updates";
+  const sourceMix = Array.from(
+    new Set(sourceRows.map((row) => LABELS[row.data_type] ?? row.data_type.replace(/_/g, " ")))
+  ).slice(0, 3);
+  const sourceMixText = sourceMix.length > 0 ? sourceMix.join(", ") : "public sources";
+  const leadTitle = shortHeadline(sourceRows[0]?.title || "", 90);
+  const lead = leadTitle
+    ? `Research desk lead: ${topicCount} ${updatesLabel} this cycle center on ${topicLabel.toLowerCase()}, with evidence drawn from ${sourceMixText}. One representative report is “${leadTitle}.”`
+    : `Research desk lead: ${topicCount} ${updatesLabel} this cycle center on ${topicLabel.toLowerCase()}, with evidence drawn from ${sourceMixText}.`;
+  const sourceText = `${topicRaw} ${sourceRows.map((row) => `${row.title || ""} ${row.condition_or_topic || ""}`).join(" ")}`.toLowerCase();
+  const researchAngle = petNewsResearchAngle(topicKey, sourceText);
+  const meaning = petNewsMeaningForPets(topicLabel, topicKey);
+  return ensureThreeParagraphs([lead, researchAngle, meaning], topicLabel);
+}
+
 function buildPetNewsCards(rows: IngestedRow[] | null): PetNewsCard[] {
   const petRows = toPetBriefItems(rows, 24);
   if (petRows.length === 0) return [];
@@ -795,11 +864,13 @@ function buildPetNewsCards(rows: IngestedRow[] | null): PetNewsCard[] {
     topicUseCount[topicKey] = useIndex + 1;
     const images = petTopicImageSet(topicKey, useIndex + idx, usedPrimary);
     const label = friendlyPetTopic(topic.topic);
+    const paragraphs = buildPetNewsParagraphs(label, topic.topic, topicKey, topic.count, sourceRows);
     return {
       id: `pet-news-${idx}-${topic.topic}`,
-      title: `${label}: what pet owners should know`,
-      summary: `${topic.count} update${topic.count === 1 ? "" : "s"} in today’s brief.`,
-      tip: "If your pet seems worse, uncomfortable, or not eating/drinking normally, contact your vet.",
+      title: `${label}: new research signals pet owners should watch`,
+      summary: `${topic.count} research ${topic.count === 1 ? "signal" : "signals"} in today’s pet brief.`,
+      tip: "If symptoms worsen or your pet is not eating/drinking normally, contact your veterinarian promptly.",
+      paragraphs,
       sources: sourceRows,
       imageUrl: images.imageUrl,
       backupImageUrl: images.backupImageUrl,
@@ -1264,7 +1335,12 @@ export default function App() {
                             <CardDescription className="text-sm">{featuredPetNews.summary}</CardDescription>
                           </CardHeader>
                           <CardContent className="p-4 pt-0 space-y-3">
-                            <p className="text-sm text-muted-foreground">{featuredPetNews.tip}</p>
+                            <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
+                              {featuredPetNews.paragraphs.map((paragraph, idx) => (
+                                <p key={`featured-pet-paragraph-${idx}`}>{paragraph}</p>
+                              ))}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{featuredPetNews.tip}</p>
                             {featuredPetNews.sources.length > 0 && (
                               <div>
                                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Trusted sources</p>
@@ -1322,6 +1398,11 @@ export default function App() {
                                 <CardDescription className="text-xs">{card.summary}</CardDescription>
                               </CardHeader>
                               <CardContent className="p-3 pt-0 space-y-2">
+                                <div className="space-y-1.5 text-xs text-muted-foreground leading-relaxed">
+                                  {card.paragraphs.map((paragraph, paragraphIdx) => (
+                                    <p key={`pet-news-paragraph-${card.id}-${paragraphIdx}`}>{paragraph}</p>
+                                  ))}
+                                </div>
                                 <p className="text-xs text-muted-foreground">{card.tip}</p>
                                 {card.sources.length > 0 && (
                                   <div className="space-y-2">
