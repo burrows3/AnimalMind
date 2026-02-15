@@ -14,6 +14,7 @@ const DATA_DIR = path.join(REPO_ROOT, 'memory', 'data-sources');
 const DOCS_SUMMARY = path.join(REPO_ROOT, 'docs', 'data-summary.json');
 const DOCS_DATA_DIR = path.join(REPO_ROOT, 'docs', 'data');
 const DOCS_INGESTED_JSON = path.join(DOCS_DATA_DIR, 'ingested.json');
+const DOCS_SOURCE_HEALTH_JSON = path.join(REPO_ROOT, 'docs', 'source-health.json');
 const INGESTED_EXPORT_LIMIT = 200;
 
 function run(cmd, opts = {}) {
@@ -43,7 +44,9 @@ function main() {
   // Write docs/data-summary.json for landing page (GitHub Pages)
   try {
     const { getIngestedMeta, getIngestedSorted } = require(path.join(REPO_ROOT, 'lib', 'db.js'));
+    const { summarizeSourceHealth } = require(path.join(REPO_ROOT, 'lib', 'dataFreshness.js'));
     const meta = getIngestedMeta();
+    const sourceHealth = summarizeSourceHealth();
     const summary = {
       lastUpdated: meta.lastFetched || null,
       counts: {
@@ -55,10 +58,14 @@ function main() {
         imaging: meta.counts.imaging || 0,
         vet_practice: meta.counts.vet_practice || 0,
       },
+      sourceHealthSummary: sourceHealth.summary,
+      sourceHealthDetails: sourceHealth.details,
+      intelligenceGaps: sourceHealth.intelligenceGaps,
     };
     const docsDir = path.join(REPO_ROOT, 'docs');
     if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
     fs.writeFileSync(DOCS_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
+    fs.writeFileSync(DOCS_SOURCE_HEALTH_JSON, JSON.stringify(sourceHealth, null, 2), 'utf8');
     // Export ingested rows for landing page "Browse data" (embed memory)
     const rows = getIngestedSorted()
       .slice(0, INGESTED_EXPORT_LIMIT)
@@ -81,6 +88,7 @@ function main() {
 
   run('git add memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md memory/agent-outputs/ memory/opportunities.md');
   if (fs.existsSync(DOCS_SUMMARY)) run('git add docs/data-summary.json');
+  if (fs.existsSync(DOCS_SOURCE_HEALTH_JSON)) run('git add docs/source-health.json');
   if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
   if (fs.existsSync(path.join(REPO_ROOT, 'docs', 'index.html'))) run('git add docs/index.html');
   if (!hasStagedChanges()) {

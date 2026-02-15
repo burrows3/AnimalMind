@@ -41,8 +41,11 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const { upsertIngested } = require('../lib/db');
+const { runSourceTask, writeSourceHealthSnapshot } = require('../lib/ingestFetch');
+const { getSourceMeta } = require('../lib/sourceCatalog');
 
 const MEMORY_DIR = path.join(__dirname, '..', 'memory', 'data-sources');
+const SOURCE_HEALTH_PATH = path.join(__dirname, '..', 'memory', 'source-health.json');
 
 // Ensure output dir exists
 if (!fs.existsSync(MEMORY_DIR)) {
@@ -53,6 +56,25 @@ function writeJson(filename, data) {
   const filepath = path.join(MEMORY_DIR, filename);
   fs.writeFileSync(filepath, JSON.stringify(data, null, 2), 'utf8');
   console.log('Wrote', filepath);
+}
+
+function defaultPubMedResult(query) {
+  return {
+    fetchedAt: new Date().toISOString(),
+    source: 'PubMed',
+    query,
+    count: 0,
+    idlist: [],
+  };
+}
+
+function defaultRssResult(source, url) {
+  return {
+    fetchedAt: new Date().toISOString(),
+    source,
+    url,
+    items: [],
+  };
 }
 
 /** Extract condition/topic from CDC notice title (e.g. "Level 2 - Monkeypox in Ghana" -> "Monkeypox"). */
@@ -148,26 +170,46 @@ async function fetchCdcTravelNotices() {
 const ECDC_AVIAN_FLU_RSS = 'https://www.ecdc.europa.eu/en/taxonomy/term/323//feed';
 
 async function fetchEcdcAvianFlu() {
-  try {
-    const xml = await fetchRss(ECDC_AVIAN_FLU_RSS);
-    const items = parseRssItems(xml);
-    return {
-      fetchedAt: new Date().toISOString(),
-      source: 'ECDC Avian influenza RSS',
-      url: ECDC_AVIAN_FLU_RSS,
-      items: items.slice(0, 20),
-    };
-  } catch (e) {
-    return { fetchedAt: new Date().toISOString(), source: 'ECDC Avian influenza RSS', url: ECDC_AVIAN_FLU_RSS, items: [] };
-  }
+  const xml = await fetchRss(ECDC_AVIAN_FLU_RSS);
+  const items = parseRssItems(xml);
+  return {
+    fetchedAt: new Date().toISOString(),
+    source: 'ECDC Avian influenza RSS',
+    url: ECDC_AVIAN_FLU_RSS,
+    items: items.slice(0, 20),
+  };
 }
 
 // --- 3. Curated datasets (cancer, imaging) ---
 function loadCuratedDatasets() {
   const p = path.join(MEMORY_DIR, 'curated-datasets.json');
-  if (!fs.existsSync(p)) return { items: [] };
-  const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
-  return { items: raw.items || [], fetchedAt: new Date().toISOString() };
+  if (!fs.existsSync(p)) {
+    return {
+      source: 'curated',
+      items: [],
+      fetchedAt: new Date().toISOString(),
+      found: false,
+      filePath: p,
+    };
+  }
+  try {
+    const raw = JSON.parse(fs.readFileSync(p, 'utf8'));
+    return {
+      source: 'curated',
+      items: raw.items || [],
+      fetchedAt: new Date().toISOString(),
+      found: true,
+      filePath: p,
+    };
+  } catch {
+    return {
+      source: 'curated',
+      items: [],
+      fetchedAt: new Date().toISOString(),
+      found: false,
+      filePath: p,
+    };
+  }
 }
 
 // --- 4. TCIA (Cancer Imaging Archive) – imaging collections (canine/veterinary) ---
@@ -359,25 +401,153 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
 async function main() {
   console.log('Ingesting data sources...');
   try {
+    const sourceHealthEntries = [];
+    const runResilientSource = async ({ sourceId, snapshotFile, fetcher, fallbackData, requiredForCoverage }) => {
+      const { data, health } = await runSourceTask({
+        sourceId,
+        snapshotPath: path.join(MEMORY_DIR, snapshotFile),
+        fetcher,
+        fallbackData,
+        requiredForCoverage,
+      });
+      sourceHealthEntries.push(health);
+      return data;
+    };
+
     const [pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, tcia] = await Promise.all([
-      fetchPubMed(),
-      fetchCdcTravelNotices(),
-      fetchEcdcAvianFlu(),
-      fetchPubMedQuery('animal cancer veterinary oncology', 15),
-      fetchPubMedQuery('veterinary case reports', 15),
-      fetchPubMedQuery('veterinary clinical practice', 12),
-      fetchPubMedQuery('small animal veterinary medicine', 12),
-      fetchPubMedQuery('equine veterinary medicine', 12),
-      fetchTciaCollections(),
+      runResilientSource({
+        sourceId: 'pubmed_recent',
+        snapshotFile: 'pubmed-recent.json',
+        fetcher: () => fetchPubMed(),
+        fallbackData: defaultPubMedResult('one health animal'),
+        requiredForCoverage: true,
+      }),
+      runResilientSource({
+        sourceId: 'cdc_travel_notices',
+        snapshotFile: 'cdc-travel-notices.json',
+        fetcher: () => fetchCdcTravelNotices(),
+        fallbackData: defaultRssResult('CDC Travel Notices RSS', CDC_RSS_URL),
+        requiredForCoverage: true,
+      }),
+      runResilientSource({
+        sourceId: 'ecdc_avian_flu',
+        snapshotFile: 'ecdc-avian-flu.json',
+        fetcher: () => fetchEcdcAvianFlu(),
+        fallbackData: defaultRssResult('ECDC Avian influenza RSS', ECDC_AVIAN_FLU_RSS),
+        requiredForCoverage: false,
+      }),
+      runResilientSource({
+        sourceId: 'pubmed_cancer',
+        snapshotFile: 'pubmed-cancer.json',
+        fetcher: () => fetchPubMedQuery('animal cancer veterinary oncology', 15),
+        fallbackData: defaultPubMedResult('animal cancer veterinary oncology'),
+        requiredForCoverage: false,
+      }),
+      runResilientSource({
+        sourceId: 'pubmed_case_reports',
+        snapshotFile: 'pubmed-case-reports.json',
+        fetcher: () => fetchPubMedQuery('veterinary case reports', 15),
+        fallbackData: defaultPubMedResult('veterinary case reports'),
+        requiredForCoverage: false,
+      }),
+      runResilientSource({
+        sourceId: 'pubmed_clinical',
+        snapshotFile: 'pubmed-clinical.json',
+        fetcher: () => fetchPubMedQuery('veterinary clinical practice', 12),
+        fallbackData: defaultPubMedResult('veterinary clinical practice'),
+        requiredForCoverage: true,
+      }),
+      runResilientSource({
+        sourceId: 'pubmed_small_animal',
+        snapshotFile: 'pubmed-small-animal.json',
+        fetcher: () => fetchPubMedQuery('small animal veterinary medicine', 12),
+        fallbackData: defaultPubMedResult('small animal veterinary medicine'),
+        requiredForCoverage: false,
+      }),
+      runResilientSource({
+        sourceId: 'pubmed_equine',
+        snapshotFile: 'pubmed-equine.json',
+        fetcher: () => fetchPubMedQuery('equine veterinary medicine', 12),
+        fallbackData: defaultPubMedResult('equine veterinary medicine'),
+        requiredForCoverage: false,
+      }),
+      runResilientSource({
+        sourceId: 'tcia_imaging',
+        snapshotFile: 'tcia-imaging.json',
+        fetcher: () => fetchTciaCollections(),
+        fallbackData: {
+          fetchedAt: new Date().toISOString(),
+          source: 'TCIA',
+          total: 0,
+          veterinary: [],
+        },
+        requiredForCoverage: false,
+      }),
     ]);
     const curated = loadCuratedDatasets();
+    const curatedMeta = getSourceMeta('curated_datasets');
+    sourceHealthEntries.push({
+      sourceId: 'curated_datasets',
+      name: curatedMeta?.name || 'Curated veterinary datasets',
+      type: curatedMeta?.type || 'clinical',
+      tier: curatedMeta?.tier || 2,
+      audience: curatedMeta?.audience || 'both',
+      requiredForCoverage: true,
+      mode: curated.found ? 'live' : 'unavailable',
+      status: curated.found ? 'fresh' : 'error',
+      attempts: 1,
+      latencyMs: 0,
+      lastAttemptAt: new Date().toISOString(),
+      lastSuccessAt: curated.found ? curated.fetchedAt : null,
+      lastError: curated.found ? null : `Missing or unreadable curated dataset file (${curated.filePath}).`,
+    });
 
     // Autonomous-agent topics: each run finds literature for these frontier topics (retmax 5 per topic)
+    const topicHealthEntries = [];
     const topicResults = await Promise.all(
-      AUTONOMOUS_AGENT_TOPICS.map(({ topic, query }) =>
-        fetchPubMedQuery(query, 5).then((r) => ({ topic, query: r.query, idlist: r.idlist || [], count: r.count }))
-      )
+      AUTONOMOUS_AGENT_TOPICS.map(async ({ topic, query }, index) => {
+        const { data, health } = await runSourceTask({
+          sourceId: `autonomous_topic_${index}`,
+          snapshotPath: path.join(MEMORY_DIR, `pubmed-topic-${index}.json`),
+          fetcher: () => fetchPubMedQuery(query, 5),
+          fallbackData: { topic, query, count: 0, idlist: [] },
+          requiredForCoverage: false,
+        });
+        topicHealthEntries.push(health);
+        return {
+          topic,
+          query: data.query || query,
+          idlist: Array.isArray(data.idlist) ? data.idlist : [],
+          count: Number(data.count) || 0,
+        };
+      })
     );
+    const topicMeta = getSourceMeta('autonomous_topics');
+    const topicLiveCount = topicHealthEntries.filter((entry) => entry.mode === 'live').length;
+    const topicCachedCount = topicHealthEntries.filter((entry) => entry.mode === 'cached').length;
+    const topicLastSuccess = topicHealthEntries
+      .map((entry) => entry.lastSuccessAt)
+      .filter(Boolean)
+      .sort()
+      .pop() || null;
+    const topicErrors = topicHealthEntries
+      .map((entry) => entry.lastError)
+      .filter(Boolean);
+    sourceHealthEntries.push({
+      sourceId: 'autonomous_topics',
+      name: topicMeta?.name || 'Autonomous-agent topic ingest',
+      type: topicMeta?.type || 'research',
+      tier: topicMeta?.tier || 1,
+      audience: topicMeta?.audience || 'pro',
+      requiredForCoverage: false,
+      mode: topicLiveCount > 0 ? 'live' : topicCachedCount > 0 ? 'cached' : 'unavailable',
+      status: topicLiveCount === AUTONOMOUS_AGENT_TOPICS.length ? 'fresh' : topicLiveCount > 0 || topicCachedCount > 0 ? 'stale' : 'error',
+      attempts: topicHealthEntries.reduce((sum, entry) => sum + (entry.attempts || 0), 0),
+      latencyMs: 0,
+      lastAttemptAt: new Date().toISOString(),
+      lastSuccessAt: topicLastSuccess,
+      lastError: topicErrors.length > 0 ? topicErrors[0] : null,
+    });
     topicResults.forEach((r, i) => {
       writeJson(`pubmed-topic-${i}.json`, { topic: AUTONOMOUS_AGENT_TOPICS[i].topic, query: r.query, count: r.count, idlist: r.idlist });
     });
@@ -389,7 +559,10 @@ async function main() {
     writeJson('pubmed-clinical.json', pubmedClinical);
     writeJson('pubmed-small-animal.json', pubmedSmallAnimal);
     writeJson('pubmed-equine.json', pubmedEquine);
+    writeJson('ecdc-avian-flu.json', ecdc);
     writeJson('tcia-imaging.json', tcia);
+    writeSourceHealthSnapshot(SOURCE_HEALTH_PATH, sourceHealthEntries);
+    console.log('Wrote', SOURCE_HEALTH_PATH);
 
     ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults);
     console.log('Ingested into database (literature including autonomous-agent topics, surveillance, cancer, case_data, clinical, imaging, vet_practice).');

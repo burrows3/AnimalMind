@@ -7,6 +7,7 @@
 const express = require('express');
 const path = require('path');
 const { getIngestedGrouped, getIngestedMeta, getIngestedSorted } = require('./lib/db');
+const { summarizeSourceHealth } = require('./lib/dataFreshness');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,9 +37,13 @@ const INGESTED_EXPORT_LIMIT = 200;
 app.get('/api/dashboard', (req, res) => {
   try {
     const meta = getIngestedMeta();
+    const sourceHealth = summarizeSourceHealth();
     const summary = {
       lastUpdated: meta.lastFetched || null,
       counts: meta.counts || {},
+      sourceHealthSummary: sourceHealth.summary,
+      sourceHealthDetails: sourceHealth.details,
+      intelligenceGaps: sourceHealth.intelligenceGaps,
     };
     const rows = getIngestedSorted()
       .slice(0, INGESTED_EXPORT_LIMIT)
@@ -48,7 +53,13 @@ app.get('/api/dashboard', (req, res) => {
         title: r.title || '',
         url: r.url || '',
       }));
-    res.json({ summary, ingested: rows });
+    res.json({
+      summary,
+      ingested: rows,
+      sourceHealthSummary: sourceHealth.summary,
+      sourceHealthDetails: sourceHealth.details,
+      intelligenceGaps: sourceHealth.intelligenceGaps,
+    });
   } catch (e) {
     res.status(500).json({ error: 'Service temporarily unavailable.' });
   }
