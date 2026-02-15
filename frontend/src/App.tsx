@@ -16,7 +16,7 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -1270,9 +1270,6 @@ export default function App() {
               className="w-full h-44 object-cover"
             />
           </div>
-          <a href="#brief-articles" className={cn(buttonVariants({ variant: "default", size: "sm" }), "rounded-md")}>
-            View today’s brief
-          </a>
         </section>
 
         {/* Mission — how the newsletter works */}
