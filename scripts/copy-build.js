@@ -39,6 +39,13 @@ const faviconSrc = path.join(DIST, "favicon.svg");
 if (fs.existsSync(faviconSrc)) {
   copyFile(faviconSrc, path.join(publicDir, "favicon.svg"));
 }
+for (let i = 1; i <= 6; i++) {
+  const name = `pet-placeholder-${i}.svg`;
+  const src = path.join(DIST, name);
+  if (fs.existsSync(src)) {
+    copyFile(src, path.join(publicDir, name));
+  }
+}
 console.log("Copied build to public/");
 
 // docs/ (GitHub Pages)
@@ -47,6 +54,13 @@ copyFile(path.join(DIST, "index.html"), path.join(docsDir, "index.html"));
 copyDir(path.join(DIST, "assets"), path.join(docsDir, "assets"));
 if (fs.existsSync(faviconSrc)) {
   copyFile(faviconSrc, path.join(docsDir, "favicon.svg"));
+}
+for (let i = 1; i <= 6; i++) {
+  const name = `pet-placeholder-${i}.svg`;
+  const src = path.join(DIST, name);
+  if (fs.existsSync(src)) {
+    copyFile(src, path.join(docsDir, name));
+  }
 }
 console.log("Copied build to docs/");
 

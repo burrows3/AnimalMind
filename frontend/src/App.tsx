@@ -72,20 +72,21 @@ const DATA_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
 };
 
 const PET_OWNER_KEYWORDS = /\b(dog|dogs|canine|cat|cats|feline|pet|pets|puppy|kitten|owner|home care|triage|poison|toxin|flea|tick|vaccin|vomit|diarrhea|itch|cough|ear|dental|behavior)\b/i;
-const PET_OWNER_FALLBACK_TYPES = new Set(["clinical", "case_data", "vet_practice", "surveillance"]);
+const PET_OWNER_FALLBACK_TYPES = new Set(["clinical", "case_data", "vet_practice", "surveillance", "literature", "cancer"]);
 const RESEARCH_TYPES = new Set(["literature", "clinical", "cancer", "case_data"]);
 const PRO_BRIEF_TYPES = new Set(["surveillance", "literature", "clinical", "cancer", "case_data", "imaging", "vet_practice"]);
 const BRAND_TAGLINE = "ANIMAL HEALTH NEWS";
 const BRAND_HEADLINE = "INTELLIGENCE FOR ANIMAL HEALTH";
 const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
 const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
+/** Local placeholders so images load without depending on external CDNs (e.g. Unsplash hotlink limits). */
 const PET_NEWS_IMAGE_POOL = [
-  "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200&q=80",
-  "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=1200&q=80",
-  "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1200&q=80",
-  "https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=1200&q=80",
-  "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=1200&q=80",
-  "https://images.unsplash.com/photo-1597633425046-08f5110420b5?w=1200&q=80",
+  "/pet-placeholder-1.svg",
+  "/pet-placeholder-2.svg",
+  "/pet-placeholder-3.svg",
+  "/pet-placeholder-4.svg",
+  "/pet-placeholder-5.svg",
+  "/pet-placeholder-6.svg",
 ];
 
 type DataSummary = {
@@ -357,7 +358,7 @@ function petArticleSummary(row: IngestedRow): string {
           : row.data_type === "case_data"
             ? "case"
             : "research";
-  return `New ${typeLabel} update on ${topic}. Here’s what it means for you and your pet.`;
+  return `New ${typeLabel} update on ${topic}. Here's what it means for you and your pet.`;
 }
 
 /** 2–3 takeaway points for pet owners. */
@@ -365,10 +366,10 @@ function petArticlePoints(row: IngestedRow): string[] {
   const topic = (row.condition_or_topic || "").toLowerCase();
   const points: string[] = [];
   if (topic.includes("surveillance") || row.data_type === "surveillance") {
-    points.push("Check travel notices if you’re planning trips with your pet.");
+    points.push("Check travel notices if you're planning trips with your pet.");
   }
   if (topic.includes("poison") || topic.includes("toxin") || topic.includes("emergenc")) {
-    points.push("Keep poison control and your vet’s number handy for emergencies.");
+    points.push("Keep poison control and your vet's number handy for emergencies.");
   }
   if (topic.includes("when to see") || topic.includes("vet")) {
     points.push("When in doubt, contact your veterinarian.");
@@ -537,16 +538,14 @@ export default function App() {
         <>
           <header className="border-b border-border bg-card">
             <div className="mx-auto max-w-5xl px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
                 onClick={() => navigate("")}
-                className="flex items-center gap-2 text-foreground no-underline h-11 px-2 -ml-2 text-left rounded-md"
+                className="flex items-center gap-2 text-foreground no-underline min-h-[44px]"
               >
                 <AnimalMindLogo className="size-8 text-foreground shrink-0" />
                 <span className="text-xl font-semibold tracking-tight">AnimalMind</span>
-              </Button>
+              </button>
               <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
                 {BRAND_TAGLINE}
               </p>
@@ -647,23 +646,17 @@ export default function App() {
         <>
           <header className="sticky top-0 z-10 border-b border-border bg-card">
             <nav className="mx-auto max-w-4xl px-4 py-3 sm:px-6 flex justify-between items-center">
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
                 onClick={() => navigate("")}
-                className="flex items-center gap-2 text-foreground h-11 px-2 -ml-2 text-left rounded-md"
+                className="flex items-center gap-2 text-foreground min-h-[44px]"
               >
                 <AnimalMindLogo className="size-7 text-foreground shrink-0" />
                 <span className="text-base font-semibold">AnimalMind</span>
-              </Button>
-              <div className="flex items-center gap-1">
-                <a href="#pet-brief" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex text-muted-foreground hover:text-foreground rounded-md no-underline")}>
-                  Today's brief
-                </a>
-                <a href="#pet-cta" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex text-muted-foreground hover:text-foreground rounded-md no-underline")}>
-                  Notify me
-                </a>
+              </button>
+              <div className="flex items-center gap-4">
+                <a href="#pet-brief" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Today's brief</a>
+                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Notify me</a>
                 <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
               </div>
             </nav>
@@ -679,8 +672,8 @@ export default function App() {
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
                 <div className="lg:col-span-3 relative h-56 sm:h-64 lg:h-auto min-h-[220px]">
                   <img
-                    src="/featured-pet.png"
-                    alt="Pet and owner: research-backed guidance for pet owners"
+                    src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80"
+                    alt=""
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                 </div>
@@ -902,10 +895,11 @@ export default function App() {
                   <p className="mt-3 text-xs text-muted-foreground">
                     Educational only. AnimalMind Pet does not replace veterinary diagnosis or emergency care.
                   </p>
-                  {petArticlesFromResearch.length > 0 && (
+                  {!loading && !memoryLoading && (
                     <div className="mt-6 border-t border-border pt-4">
-                      <h3 className="text-sm font-semibold text-foreground mb-3">Articles from today’s research</h3>
+                      <h3 className="text-sm font-semibold text-foreground mb-3">Articles from today's research</h3>
                       <p className="text-xs text-muted-foreground mb-4">Each article is based on ingested research and written for pet owners. Tap a source to read more.</p>
+                      {petArticlesFromResearch.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {petArticlesFromResearch.map((article) => (
                           <Card key={`pet-article-${article.id}`} className="border border-border bg-muted/10 overflow-hidden">
@@ -927,39 +921,37 @@ export default function App() {
                                   <li key={`pet-point-${article.id}-${idx}`}>{point}</li>
                                 ))}
                               </ul>
-                              {article.sources.length > 0 && (
-                                <div>
-                                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Source</p>
-                                  <div className="space-y-2">
-                                    {article.sources.slice(0, 2).map((source, idx) => {
-                                      const href = safeHref(source.url);
-                                      return href !== "#" ? (
-                                        <a
-                                          key={`pet-source-${article.id}-${idx}`}
-                                          href={href}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="inline-flex w-full items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-xs font-medium text-foreground hover:bg-muted/40 hover:border-foreground/30"
-                                        >
-                                          <span className="truncate">View source · {sourceHostLabel(source.url)}</span>
-                                          <ExternalLink className="size-3.5 shrink-0" aria-hidden />
-                                        </a>
-                                      ) : (
-                                        <span
-                                          key={`pet-source-${article.id}-${idx}`}
-                                          className="inline-flex w-full items-center rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-xs text-muted-foreground"
-                                        >
-                                          {source.title || "Source"}
-                                        </span>
-                                      );
-                                    })}
+                              {article.sources.length > 0 && (() => {
+                                const source = article.sources[0];
+                                const href = safeHref(source.url);
+                                return (
+                                  <div>
+                                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Source</p>
+                                    {href !== "#" ? (
+                                      <a
+                                        href={href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex w-full items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-xs font-medium text-foreground hover:bg-muted/40 hover:border-foreground/30"
+                                      >
+                                        <span className="truncate">View source</span>
+                                        <ExternalLink className="size-3.5 shrink-0" aria-hidden />
+                                      </a>
+                                    ) : (
+                                      <span className="inline-flex w-full items-center rounded-md border border-border bg-background px-3 py-2 min-h-[40px] text-xs text-muted-foreground">
+                                        {source.title || "Source"}
+                                      </span>
+                                    )}
                                   </div>
-                                </div>
-                              )}
+                                );
+                              })()}
                             </CardContent>
                           </Card>
                         ))}
                       </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No articles from today's research yet. Run an ingest to see pet-relevant articles here.</p>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -1068,9 +1060,9 @@ export default function App() {
             </section>
 
             <div className="pt-6 flex justify-center">
-              <Button type="button" variant="outline" size="sm" onClick={() => navigate("")} className="rounded-md gap-2">
+              <button type="button" onClick={() => navigate("")} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 ← Back to AnimalMind
-              </Button>
+              </button>
             </div>
           </main>
 
@@ -1087,38 +1079,22 @@ export default function App() {
         <>
           <header className="sticky top-0 z-10 border-b border-border bg-card">
             <nav className="mx-auto max-w-4xl px-4 py-3 sm:px-6 flex flex-wrap justify-between items-center gap-2">
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
                 onClick={() => navigate("")}
-                className="flex items-center gap-2 text-foreground h-11 px-2 -ml-2 text-left rounded-md"
+                className="flex items-center gap-2 text-foreground min-h-[44px] py-1 text-left"
               >
                 <AnimalMindLogo className="size-7 sm:size-8 text-foreground shrink-0" />
                 <span className="text-base sm:text-xl font-semibold tracking-tight">AnimalMind Pro</span>
-              </Button>
-              <div className="flex flex-wrap items-center gap-0.5 sm:gap-1 text-sm">
-                <a href="#data" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
-                  Digest
-                </a>
-                <a href="#pro-cta" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-md text-foreground font-medium min-h-[44px] no-underline")}>
-                  Brief
-                </a>
-                <a href="#brief-articles" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
-                  Articles
-                </a>
-                <a href="#mission" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
-                  Mission
-                </a>
-                <a href="#topics" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
-                  Topics
-                </a>
-                <a href="#track" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
-                  Sources
-                </a>
-                <a href="#waitlist" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-md text-muted-foreground hover:text-foreground min-h-[44px] no-underline")}>
-                  Updates
-                </a>
+              </button>
+              <div className="flex flex-wrap items-center gap-0.5 sm:gap-2 text-sm">
+                <a href="#data" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Digest</a>
+                <a href="#pro-cta" className="px-2.5 py-2 rounded-md text-foreground font-medium hover:bg-muted/50 min-h-[44px] flex items-center">Brief</a>
+                <a href="#brief-articles" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Articles</a>
+                <a href="#mission" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Mission</a>
+                <a href="#topics" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Topics</a>
+                <a href="#track" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Sources</a>
+                <a href="#waitlist" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Updates</a>
               </div>
             </nav>
             <div className="mx-auto max-w-4xl px-4 pb-2 sm:px-6 flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-0.5 text-xs text-muted-foreground">
@@ -1604,7 +1580,7 @@ export default function App() {
         </section>
 
         <div className="pt-8 flex justify-center">
-          <a href="#data" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-md gap-2 inline-flex items-center no-underline")}>
+          <a href="#data" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             Back to digest
             <ChevronDown className="size-4 rotate-180" aria-hidden />
           </a>
