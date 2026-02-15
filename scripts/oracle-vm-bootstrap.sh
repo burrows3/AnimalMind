@@ -66,13 +66,26 @@ else
   echo "First run had issues (e.g. push needs token). Fix and re-run: ./scripts/run-ingest.sh"
 fi
 
-# Cron: every 12 hours
-CRON_LINE="0 */12 * * * ${REPO_DIR}/scripts/run-ingest.sh >> ${CRON_LOG} 2>&1"
-if crontab -l 2>/dev/null | grep -q "run-ingest.sh"; then
-  echo "Cron already has ingest (every 12h)."
+# Cron: every 6 hours (replace any older run-ingest.sh schedule)
+CRON_LINE="0 */6 * * * ${REPO_DIR}/scripts/run-ingest.sh >> ${CRON_LOG} 2>&1"
+CURRENT_CRON="$(crontab -l 2>/dev/null || true)"
+if printf "%s\n" "$CURRENT_CRON" | awk '/run-ingest\.sh/ { found=1 } END { exit found ? 0 : 1 }'; then
+  CRON_ACTION="updated"
 else
-  (crontab -l 2>/dev/null; echo "$CRON_LINE") | crontab -
-  echo "Added cron every 12 hours. Verify: crontab -l"
+  CRON_ACTION="added"
+fi
+
+FILTERED_CRON="$(printf "%s\n" "$CURRENT_CRON" | awk 'NF && $0 !~ /run-ingest\.sh/')"
+if [ -n "$FILTERED_CRON" ]; then
+  printf "%s\n%s\n" "$FILTERED_CRON" "$CRON_LINE" | crontab -
+else
+  printf "%s\n" "$CRON_LINE" | crontab -
+fi
+
+if [ "$CRON_ACTION" = "updated" ]; then
+  echo "Updated ingest cron to every 6 hours. Verify: crontab -l"
+else
+  echo "Added cron every 6 hours. Verify: crontab -l"
 fi
 
 # Optional PM2 for dashboard
@@ -93,4 +106,4 @@ else
 fi
 
 echo ""
-echo "=== Done. Ingest is scheduled every 12 hours. ==="
+echo "=== Done. Ingest is scheduled every 6 hours. ==="

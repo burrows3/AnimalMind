@@ -8,10 +8,10 @@
 
 | What | Frequency | Purpose |
 |------|-----------|---------|
-| **Data ingest** (PubMed + CDC) | **Every hour** (Windows Task Scheduler) | Keeps the DB and GitHub up to date with latest literature and surveillance. |
+| **Data ingest** (PubMed + CDC) | **Every 6 hours** (Windows Task Scheduler) | Keeps the DB and GitHub up to date with latest literature and surveillance. |
 | **Dependabot** (dependency updates) | **Weekly** (GitHub) | Opens PRs for npm and GitHub Actions updates; no secrets needed. |
 
-So: **ingest = every 12 hours**; **Dependabot = weekly**. The research engine's data is refreshed twice per day.
+So: **ingest = every 6 hours**; **Dependabot = weekly**. The research engine's data is refreshed four times per day.
 
 ---
 
@@ -65,7 +65,7 @@ Then open **http://localhost:3000** to view the research engine data.
 
 | Question | Answer |
 |----------|--------|
-| Will it run every hour? | **Ingest** runs every hour (Task Scheduler). **Dependabot** runs weekly. |
+| Will it run every 6 hours? | **Ingest** runs every 6 hours (Task Scheduler). **Dependabot** runs weekly. |
 | End goal? | **Animal Research Network** (built by ChatVet)—data, insights, opportunities, and a frontend. |
 | How to improve? | More sources, opportunities API, optional summaries/alerts. |
 | Frontend? | Express + one dashboard page that reads from the DB via `/api/ingested`; run with `npm run start`. |
