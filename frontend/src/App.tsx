@@ -79,18 +79,17 @@ const BRAND_TAGLINE = "ANIMAL HEALTH NEWS";
 const BRAND_HEADLINE = "INTELLIGENCE FOR ANIMAL HEALTH";
 const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
 const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
-/** Inline data-URI images so they always load (no paths, no external requests). Different animal per article. */
-const PET_ARTICLE_IMAGES: string[] = (() => {
-  const enc = (s: string) => `data:image/svg+xml,${encodeURIComponent(s)}`;
-  return [
-    enc('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><rect fill="#fef3e8" width="400" height="250"/><ellipse cx="200" cy="135" rx="75" ry="55" fill="#d4a574"/><ellipse cx="155" cy="95" rx="28" ry="45" fill="#d4a574" transform="rotate(-25 155 95)"/><ellipse cx="245" cy="95" rx="28" ry="45" fill="#d4a574" transform="rotate(25 245 95)"/><circle cx="182" cy="130" r="10" fill="#3d2914"/><circle cx="218" cy="130" r="10" fill="#3d2914"/><ellipse cx="200" cy="155" rx="12" ry="10" fill="#2d1f0f"/></svg>'),
-    enc('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><rect fill="#f5f0ff" width="400" height="250"/><path d="M200 85 L165 55 L140 95 L200 105 Z" fill="#c9a0dc"/><path d="M200 85 L235 55 L260 95 L200 105 Z" fill="#c9a0dc"/><circle cx="200" cy="130" r="50" fill="#c9a0dc"/><ellipse cx="178" cy="125" rx="8" ry="12" fill="#1a0d1a"/><ellipse cx="222" cy="125" rx="8" ry="12" fill="#1a0d1a"/><circle cx="200" cy="142" r="5" fill="#1a0d1a"/></svg>'),
-    enc('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><rect fill="#e8f5e9" width="400" height="250"/><ellipse cx="200" cy="195" rx="85" ry="35" fill="#e8c88c"/><ellipse cx="200" cy="125" rx="55" ry="50" fill="#e8c88c"/><ellipse cx="200" cy="75" rx="35" ry="38" fill="#e8c88c"/><ellipse cx="155" cy="65" rx="18" ry="28" fill="#e8c88c" transform="rotate(-30 155 65)"/><ellipse cx="245" cy="65" rx="18" ry="28" fill="#e8c88c" transform="rotate(30 245 65)"/><circle cx="185" cy="72" r="6" fill="#3d2e14"/><circle cx="215" cy="72" r="6" fill="#3d2e14"/></svg>'),
-    enc('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><rect fill="#fff3e0" width="400" height="250"/><ellipse cx="200" cy="190" rx="70" ry="32" fill="#e8b86d"/><circle cx="200" cy="125" r="48" fill="#e8b86d"/><path d="M200 78 L168 48 L148 82 L200 92 Z" fill="#d4a04a"/><path d="M200 78 L232 48 L252 82 L200 92 Z" fill="#d4a04a"/><ellipse cx="182" cy="118" rx="7" ry="11" fill="#2d1f0a"/><ellipse cx="218" cy="118" rx="7" ry="11" fill="#2d1f0a"/></svg>'),
-    enc('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><rect fill="#e3f2fd" width="400" height="250"/><ellipse cx="200" cy="175" rx="55" ry="28" fill="#b8d4e8"/><ellipse cx="200" cy="118" rx="42" ry="40" fill="#b8d4e8"/><ellipse cx="200" cy="72" rx="28" ry="32" fill="#b8d4e8"/><ellipse cx="172" cy="58" rx="14" ry="22" fill="#b8d4e8" transform="rotate(-20 172 58)"/><ellipse cx="228" cy="58" rx="14" ry="22" fill="#b8d4e8" transform="rotate(20 228 58)"/><circle cx="190" cy="68" r="5" fill="#1a2d3d"/><circle cx="210" cy="68" r="5" fill="#1a2d3d"/></svg>'),
-    enc('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><rect fill="#fce4ec" width="400" height="250"/><ellipse cx="200" cy="182" rx="48" ry="30" fill="#e8c4d4"/><circle cx="200" cy="122" r="42" fill="#e8c4d4"/><path d="M200 82 L175 58 L162 88 L200 95 Z" fill="#d4a8bc"/><path d="M200 82 L225 58 L238 88 L200 95 Z" fill="#d4a8bc"/><ellipse cx="184" cy="116" rx="6" ry="9" fill="#2d1a22"/><ellipse cx="216" cy="116" rx="6" ry="9" fill="#2d1a22"/></svg>'),
-  ];
-})();
+/** Your animal photos (cat, turtle, fox, horse, dog, parrot, cows, lemur). One per article by hash. */
+const PET_ARTICLE_IMAGES: string[] = [
+  "/pet-images/pet-1.png",
+  "/pet-images/pet-2.png",
+  "/pet-images/pet-3.png",
+  "/pet-images/pet-4.png",
+  "/pet-images/pet-5.png",
+  "/pet-images/pet-6.png",
+  "/pet-images/pet-7.png",
+  "/pet-images/pet-8.png",
+];
 
 type DataSummary = {
   lastUpdated?: string | null;

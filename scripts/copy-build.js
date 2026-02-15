@@ -46,6 +46,7 @@ for (let i = 1; i <= 6; i++) {
     copyFile(src, path.join(publicDir, name));
   }
 }
+copyDir(path.join(DIST, "pet-images"), path.join(publicDir, "pet-images"));
 console.log("Copied build to public/");
 
 // docs/ (GitHub Pages)
@@ -62,6 +63,7 @@ for (let i = 1; i <= 6; i++) {
     copyFile(src, path.join(docsDir, name));
   }
 }
+copyDir(path.join(DIST, "pet-images"), path.join(docsDir, "pet-images"));
 console.log("Copied build to docs/");
 
 console.log("Done. Restart server or push docs for GitHub Pages.");
