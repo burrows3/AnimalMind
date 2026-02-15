@@ -9,6 +9,8 @@ This document describes how we protect the project from hackers and bad actors, 
 - **Do not share anything sensitive on GitHub.** Never commit `.env`, API keys, tokens, passwords, or PII. This repo is intended to be private. Keep secrets in local `.env` and private notes only.
 - **Frontend is read-only.** The dashboard and landing page display data from public sources (PubMed, CDC, curated). No credentials, API keys, or PII are exposed in the UI. External links use `rel="noopener noreferrer"` and only `http://` / `https://` URLs are allowed.
 - **API does not leak internals.** The `/api/ingested` endpoint returns only DB data; errors return a generic message (no stack traces or paths to the client).
+- **Protected internal endpoints.** Non-UI data endpoints can be protected with `INTERNAL_API_KEY` (header: `x-internal-api-key`) so they are not publicly accessible by default.
+- **No source maps in production build.** Frontend production builds are minified without source maps to reduce reverse-engineering signal.
 
 ---
 
