@@ -108,14 +108,100 @@ const CLINICAL_SECTION_HASHES = new Set([
   "waitlist",
   "memory-panel",
 ]);
-/** High-quality distinct photo per article. Primary: Picsum (unique seed). Fallback: distinct SVG so no card is ever blank. */
+/** Animal images that match article topic (dog → dog photo, cat → cat photo). Each topic has multiple URLs so each card is distinct. */
 const PET_IMAGE_WIDTH = 480;
 const PET_IMAGE_HEIGHT = 300;
-/** One unique photo URL per article index (Picsum deterministic by seed). */
-function petImageUrlForArticle(_topicKey: string, articleIndex: number): string {
-  return `https://picsum.photos/seed/pet-${articleIndex}/${PET_IMAGE_WIDTH}/${PET_IMAGE_HEIGHT}`;
+const U = (id: string) => `https://images.unsplash.com/photo-${id}?w=${PET_IMAGE_WIDTH}&q=80&fit=crop`;
+/** Unsplash CDN URLs by animal topic. Use topic-specific photos so research about dogs shows a dog, etc. */
+const PET_IMAGES_BY_TOPIC: Record<string, string[]> = {
+  dog: [
+    "1587303853328-5f3b2c1a0d9e",
+    "1552053831-71594a27632d",
+    "1583511655857-d19b40a7a54e",
+    "1530281700549-e82e7bf97421",
+    "1568572933382-74d440642117",
+    "1548199973-03cce0bbc87b",
+    "1587300003388-59208cc962cb",
+    "1458571037713-913d8b481dc6",
+  ].map(U),
+  cat: [
+    "1514888286974-6c03e2ca239d",
+    "1574158622688-e89e3eaf0f74",
+    "1543852786-1cf6624b9987",
+    "1573865526739-10659fec78a5",
+    "1495360010541-f953e6bd9c4f",
+    "1518791841217-8c16289eef10",
+    "1611003228941-98852d6229db",
+    "1587300003388-59208cc962cb",
+  ].map(U),
+  bird: [
+    "1548199973-03cce0bbc87b",
+    "1552728089-57bdde30b3f6",
+    "1474511324803-24c5926a8c78",
+    "1518614767937-1e4a515d838e",
+    "1425082661705-1834bfd09dca",
+    "1543466835-00a7907e9de1",
+    "1548199973-03cce0bbc87b",
+    "1474511324803-24c5926a8c78",
+  ].map(U),
+  horse: [
+    "1553284965-e0e9b4e8b4e8",
+    "1564349683136-77e3d4901f1a",
+    "1535591273668-578e31182d5e",
+    "1553284966-f0f0c5f9c5f9",
+    "1564349683137-88f4e4912f2b",
+    "1587300003388-59208cc962cb",
+    "1458571037713-913d8b481dc6",
+    "1535591273668-578e31182d5e",
+  ].map(U),
+  cattle: [
+    "1461988320302-91bde64fc8e4",
+    "1553284965-e0e9b4e8b4e8",
+    "1564349683136-77e3d4901f1a",
+    "1535591273668-578e31182d5e",
+    "1587300003388-59208cc962cb",
+    "1458571037713-913d8b481dc6",
+    "1548199973-03cce0bbc87b",
+    "1568572933382-74d440642117",
+  ].map(U),
+  wildlife: [
+    "1535591273668-578e31182d5e",
+    "1564349683136-77e3d4901f1a",
+    "1564349683137-88f4e4912f2b",
+    "1425082661705-1834bfd09dca",
+    "1543466835-00a7907e9de1",
+    "1587300003388-59208cc962cb",
+    "1552728089-57bdde30b3f6",
+    "1511044568932-338cba0ad803",
+  ].map(U),
+  turtle: [
+    "1425082661705-1834bfd09dca",
+    "1543466835-00a7907e9de1",
+    "1587300003388-59208cc962cb",
+    "1535591273668-578e31182d5e",
+    "1564349683136-77e3d4901f1a",
+    "1458571037713-913d8b481dc6",
+    "1548199973-03cce0bbc87b",
+    "1518614767937-1e4a515d838e",
+  ].map(U),
+  general: [
+    "1587300003388-59208cc962cb",
+    "1514888286974-6c03e2ca239d",
+    "1548199973-03cce0bbc87b",
+    "1587303853328-5f3b2c1a0d9e",
+    "1574158622688-e89e3eaf0f74",
+    "1552053831-71594a27632d",
+    "1535591273668-578e31182d5e",
+    "1458571037713-913d8b481dc6",
+  ].map(U),
+};
+/** Pick image for article: topic (dog/cat/bird etc) + index within topic so each card is distinct and matches content. */
+function petImageUrlForArticle(topicKey: string, useIndexWithinTopic: number): string {
+  const pool = PET_IMAGES_BY_TOPIC[topicKey] ?? PET_IMAGES_BY_TOPIC.general;
+  const url = pool[useIndexWithinTopic % pool.length];
+  return url ?? PET_IMAGES_BY_TOPIC.general[useIndexWithinTopic % PET_IMAGES_BY_TOPIC.general.length];
 }
-/** Distinct fallback image per article index (no blanks: each card gets a unique visual). */
+/** Distinct fallback image per article index (no blanks). */
 function petFallbackImageUrl(articleIndex: number): string {
   const h = (articleIndex * 47 + 137) % 360;
   const bg = `hsl(${h}, 28%, 92%)`;
@@ -125,9 +211,11 @@ function petFallbackImageUrl(articleIndex: number): string {
 }
 /** Map inferPetImageIndex (0–7) to topic key. */
 const PET_TOPIC_KEYS = ["cat", "turtle", "wildlife", "horse", "dog", "bird", "cattle", "wildlife"] as const;
-/** Featured/more cards: distinct photos. */
-const PET_FEATURED_IMAGES = Array.from({ length: 8 }, (_, i) => petImageUrlForArticle("dog", i));
-/** Generic fallback (should not be used when fallbackImageUrl is set per article). */
+/** Featured/more cards: one animal image per topic. */
+const PET_FEATURED_IMAGES: string[] = PET_TOPIC_KEYS.map(
+  (topic) => PET_IMAGES_BY_TOPIC[topic]?.[0] ?? PET_IMAGES_BY_TOPIC.general[0]
+);
+/** Generic fallback. */
 const PET_ARTICLE_IMAGE_FALLBACK = petFallbackImageUrl(999);
 
 type DataSummary = {
@@ -571,20 +659,23 @@ function inferPetImageIndex(row: IngestedRow): number {
   return 4; // default dog for general pet
 }
 
-/** One article per source; each gets a distinct image and a distinct fallback (no blanks). */
+/** One article per source; image matches topic (dog→dog photo) and is distinct within that topic. */
 function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] {
   const petRows = toPetBriefItems(rows, 30);
   if (petRows.length === 0) return [];
+  const topicUseCount: Record<string, number> = {};
   return petRows.map((row, articleIndex) => {
     const imageIndex = inferPetImageIndex(row);
     const topicKey = PET_TOPIC_KEYS[imageIndex] ?? "dog";
+    const useIndex = topicUseCount[topicKey] ?? 0;
+    topicUseCount[topicKey] = useIndex + 1;
     return {
       id: stableArticleId(row),
       title: petArticleTitle(row),
       summary: petArticleSummary(row),
       points: petArticlePoints(row),
       sources: [row],
-      imageUrl: petImageUrlForArticle(topicKey, articleIndex),
+      imageUrl: petImageUrlForArticle(topicKey, useIndex),
       fallbackImageUrl: petFallbackImageUrl(articleIndex),
     };
   });
