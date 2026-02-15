@@ -81,13 +81,18 @@ const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
 const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
 const PRO_MARKETING_HEADLINE = "AnimalMind Pro is the modern intelligence layer for veterinary medicine.";
 const PRO_MARKETING_VALUE =
-  "It monitors veterinary research and public health sources in real time, then delivers concise AI summaries of outbreak alerts, drug updates, regulatory changes, and clinical insights so teams can act quickly.";
+  "It monitors veterinary research and public health sources on a 6-hour cadence, then delivers concise AI summaries of outbreak alerts, drug updates, regulatory changes, and clinical insights so teams can act quickly.";
 const PRO_MARKETING_BENEFITS = [
   "Track new research, surveillance signals, and regulatory changes in one place.",
   "Get prioritized outbreak alerts by region, species, and clinical relevance.",
   "Stay current on drug approvals, safety signals, label changes, and withdrawals.",
   "Focus on high-signal updates designed to reduce noise for busy clinicians.",
   "Replace hours of manual review with brief updates you can scan in minutes.",
+];
+const PRO_MISSION_POINTS = [
+  "Shared digest view keeps teams aligned on what changed and why it matters.",
+  "Source-linked cards make triage and verification fast during clinical workflows.",
+  "A predictable 6-hour cadence improves freshness without introducing alert fatigue.",
 ];
 const PRO_MARKETING_CREDIBILITY =
   "Built for veterinarians, researchers, and animal health professionals, with source-linked updates from trusted public data.";
@@ -757,7 +762,6 @@ export default function App() {
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [waitlistError, setWaitlistError] = useState("");
-  const [proCtaExpanded, setProCtaExpanded] = useState(false);
 
   const hashToView = (h: string) => {
     if (h === "consumer" || h === "clinical") return h;
@@ -950,7 +954,7 @@ export default function App() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Clinical & Research</p>
                   <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pro</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Real-time intelligence briefs with research, outbreak, drug, and regulatory updates.
+                    6-hour intelligence briefs with research, outbreak, drug, and regulatory updates.
                   </p>
                   <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
                     Enter Pro
@@ -1595,56 +1599,15 @@ export default function App() {
               <div className="shrink-0 w-full sm:w-auto">
                 {waitlistStatus === "success" ? (
                   <p className="text-sm text-foreground font-medium py-2">You’re on the list. We’ll notify you when the daily brief launches.</p>
-                ) : proCtaExpanded ? (
-                  <form
-                    className="flex flex-col sm:flex-row gap-2"
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      const email = waitlistEmail.trim();
-                      if (!email) return;
-                      setWaitlistStatus("loading");
-                      setWaitlistError("");
-                      const result = await submitWaitlist(email);
-                      if (result.ok) {
-                        setWaitlistStatus("success");
-                        setWaitlistEmail("");
-                      } else if (result.error === "MAILTO") {
-                        window.location.href = `mailto:pro@animalmind.co?subject=Pro%20early%20access&body=${encodeURIComponent(`Please add me for early access.\nEmail: ${email}`)}`;
-                        setWaitlistStatus("success");
-                        setWaitlistEmail("");
-                      } else {
-                        setWaitlistStatus("error");
-                        setWaitlistError(result.error || "Something went wrong.");
-                      }
-                    }}
-                  >
-                    <input
-                      type="email"
-                      placeholder="Your email"
-                      value={waitlistEmail}
-                      onChange={(e) => setWaitlistEmail(e.target.value)}
-                      disabled={waitlistStatus === "loading"}
-                      className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
-                      aria-label="Email"
-                    />
-                    <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
-                      {waitlistStatus === "loading" ? "…" : "Notify me"}
-                    </Button>
-                  </form>
                 ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full sm:w-auto rounded-md font-medium border-border bg-background min-h-[44px]"
-                    onClick={() => setProCtaExpanded(true)}
+                  <a
+                    href="#waitlist"
+                    className="inline-flex w-full sm:w-auto items-center justify-center rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/40 hover:border-foreground/30 min-h-[44px]"
                   >
-                    Early access to the brief
-                  </Button>
+                    Join the updates list
+                  </a>
                 )}
               </div>
-              {waitlistStatus === "error" && waitlistError && (
-                <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
-              )}
             </div>
           </div>
           <p className="px-4 sm:px-6 py-3 border-t border-border/80 text-xs text-muted-foreground">
@@ -1683,11 +1646,11 @@ export default function App() {
             </div>
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
-                {PRO_MARKETING_VALUE}
+                AnimalMind Pro helps teams move from scattered monitoring to a consistent, source-linked operating rhythm.
               </p>
               <ul className="list-disc pl-5 space-y-1.5">
-                {PRO_MARKETING_BENEFITS.map((benefit) => (
-                  <li key={`mission-${benefit}`}>{benefit}</li>
+                {PRO_MISSION_POINTS.map((point) => (
+                  <li key={`mission-${point}`}>{point}</li>
                 ))}
               </ul>
               <p>{PRO_MARKETING_CREDIBILITY}</p>
