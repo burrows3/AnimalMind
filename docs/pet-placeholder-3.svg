@@ -1,7 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" fill="none">
-  <rect width="400" height="250" fill="#e8eaf4"/>
-  <circle cx="200" cy="105" r="42" fill="#b8bdd5" opacity="0.85"/>
-  <ellipse cx="200" cy="178" rx="68" ry="38" fill="#b8bdd5" opacity="0.85"/>
-  <circle cx="186" cy="98" r="7" fill="#2d315a"/>
-  <circle cx="214" cy="98" r="7" fill="#2d315a"/>
+  <rect width="400" height="250" fill="#e8f5e9"/>
+  <!-- Golden retriever-style dog sitting -->
+  <ellipse cx="200" cy="195" rx="85" ry="35" fill="#e8c88c" stroke="#c9a85e" strokeWidth="2"/>
+  <ellipse cx="200" cy="125" rx="55" ry="50" fill="#e8c88c" stroke="#c9a85e" strokeWidth="2"/>
+  <ellipse cx="200" cy="75" rx="35" ry="38" fill="#e8c88c" stroke="#c9a85e" strokeWidth="2"/>
+  <ellipse cx="155" cy="65" rx="18" ry="28" fill="#e8c88c" stroke="#c9a85e" strokeWidth="2" transform="rotate(-30 155 65)"/>
+  <ellipse cx="245" cy="65" rx="18" ry="28" fill="#e8c88c" stroke="#c9a85e" strokeWidth="2" transform="rotate(30 245 65)"/>
+  <circle cx="185" cy="72" r="6" fill="#3d2e14"/>
+  <circle cx="215" cy="72" r="6" fill="#3d2e14"/>
+  <ellipse cx="200" cy="88" rx="8" ry="6" fill="#2d2210"/>
 </svg>

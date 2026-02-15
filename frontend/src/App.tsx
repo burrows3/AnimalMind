@@ -79,15 +79,33 @@ const BRAND_TAGLINE = "ANIMAL HEALTH NEWS";
 const BRAND_HEADLINE = "INTELLIGENCE FOR ANIMAL HEALTH";
 const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
 const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
-/** Local placeholders so images load without depending on external CDNs (e.g. Unsplash hotlink limits). */
-const PET_NEWS_IMAGE_POOL = [
-  "/pet-placeholder-1.svg",
-  "/pet-placeholder-2.svg",
-  "/pet-placeholder-3.svg",
-  "/pet-placeholder-4.svg",
-  "/pet-placeholder-5.svg",
-  "/pet-placeholder-6.svg",
-];
+/** Real animal photos (Wikimedia Commons, hotlink allowed). Match content: dog/cat/bird/horse or default. */
+const REAL_ANIMAL_IMAGES: Record<string, string[]> = {
+  dog: [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/480px-YellowLabradorLooking_new.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Golden_retriever_eating_pigs_foot.jpg/480px-Golden_retriever_eating_pigs_foot.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Guide_dog_crop.jpg/480px-Guide_dog_crop.jpg",
+  ],
+  cat: [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/480px-Cat_November_2010-1a.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Cat_poster_1.jpg/480px-Cat_poster_1.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/480px-Cat03.jpg",
+  ],
+  bird: [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Budgerigar_%28Melopsittacus_undulatus%29_-Brisbane-8.jpg/480px-Budgerigar_%28Melopsittacus_undulatus%29_-Brisbane-8.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Parrot_montage.jpg/480px-Parrot_montage.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Cockatiel_Male_22Jan2010.jpg/480px-Cockatiel_Male_22Jan2010.jpg",
+  ],
+  horse: [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Knabstrupper_Horse.jpg/480px-Knabstrupper_Horse.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Nokota_Horses_cropped.jpg/480px-Nokota_Horses_cropped.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_black_horse_with_four_white_socks.jpg/480px-A_black_horse_with_four_white_socks.jpg",
+  ],
+  default: [
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/480px-YellowLabradorLooking_new.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/480px-Cat_November_2010-1a.jpg",
+  ],
+};
 
 type DataSummary = {
   lastUpdated?: string | null;
@@ -127,6 +145,8 @@ type PetArticle = {
   summary: string;
   points: string[];
   sources: IngestedRow[];
+  /** Inferred from content so we show a matching real animal photo (dog, cat, bird, etc.). */
+  animalType: "dog" | "cat" | "bird" | "horse" | "default";
 };
 
 function safeHref(url: string | undefined): string {
@@ -335,6 +355,16 @@ function stableArticleId(row: IngestedRow): string {
   return `pet-art-${Math.abs(h).toString(36)}`;
 }
 
+/** Infer animal type from content so we show a matching real photo (dog, cat, bird, horse). */
+function inferAnimalType(row: IngestedRow): "dog" | "cat" | "bird" | "horse" | "default" {
+  const text = `${(row.title ?? "")} ${(row.condition_or_topic ?? "")} ${row.data_type}`.toLowerCase();
+  if (/\b(canine|dog|puppy|puppies)\b/.test(text)) return "dog";
+  if (/\b(feline|cat|kitten|kittens)\b/.test(text)) return "cat";
+  if (/\b(bird|avian|parrot|budgie|cockatiel|poultry)\b/.test(text)) return "bird";
+  if (/\b(equine|horse|pony|foal)\b/.test(text)) return "horse";
+  return "default";
+}
+
 /** Pet-owner headline from research title (short, readable). */
 function petArticleTitle(row: IngestedRow): string {
   const topic = friendlyPetTopic(row.condition_or_topic || "");
@@ -345,7 +375,7 @@ function petArticleTitle(row: IngestedRow): string {
   return (end > 0 ? t.slice(0, end) : t.slice(0, 72)) + "…";
 }
 
-/** One-sentence summary relating research to pet owners. */
+/** Two-sentence summary relating research to pet owners (a bit longer for each article). */
 function petArticleSummary(row: IngestedRow): string {
   const topic = (row.condition_or_topic || "pet health").replace(/<[^>]+>/g, "").trim() || "pet health";
   const typeLabel =
@@ -358,27 +388,36 @@ function petArticleSummary(row: IngestedRow): string {
           : row.data_type === "case_data"
             ? "case"
             : "research";
-  return `New ${typeLabel} update on ${topic}. Here's what it means for you and your pet.`;
+  return `New ${typeLabel} update on ${topic}. Here's what it means for you and your pet—and when it's worth a call to your vet or a look at the full source.`;
 }
 
-/** 2–3 takeaway points for pet owners. */
+/** 3–4 takeaway points for pet owners (a bit longer per article). */
 function petArticlePoints(row: IngestedRow): string[] {
   const topic = (row.condition_or_topic || "").toLowerCase();
   const points: string[] = [];
   if (topic.includes("surveillance") || row.data_type === "surveillance") {
-    points.push("Check travel notices if you're planning trips with your pet.");
+    points.push("Check travel and disease notices if you're planning trips with your pet.");
+    points.push("Regional outbreaks can affect which vaccines or precautions your vet recommends.");
   }
   if (topic.includes("poison") || topic.includes("toxin") || topic.includes("emergenc")) {
-    points.push("Keep poison control and your vet's number handy for emergencies.");
+    points.push("Keep poison control and your vet's number handy; quick action matters in emergencies.");
+    points.push("Know what's in your home and yard that could harm your pet.");
   }
   if (topic.includes("when to see") || topic.includes("vet")) {
-    points.push("When in doubt, contact your veterinarian.");
+    points.push("When in doubt, contact your veterinarian—they can help you decide next steps.");
   }
   if (topic.includes("vaccin") || topic.includes("prevent")) {
-    points.push("Prevention and routine care support long-term health.");
+    points.push("Prevention and routine care support your pet's long-term health.");
+    points.push("Ask your vet which vaccines and screenings are right for your pet's age and lifestyle.");
+  }
+  if (topic.includes("cancer") || topic.includes("canine") || topic.includes("feline")) {
+    points.push("Early detection and regular check-ups help; your vet can explain options and what to watch for.");
+  }
+  if (points.length < 2) {
+    points.push("Staying informed helps you partner with your vet and make better choices for your pet.");
   }
   points.push("Read the source for full details; this is not medical advice.");
-  return points.slice(0, 3);
+  return points.slice(0, 4);
 }
 
 /** One article per ingested research item, for pet owners, each with a dedicated image. */
@@ -391,12 +430,16 @@ function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] 
     summary: petArticleSummary(row),
     points: petArticlePoints(row),
     sources: [row],
+    animalType: inferAnimalType(row),
   }));
 }
 
-function pickPetNewsImage(seed: string): string {
-  const idx = hashText(seed) % PET_NEWS_IMAGE_POOL.length;
-  return PET_NEWS_IMAGE_POOL[idx];
+/** Pick a real animal image: by type (dog/cat/bird/horse) for articles, or default for other cards. */
+function pickPetNewsImage(seed: string, animalType?: "dog" | "cat" | "bird" | "horse" | "default"): string {
+  const type = animalType ?? "default";
+  const pool = REAL_ANIMAL_IMAGES[type] ?? REAL_ANIMAL_IMAGES.default;
+  const idx = hashText(seed) % pool.length;
+  return pool[idx];
 }
 
 function friendlyPetTopic(topic: string): string {
@@ -905,7 +948,7 @@ export default function App() {
                           <Card key={`pet-article-${article.id}`} className="border border-border bg-muted/10 overflow-hidden">
                             <div className="aspect-[16/10] overflow-hidden bg-muted/20 border-b border-border">
                               <img
-                                src={pickPetNewsImage(article.id)}
+                                src={pickPetNewsImage(article.id, article.animalType)}
                                 alt=""
                                 className="w-full h-full object-cover"
                               />

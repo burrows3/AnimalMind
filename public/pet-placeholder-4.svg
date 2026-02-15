@@ -1,7 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" fill="none">
-  <rect width="400" height="250" fill="#f4e8f0"/>
-  <circle cx="200" cy="112" r="48" fill="#d5a8c4" opacity="0.85"/>
-  <ellipse cx="200" cy="188" rx="72" ry="35" fill="#d5a8c4" opacity="0.85"/>
-  <circle cx="184" cy="102" r="8" fill="#5a2d45"/>
-  <circle cx="216" cy="102" r="8" fill="#5a2d45"/>
+  <rect width="400" height="250" fill="#fff3e0"/>
+  <!-- Tabby-style cat sitting -->
+  <ellipse cx="200" cy="190" rx="70" ry="32" fill="#e8b86d" stroke="#c9954a" strokeWidth="2"/>
+  <circle cx="200" cy="125" r="48" fill="#e8b86d" stroke="#c9954a" strokeWidth="2"/>
+  <path d="M200 78 L168 48 L148 82 L200 92 Z" fill="#d4a04a" stroke="#c9954a" strokeWidth="2"/>
+  <path d="M200 78 L232 48 L252 82 L200 92 Z" fill="#d4a04a" stroke="#c9954a" strokeWidth="2"/>
+  <ellipse cx="182" cy="118" rx="7" ry="11" fill="#2d1f0a"/>
+  <ellipse cx="218" cy="118" rx="7" ry="11" fill="#2d1f0a"/>
+  <circle cx="200" cy="132" r="5" fill="#2d1f0a"/>
 </svg>

@@ -1,7 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" fill="none">
-  <rect width="400" height="250" fill="#e8f4f0"/>
-  <circle cx="200" cy="108" r="46" fill="#a8d5c8" opacity="0.85"/>
-  <ellipse cx="200" cy="182" rx="70" ry="36" fill="#a8d5c8" opacity="0.85"/>
-  <circle cx="186" cy="98" r="8" fill="#2d5a4a"/>
-  <circle cx="214" cy="98" r="8" fill="#2d5a4a"/>
+  <rect width="400" height="250" fill="#e3f2fd"/>
+  <!-- Puppy / small dog -->
+  <ellipse cx="200" cy="175" rx="55" ry="28" fill="#b8d4e8" stroke="#8fb8d0" strokeWidth="2"/>
+  <ellipse cx="200" cy="118" rx="42" ry="40" fill="#b8d4e8" stroke="#8fb8d0" strokeWidth="2"/>
+  <ellipse cx="200" cy="72" rx="28" ry="32" fill="#b8d4e8" stroke="#8fb8d0" strokeWidth="2"/>
+  <ellipse cx="172" cy="58" rx="14" ry="22" fill="#b8d4e8" stroke="#8fb8d0" strokeWidth="2" transform="rotate(-20 172 58)"/>
+  <ellipse cx="228" cy="58" rx="14" ry="22" fill="#b8d4e8" stroke="#8fb8d0" strokeWidth="2" transform="rotate(20 228 58)"/>
+  <circle cx="190" cy="68" r="5" fill="#1a2d3d"/>
+  <circle cx="210" cy="68" r="5" fill="#1a2d3d"/>
+  <ellipse cx="200" cy="80" rx="6" ry="5" fill="#1a2d3d"/>
 </svg>

@@ -1,7 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" fill="none">
-  <rect width="400" height="250" fill="#f0eef4"/>
-  <circle cx="200" cy="110" r="44" fill="#c4b8d5" opacity="0.85"/>
-  <ellipse cx="200" cy="185" rx="69" ry="34" fill="#c4b8d5" opacity="0.85"/>
-  <circle cx="185" cy="100" r="8" fill="#3d2d5a"/>
-  <circle cx="215" cy="100" r="8" fill="#3d2d5a"/>
+  <rect width="400" height="250" fill="#fce4ec"/>
+  <!-- Kitten / small cat -->
+  <ellipse cx="200" cy="182" rx="48" ry="30" fill="#e8c4d4" stroke="#c99bb0" strokeWidth="2"/>
+  <circle cx="200" cy="122" r="42" fill="#e8c4d4" stroke="#c99bb0" strokeWidth="2"/>
+  <path d="M200 82 L175 58 L162 88 L200 95 Z" fill="#d4a8bc" stroke="#c99bb0" strokeWidth="2"/>
+  <path d="M200 82 L225 58 L238 88 L200 95 Z" fill="#d4a8bc" stroke="#c99bb0" strokeWidth="2"/>
+  <ellipse cx="184" cy="116" rx="6" ry="9" fill="#2d1a22"/>
+  <ellipse cx="216" cy="116" rx="6" ry="9" fill="#2d1a22"/>
+  <circle cx="200" cy="128" r="4" fill="#2d1a22"/>
 </svg>
