@@ -586,11 +586,11 @@ function buildDailyBriefArticles(rows: IngestedRow[] | null): BriefArticle[] {
       audience: "all",
       title: "Surveillance watchlist: conditions to track now",
       summary: `Current feed signals emphasize ${formatTopics(topics)}.`,
-      points: [
-        `Top tracked conditions: ${topics.map((t) => `${t.topic} (${t.count})`).join(", ")}.`,
-        "Use this watchlist for travel advice, triage preparation, and clinic communication.",
-        "Cross-check outbreak context before operational decisions.",
-      ],
+      points: ensureThreeParagraphs([
+        `Top tracked conditions in this cycle are ${topics.map((t) => `${t.topic} (${t.count})`).join(", ")}. These represent the strongest surveillance-linked research themes in the current ingest window.`,
+        "Use this watchlist to guide travel counseling, triage planning, and proactive communication with owners when conditions begin to trend upward.",
+        "Before operational changes, open the source links to validate geography, species relevance, and reporting timeframes that can shift the practical risk profile.",
+      ], formatTopics(topics)),
       sources: uniqueRows(surveillanceRows, 4),
     });
   }
@@ -602,11 +602,11 @@ function buildDailyBriefArticles(rows: IngestedRow[] | null): BriefArticle[] {
       audience: "pro",
       title: "Research pulse: today’s strongest evidence signals",
       summary: `New research activity clusters around ${formatTopics(topics)}.`,
-      points: [
-        `${researchRows.length} research-linked items are represented in today’s ingest slice.`,
-        "Use these signals to prioritize rounds, education updates, and literature review.",
-        "Focus first on topics that appear repeatedly across multiple source types.",
-      ],
+      points: ensureThreeParagraphs([
+        `${researchRows.length} research-linked records are represented in this digest, with repeated concentration around ${formatTopics(topics)}.`,
+        "Treat these themes as near-term reading priorities for rounds, case discussions, protocol reviews, and internal education updates.",
+        "Start with topics appearing across multiple source types, because repeated cross-source recurrence usually indicates higher signal quality.",
+      ], formatTopics(topics)),
       sources: uniqueRows(researchRows, 4),
     });
   }
@@ -618,11 +618,11 @@ function buildDailyBriefArticles(rows: IngestedRow[] | null): BriefArticle[] {
       audience: "pet",
       title: "Pet news you can use today",
       summary: `Friendly, source-backed updates focused on ${formatTopics(topics)}.`,
-      points: [
-        "What to watch at home today.",
-        "When to contact your veterinarian sooner.",
-        "Trusted links for deeper reading.",
-      ],
+      points: ensureThreeParagraphs([
+        `Today's owner-facing research themes center on ${formatTopics(topics)}, which helps prioritize what is most relevant for at-home observation.`,
+        "Each article emphasizes concrete monitoring triggers so owners can escalate to veterinary care earlier when trends suggest increased risk.",
+        "Every summary links back to source material so decisions stay grounded in verifiable research context, not generalized advice.",
+      ], formatTopics(topics)),
       sources: uniqueRows(petRows, 4),
     });
   }
@@ -634,11 +634,11 @@ function buildDailyBriefArticles(rows: IngestedRow[] | null): BriefArticle[] {
       audience: "pro",
       title: "Operations brief: what to monitor in the next cycle",
       summary: `Cross-source monitoring currently centers on ${formatTopics(topics)}.`,
-      points: [
-        "Align care pathways and communication around repeated topic clusters.",
-        "Flag items that overlap surveillance and clinical evidence for team review.",
-        "Carry high-signal topics into the next daily brief for continuity.",
-      ],
+      points: ensureThreeParagraphs([
+        `Current operations-relevant clusters are ${formatTopics(topics)}, giving teams a focused set of signals to carry into shift handoffs and planning.`,
+        "Align internal communication and care pathways around repeated clusters, especially where clinical and surveillance evidence overlap.",
+        "Carry these same high-signal topics into the next cycle to preserve continuity and reduce context switching across the team.",
+      ], formatTopics(topics)),
       sources: uniqueRows(proRows, 3),
     });
   }
@@ -674,7 +674,7 @@ function petArticleTitle(row: IngestedRow): string {
 
 /** One-sentence summary tied to this specific source for pet owners. */
 function petArticleSummary(row: IngestedRow): string {
-  const topic = (row.condition_or_topic || "pet health").replace(/<[^>]+>/g, "").trim() || "pet health";
+  const topic = articleTopicText(row);
   const hasTitle = (row.title || "").trim().length > 0;
   if (hasTitle) {
     return `This source on ${topic} is relevant for pet owners. Here's what it may mean for you and your pet—read the source for full details.`;
@@ -682,32 +682,45 @@ function petArticleSummary(row: IngestedRow): string {
   return `New update on ${topic}. Here's what it may mean for you and your pet. Read the source for full details; this is not medical advice.`;
 }
 
-/** 2–3 takeaway points for this article; topic-specific so each article feels real. */
-function petArticlePoints(row: IngestedRow): string[] {
-  const topic = (row.condition_or_topic || "").toLowerCase();
-  const title = (row.title || "").toLowerCase();
-  const text = `${topic} ${title}`;
-  const points: string[] = [];
-  if (text.includes("surveillance") || row.data_type === "surveillance") {
-    points.push("Check travel and disease notices if you're planning trips with your pet.");
+function articleTopicText(row: IngestedRow): string {
+  const cleaned = (row.condition_or_topic || "pet health")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || "pet health";
+}
+
+function ensureThreeParagraphs(paragraphs: string[], topic: string): string[] {
+  const cleaned = paragraphs
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+  while (cleaned.length < 3) {
+    cleaned.push(`This update remains focused on ${topic}. Review the linked source for full methods and context.`);
   }
-  if (text.includes("poison") || text.includes("toxin") || text.includes("emergenc")) {
-    points.push("Keep poison control and your vet's number handy; quick action matters.");
+  return cleaned.slice(0, 3);
+}
+
+/** Exactly three research-focused paragraphs per article card. */
+function petArticleParagraphs(row: IngestedRow): string[] {
+  const topic = articleTopicText(row);
+  const text = `${row.title || ""} ${row.condition_or_topic || ""}`.toLowerCase();
+  const sourceLabel = LABELS[row.data_type] ?? row.data_type.replace(/_/g, " ");
+
+  const intro = `This research article centers on ${topic}. AnimalMind pulled it from the ${sourceLabel} stream and translated the signal into plain language so pet owners can understand what the topic means in real-world care.`;
+
+  let interpretation = `The core takeaway for ${topic} is to watch for pattern changes in appetite, comfort, energy, and behavior over time, then compare what you see with the source details and your veterinarian's guidance.`;
+  if (/\b(surveillance|travel|outbreak|zoonotic|rabies|dengue|chikungunya)\b/.test(text) || row.data_type === "surveillance") {
+    interpretation = `This topic is linked to surveillance signals, so context matters: location, recent spread, and species-specific risk can change quickly. Use the source to verify whether your region or pet type is directly affected.`;
+  } else if (/\b(poison|toxin|toxic|emergenc)\b/.test(text)) {
+    interpretation = `The research signal points to toxin or emergency relevance. For this topic, rapid symptom recognition and fast escalation are the biggest drivers of outcome, so preparation and early action are critical.`;
+  } else if (/\b(vaccin|prevent|prophylaxis)\b/.test(text)) {
+    interpretation = `This update emphasizes prevention and risk reduction. Research around ${topic} often shows that timing, consistency, and individualized plans with your vet improve protection and reduce avoidable complications.`;
+  } else if (/\b(cancer|oncolog|tumou|tumor|canine|feline)\b/.test(text)) {
+    interpretation = `This article intersects with oncology-related evidence. In this topic area, early trend detection, staged diagnostics, and follow-up planning are usually the key factors that shape treatment options and quality of life.`;
   }
-  if (text.includes("vaccin") || text.includes("prevent")) {
-    points.push("Routine care and prevention support long-term health—ask your vet what's right for your pet.");
-  }
-  if (text.includes("cancer") || text.includes("canine") || text.includes("feline")) {
-    points.push("Early detection and regular check-ups help; your vet can explain options and what to watch for.");
-  }
-  if (text.includes("when to see") || text.includes("vet")) {
-    points.push("When in doubt, contact your veterinarian.");
-  }
-  if (points.length < 1) {
-    points.push("Staying informed helps you partner with your vet.");
-  }
-  points.push("Read the source for full details; this is not medical advice.");
-  return points.slice(0, 3);
+
+  const action = `Use this as educational context for ${topic}, then open the source for full methodology and limitations. If your pet has symptoms related to this topic, contact your veterinarian promptly for case-specific advice.`;
+  return ensureThreeParagraphs([intro, interpretation, action], topic);
 }
 
 /** One article per source; image matches topic (dog→dog photo), distinct. Backup = same topic so no blanks. */
@@ -734,7 +747,7 @@ function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] 
       id: stableArticleId(row),
       title: petArticleTitle(row),
       summary: petArticleSummary(row),
-      points: petArticlePoints(row),
+      points: petArticleParagraphs(row),
       sources: [row],
       imageUrl: images.imageUrl,
       backupImageUrl: images.backupImageUrl,
@@ -1380,11 +1393,11 @@ export default function App() {
                               <CardDescription className="text-xs">{article.summary}</CardDescription>
                             </CardHeader>
                             <CardContent className="p-3 pt-0 space-y-2">
-                              <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+                              <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
                                 {article.points.map((point, idx) => (
-                                  <li key={`pet-point-${article.id}-${idx}`}>{point}</li>
+                                  <p key={`pet-point-${article.id}-${idx}`}>{point}</p>
                                 ))}
-                              </ul>
+                              </div>
                               {article.sources.length > 0 && (() => {
                                 const source = article.sources[0];
                                 const href = safeHref(source.url);
@@ -1932,11 +1945,11 @@ export default function App() {
                       <CardDescription className="text-sm">{article.summary}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0 space-y-3">
-                      <ul className="list-disc pl-4 space-y-1 text-sm text-muted-foreground">
+                      <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
                         {article.points.map((point, idx) => (
-                          <li key={`pro-point-${article.id}-${idx}`}>{point}</li>
+                          <p key={`pro-point-${article.id}-${idx}`}>{point}</p>
                         ))}
-                      </ul>
+                      </div>
                       {article.sources.length > 0 && (
                         <div>
                           <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Source links</p>
