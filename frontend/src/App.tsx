@@ -125,6 +125,45 @@ const PET_ARTICLE_IMAGE_FALLBACK = `data:image/svg+xml,${encodeURIComponent('<sv
 type DataSummary = {
   lastUpdated?: string | null;
   counts?: Record<string, number>;
+  sourceHealthSummary?: SourceHealthSummary | null;
+  sourceHealthDetails?: SourceHealthDetail[];
+  intelligenceGaps?: IntelligenceGap[];
+};
+
+type SourceHealthStatus = "fresh" | "stale" | "very_stale" | "no_data" | "error" | "disabled";
+type SourceHealthOverall = "sufficient" | "limited" | "insufficient";
+type SourceHealthSeverity = "warning" | "critical";
+
+type SourceHealthSummary = {
+  generatedAt?: string | null;
+  overallStatus?: SourceHealthOverall;
+  coveragePercent?: number;
+  totalSources?: number;
+  requiredSources?: number;
+  staleSources?: number;
+  errorSources?: number;
+  noDataSources?: number;
+  newestUpdate?: string | null;
+  oldestUpdate?: string | null;
+};
+
+type SourceHealthDetail = {
+  sourceId: string;
+  name: string;
+  type?: string;
+  tier?: number;
+  audience?: string;
+  requiredForCoverage?: boolean;
+  status?: SourceHealthStatus;
+  mode?: string;
+  lastUpdate?: string | null;
+  lastError?: string | null;
+};
+
+type IntelligenceGap = {
+  sourceId?: string;
+  severity?: SourceHealthSeverity;
+  message: string;
 };
 
 type IngestedRow = {
@@ -180,6 +219,66 @@ function sourceHostLabel(url: string | undefined): string {
   }
 }
 
+function relativeTime(iso: string | null | undefined): string {
+  if (!iso) return "unknown";
+  const ts = new Date(iso).getTime();
+  if (Number.isNaN(ts)) return "unknown";
+  const ageMs = Math.max(0, Date.now() - ts);
+  const mins = Math.floor(ageMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function healthOverallLabel(status: SourceHealthOverall | undefined): string {
+  if (status === "sufficient") return "Sufficient";
+  if (status === "limited") return "Limited";
+  if (status === "insufficient") return "Insufficient";
+  return "Unknown";
+}
+
+function sourceStatusLabel(status: SourceHealthStatus | undefined): string {
+  if (status === "fresh") return "Fresh";
+  if (status === "stale") return "Stale";
+  if (status === "very_stale") return "Very stale";
+  if (status === "error") return "Error";
+  if (status === "disabled") return "Disabled";
+  return "No data";
+}
+
+function deriveHealthFromLastUpdated(lastUpdated: string | null | undefined): SourceHealthSummary | null {
+  if (!lastUpdated) return null;
+  const ts = new Date(lastUpdated).getTime();
+  if (Number.isNaN(ts)) return null;
+  const ageMs = Math.max(0, Date.now() - ts);
+  const ageHours = ageMs / (60 * 60 * 1000);
+  if (ageHours <= 18) {
+    return {
+      overallStatus: "sufficient",
+      coveragePercent: 100,
+      newestUpdate: lastUpdated,
+      oldestUpdate: lastUpdated,
+    };
+  }
+  if (ageHours <= 36) {
+    return {
+      overallStatus: "limited",
+      coveragePercent: 66,
+      newestUpdate: lastUpdated,
+      oldestUpdate: lastUpdated,
+    };
+  }
+  return {
+    overallStatus: "insufficient",
+    coveragePercent: 33,
+    newestUpdate: lastUpdated,
+    oldestUpdate: lastUpdated,
+  };
+}
+
 /** Animal Mind logo: animal head (profile) + mind dot. Same as favicon. */
 function AnimalMindLogo({ className }: { className?: string }) {
   return (
@@ -208,19 +307,47 @@ async function fetchDashboard(): Promise<{
     const r = await fetch(`${base}/api/dashboard`, { cache: "no-store" });
     if (r.ok) {
       const data = await r.json();
+      const apiSourceHealthSummary =
+        data.sourceHealthSummary ?? data.summary?.sourceHealthSummary ?? deriveHealthFromLastUpdated(data.summary?.lastUpdated);
+      const summaryFromApi: DataSummary | null = data.summary
+        ? {
+            ...data.summary,
+            sourceHealthSummary: apiSourceHealthSummary,
+            sourceHealthDetails: Array.isArray(data.sourceHealthDetails)
+              ? data.sourceHealthDetails
+              : Array.isArray(data.summary?.sourceHealthDetails)
+                ? data.summary.sourceHealthDetails
+                : [],
+            intelligenceGaps: Array.isArray(data.intelligenceGaps)
+              ? data.intelligenceGaps
+              : Array.isArray(data.summary?.intelligenceGaps)
+                ? data.summary.intelligenceGaps
+                : [],
+          }
+        : null;
       return {
-        summary: data.summary ?? null,
+        summary: summaryFromApi,
         ingested: Array.isArray(data.ingested) ? data.ingested : null,
       };
     }
   } catch {
     // e.g. GitHub Pages: no API
   }
-  const [summaryRes, ingestedRes] = await Promise.all([
+  const [summaryRes, ingestedRes, sourceHealthRes] = await Promise.all([
     fetch(`${base}/data-summary.json`, { cache: "no-store" }),
     fetch(`${base}/data/ingested.json`, { cache: "no-store" }),
+    fetch(`${base}/source-health.json`, { cache: "no-store" }).catch(() => null),
   ]);
   const summary = summaryRes.ok ? await summaryRes.json() : null;
+  const sourceHealthPayload = sourceHealthRes && sourceHealthRes.ok ? await sourceHealthRes.json() : null;
+  if (summary && sourceHealthPayload) {
+    summary.sourceHealthSummary = summary.sourceHealthSummary ?? sourceHealthPayload.summary ?? null;
+    summary.sourceHealthDetails = summary.sourceHealthDetails ?? sourceHealthPayload.details ?? [];
+    summary.intelligenceGaps = summary.intelligenceGaps ?? sourceHealthPayload.intelligenceGaps ?? [];
+  }
+  if (summary && !summary.sourceHealthSummary) {
+    summary.sourceHealthSummary = deriveHealthFromLastUpdated(summary.lastUpdated);
+  }
   const ingestedPayload = ingestedRes.ok ? await ingestedRes.json() : null;
   const ingested = Array.isArray(ingestedPayload) ? ingestedPayload : null;
   return { summary, ingested };
@@ -585,6 +712,35 @@ export default function App() {
   const petNewsCards = useMemo(() => buildPetNewsCards(memory), [memory]);
   const featuredPetNews = petNewsCards[0] ?? null;
   const morePetNews = petNewsCards.slice(1);
+  const sourceHealthSummary = summary?.sourceHealthSummary ?? null;
+  const sourceHealthDetails = summary?.sourceHealthDetails ?? [];
+  const intelligenceGaps = summary?.intelligenceGaps ?? [];
+  const topHealthDetails = useMemo(() => {
+    const priority = {
+      error: 0,
+      no_data: 1,
+      very_stale: 2,
+      stale: 3,
+      fresh: 4,
+      disabled: 5,
+    } as const;
+    return [...sourceHealthDetails]
+      .sort((a, b) => {
+        const requiredDelta = Number(!!b.requiredForCoverage) - Number(!!a.requiredForCoverage);
+        if (requiredDelta !== 0) return requiredDelta;
+        const aPriority = priority[a.status || "no_data"];
+        const bPriority = priority[b.status || "no_data"];
+        if (aPriority !== bPriority) return aPriority - bPriority;
+        return (a.name || "").localeCompare(b.name || "");
+      })
+      .slice(0, 6);
+  }, [sourceHealthDetails]);
+  const statusToneClass =
+    sourceHealthSummary?.overallStatus === "sufficient"
+      ? "border-emerald-200 bg-emerald-50/60 text-emerald-900"
+      : sourceHealthSummary?.overallStatus === "limited"
+        ? "border-amber-200 bg-amber-50/60 text-amber-900"
+        : "border-rose-200 bg-rose-50/60 text-rose-900";
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
@@ -718,6 +874,45 @@ export default function App() {
           </header>
 
           <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
+            {sourceHealthSummary && (
+              <section className={cn("mb-6 rounded-md border px-4 py-3", statusToneClass)}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">
+                    Data status: {healthOverallLabel(sourceHealthSummary.overallStatus)}
+                  </p>
+                  <span className="text-xs">
+                    Coverage {sourceHealthSummary.coveragePercent ?? 0}%
+                  </span>
+                </div>
+                <p className="mt-1 text-xs">
+                  Last reliable source update {relativeTime(sourceHealthSummary.newestUpdate || summary?.lastUpdated)}.
+                </p>
+                <details className="mt-2 text-xs">
+                  <summary className="cursor-pointer select-none font-medium">View source status</summary>
+                  {topHealthDetails.length > 0 ? (
+                    <ul className="mt-2 space-y-1.5 text-muted-foreground">
+                      {topHealthDetails.map((item) => (
+                        <li key={`pet-health-${item.sourceId}`} className="flex items-center justify-between gap-2">
+                          <span className="truncate">{item.name}</span>
+                          <span className="shrink-0">
+                            {sourceStatusLabel(item.status)} · {relativeTime(item.lastUpdate)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-muted-foreground">Detailed source health appears after the next ingest cycle.</p>
+                  )}
+                  {intelligenceGaps.length > 0 && (
+                    <ul className="mt-2 space-y-1 text-muted-foreground">
+                      {intelligenceGaps.slice(0, 2).map((gap, idx) => (
+                        <li key={`pet-gap-${idx}`}>{gap.message}</li>
+                      ))}
+                    </ul>
+                  )}
+                </details>
+              </section>
+            )}
             {/* Hero CTA — image + headline + waitlist */}
             <section
               id="pet-cta"
@@ -1162,6 +1357,49 @@ export default function App() {
           </header>
 
           <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
+            {sourceHealthSummary && (
+              <section className={cn("mb-6 rounded-md border px-4 py-3", statusToneClass)}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">
+                    Data status: {healthOverallLabel(sourceHealthSummary.overallStatus)}
+                  </p>
+                  <span className="text-xs">
+                    Coverage {sourceHealthSummary.coveragePercent ?? 0}%
+                  </span>
+                </div>
+                <p className="mt-1 text-xs">
+                  Reliability snapshot based on source freshness and ingest success. Last update{" "}
+                  {relativeTime(sourceHealthSummary.newestUpdate || summary?.lastUpdated)}.
+                </p>
+                <details className="mt-2 text-xs">
+                  <summary className="cursor-pointer select-none font-medium">View source status</summary>
+                  {topHealthDetails.length > 0 ? (
+                    <ul className="mt-2 space-y-1.5 text-muted-foreground">
+                      {topHealthDetails.map((item) => (
+                        <li key={`pro-health-${item.sourceId}`} className="flex items-center justify-between gap-2">
+                          <span className="truncate">
+                            {item.name}
+                            {item.tier ? ` (Tier ${item.tier})` : ""}
+                          </span>
+                          <span className="shrink-0">
+                            {sourceStatusLabel(item.status)} · {relativeTime(item.lastUpdate)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-muted-foreground">Detailed source health appears after the next ingest cycle.</p>
+                  )}
+                  {intelligenceGaps.length > 0 && (
+                    <ul className="mt-2 space-y-1 text-muted-foreground">
+                      {intelligenceGaps.slice(0, 3).map((gap, idx) => (
+                        <li key={`pro-gap-${idx}`}>{gap.message}</li>
+                      ))}
+                    </ul>
+                  )}
+                </details>
+              </section>
+            )}
             {/* Pro CTA — newsletter hero with image */}
         <section
           id="pro-cta"
