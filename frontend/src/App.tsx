@@ -108,106 +108,22 @@ const CLINICAL_SECTION_HASHES = new Set([
   "waitlist",
   "memory-panel",
 ]);
-/** Unsplash CDN base; use w=480 for cards. See https://unsplash.com/s/photos/dog?license=free (use dog/cat/bird etc by topic). */
-const UNSPLASH = (id: string) => `https://images.unsplash.com/photo-${id}?w=480&q=80&fit=crop`;
-/** Per-topic Unsplash image IDs (dog, cat, bird, horse, etc.) so each article gets a different image that matches topic. */
-const PET_UNSPLASH_BY_TOPIC: Record<string, string[]> = {
-  dog: [
-    "1587303853328-5f3b2c1a0d9e",
-    "1568571037713-913d8b481dc6",
-    "1587303853329-6g4c3d2b1e0f",
-    "1587303853330-7h5d4e3c2f1g",
-    "1587303853331-8i6e5f4d3g2h",
-    "1601758228041-f3b2795255f1",
-    "1583337133575-2d75733f19e0",
-    "1552053831-71594a27632d",
-  ],
-  cat: [
-    "1574158622688-e89e3eaf0f74",
-    "1514888286974-6c03e2ca239d",
-    "1543852786-1cf6624b9987",
-    "1573865526739-10659fec78a5",
-    "1495360010541-f953e6bd9c4f",
-    "1518791841217-8c16289eef10",
-    "1611003228941-98852d6229db",
-    "1543852786-2df773c0aa98",
-  ],
-  bird: [
-    "1552728089-57bdde30b3f6",
-    "1548199973-03cce0bbc87b",
-    "1552728089-57bdde30b3f7",
-    "1518614767937-1e4a515d838e",
-    "1552728089-57bdde30b3f8",
-    "1474511324803-24c5926a8c78",
-    "1552728089-57bdde30b3f9",
-    "1526334063537-d1d2b0a8e9a0",
-  ],
-  horse: [
-    "1553284965-e0e9b4e8b4e8",
-    "1553284966-f0f0c5f9c5f9",
-    "1553284967-g1g1d6g0d6g0",
-    "1553284968-h2h2e7h1e7h1",
-    "1553284969-i3i3f8i2f8i2",
-    "1553284970-j4j4g9j3g9j3",
-    "1553284971-k5k5h0k4h0k4",
-    "1553284972-l6l6i1l5i1l5",
-  ],
-  cattle: [
-    "1553284965-e0e9b4e8b4e8",
-    "1461988320302-91bde64fc8e4",
-    "1553284966-f0f0c5f9c5f9",
-    "1553284967-g1g1d6g0d6g0",
-    "1553284968-h2h2e7h1e7h1",
-    "1553284969-i3i3f8i2f8i2",
-    "1553284970-j4j4g9j3g9j3",
-    "1553284971-k5k5h0k4h0k4",
-  ],
-  wildlife: [
-    "1535591273668-578e31182d5e",
-    "1564349683136-77e3d4901f1a",
-    "1564349683137-88f4e4912f2b",
-    "1564349683138-99g5f5a0303c",
-    "1564349683139-00h6g6b1414d",
-    "1564349683140-11i7h7c2525e",
-    "1564349683141-22j8i8d3636f",
-    "1564349683142-33k9j9e4747g",
-  ],
-  turtle: [
-    "1553284965-e0e9b4e8b4e8",
-    "1553284966-f0f0c5f9c5f9",
-    "1553284967-g1g1d6g0d6g0",
-    "1553284968-h2h2e7h1e7h1",
-    "1553284969-i3i3f8i2f8i2",
-    "1553284970-j4j4g9j3g9j3",
-    "1553284971-k5k5h0k4h0k4",
-    "1553284972-l6l6i1l5i1l5",
-  ],
-  general: [
-    "1458571037713-913d8b481dc6",
-    "1461988320302-91bde64fc8e4",
-    "1587303853328-5f3b2c1a0d9e",
-    "1574158622688-e89e3eaf0f74",
-    "1552728089-57bdde30b3f6",
-    "1553284965-e0e9b4e8b4e8",
-    "1535591273668-578e31182d5e",
-    "1568571037713-913d8b481dc6",
-  ],
-};
-/** Map inferPetImageIndex (0–7) to topic key for Unsplash pool. */
-const PET_TOPIC_KEYS: (keyof typeof PET_UNSPLASH_BY_TOPIC)[] = ["cat", "turtle", "wildlife", "horse", "dog", "bird", "cattle", "wildlife"];
-/** Flat list of Unsplash URLs for featured/more cards (one per topic). */
-const PET_FEATURED_IMAGES = [
-  UNSPLASH(PET_UNSPLASH_BY_TOPIC.dog[0]),
-  UNSPLASH(PET_UNSPLASH_BY_TOPIC.cat[0]),
-  UNSPLASH(PET_UNSPLASH_BY_TOPIC.bird[0]),
-  UNSPLASH(PET_UNSPLASH_BY_TOPIC.horse[0]),
-  UNSPLASH(PET_UNSPLASH_BY_TOPIC.wildlife[0]),
-  UNSPLASH(PET_UNSPLASH_BY_TOPIC.dog[1]),
-  UNSPLASH(PET_UNSPLASH_BY_TOPIC.cat[1]),
-  UNSPLASH(PET_UNSPLASH_BY_TOPIC.bird[1]),
-];
-/** Fallback when topic pool is exhausted: placeholder so we never reuse a photo. */
-const PET_ARTICLE_IMAGE_FALLBACK = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><rect fill="#f1f5f9" width="400" height="250"/><text x="200" y="125" font-family="system-ui,sans-serif" font-size="14" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle">Pet health</text></svg>')}`;
+/** Unique image per article: inline SVG data URI so no external requests and no blocking. Each card gets a different color. */
+const PET_IMAGE_WIDTH = 480;
+const PET_IMAGE_HEIGHT = 300;
+function petImageUrlForArticle(topicKey: string, articleIndex: number): string {
+  const h = (articleIndex * 47 + topicKey.length * 31) % 360;
+  const bg = `hsl(${h}, 25%, 94%)`;
+  const fg = `hsl(${h}, 30%, 45%)`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PET_IMAGE_WIDTH} ${PET_IMAGE_HEIGHT}"><rect fill="${bg}" width="${PET_IMAGE_WIDTH}" height="${PET_IMAGE_HEIGHT}"/><circle cx="${PET_IMAGE_WIDTH / 2}" cy="${PET_IMAGE_HEIGHT / 2 - 20}" r="40" fill="${fg}" opacity="0.4"/><text x="${PET_IMAGE_WIDTH / 2}" y="${PET_IMAGE_HEIGHT / 2 + 45}" font-family="system-ui,sans-serif" font-size="14" fill="${fg}" text-anchor="middle" dominant-baseline="middle">Pet health</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+/** Map inferPetImageIndex (0–7) to topic key. */
+const PET_TOPIC_KEYS = ["cat", "turtle", "wildlife", "horse", "dog", "bird", "cattle", "wildlife"] as const;
+/** Featured/more cards: one distinct image per topic. */
+const PET_FEATURED_IMAGES = PET_TOPIC_KEYS.map((topic, i) => petImageUrlForArticle(topic, i));
+/** Fallback when image fails to load (should not happen with data URIs). */
+const PET_ARTICLE_IMAGE_FALLBACK = petImageUrlForArticle("general", 999);
 
 type DataSummary = {
   lastUpdated?: string | null;
@@ -648,19 +564,14 @@ function inferPetImageIndex(row: IngestedRow): number {
   return 4; // default dog for general pet
 }
 
-/** One actual article per ingested source; each gets a different Unsplash image matching topic (dog/cat/bird etc). */
+/** One article per source; each gets a different image (seed = global index so every card is unique). */
 function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] {
   const petRows = toPetBriefItems(rows, 30);
   if (petRows.length === 0) return [];
-  const topicUseCount: Record<string, number> = {};
-  return petRows.map((row) => {
+  return petRows.map((row, articleIndex) => {
     const imageIndex = inferPetImageIndex(row);
-    const topicKey = PET_TOPIC_KEYS[imageIndex] ?? "general";
-    const pool = PET_UNSPLASH_BY_TOPIC[topicKey] ?? PET_UNSPLASH_BY_TOPIC.general;
-    const useIndex = (topicUseCount[topicKey] ?? 0);
-    topicUseCount[topicKey] = useIndex + 1;
-    const id = pool[useIndex % pool.length];
-    const imageUrl = id ? UNSPLASH(id) : PET_ARTICLE_IMAGE_FALLBACK;
+    const topicKey = PET_TOPIC_KEYS[imageIndex] ?? "dog";
+    const imageUrl = petImageUrlForArticle(topicKey, articleIndex);
     return {
       id: stableArticleId(row),
       title: petArticleTitle(row),
@@ -1267,6 +1178,10 @@ export default function App() {
                                 src={article.imageUrl}
                                 alt=""
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = PET_ARTICLE_IMAGE_FALLBACK;
+                                }}
                               />
                             </div>
                             <CardHeader className="p-3 pb-2">
