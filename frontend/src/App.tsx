@@ -327,6 +327,7 @@ type IngestedRow = {
   condition_or_topic?: string;
   title?: string;
   url?: string;
+  abstract?: string;
 };
 
 type BriefAudience = "pro" | "pet" | "all";
@@ -387,7 +388,7 @@ function sourceHostLabel(url: string | undefined): string {
 
 function extractPubMedIdFromUrl(url: string | undefined): string | null {
   if (!url) return null;
-  const match = url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)\//i);
+  const match = url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)(?:\/|$|\?)/i);
   return match ? match[1] : null;
 }
 
@@ -807,6 +808,19 @@ function shortHeadline(text: string, max = 96): string {
   return `${safe}…`;
 }
 
+function cleanEvidenceText(text: string | undefined): string {
+  if (!text) return "";
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function rowEvidenceText(row: IngestedRow, abstractByPmid: Record<string, string>): string {
+  const fromRow = cleanEvidenceText(row.abstract);
+  if (fromRow) return fromRow;
+  const pmid = extractPubMedIdFromUrl(row.url);
+  if (!pmid) return "";
+  return cleanEvidenceText(abstractByPmid[pmid]);
+}
+
 function firstSentences(text: string, maxSentences = 2, maxChars = 320): string {
   const cleaned = text.replace(/\s+/g, " ").trim();
   if (!cleaned) return "";
@@ -828,11 +842,9 @@ function firstSentences(text: string, maxSentences = 2, maxChars = 320): string 
 function sourceEvidenceSnippet(rows: IngestedRow[], abstractByPmid: Record<string, string>): string {
   const snippets: string[] = [];
   for (const row of rows) {
-    const pmid = extractPubMedIdFromUrl(row.url);
-    if (!pmid) continue;
-    const abstract = abstractByPmid[pmid];
-    if (!abstract) continue;
-    const snippet = firstSentences(abstract, 1, 220);
+    const evidence = rowEvidenceText(row, abstractByPmid);
+    if (!evidence) continue;
+    const snippet = firstSentences(evidence, 1, 220);
     if (!snippet) continue;
     snippets.push(snippet);
     if (snippets.length >= 2) break;
@@ -901,8 +913,7 @@ function buildPetArticlesFromResearch(rows: IngestedRow[] | null, abstractByPmid
     const useIndex = topicUseCount[topicKey];
     topicUseCount[topicKey] = useIndex + 1;
     const images = petTopicImageSet(topicKey, useIndex, usedPrimary);
-    const pmid = extractPubMedIdFromUrl(row.url);
-    const evidenceText = pmid ? abstractByPmid[pmid] || "" : "";
+    const evidenceText = rowEvidenceText(row, abstractByPmid);
     return {
       id: stableArticleId(row),
       title: petArticleTitle(row),
@@ -1121,14 +1132,21 @@ export default function App() {
   const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const petBriefItems = useMemo(() => toPetBriefItems(memory), [memory]);
   const petArticleSourceRows = useMemo(() => toPetResearchItems(memory, 30), [memory]);
-  const petPubMedIds = useMemo(() => collectPubMedIds(petArticleSourceRows), [petArticleSourceRows]);
+  const petRowsNeedingFetch = useMemo(
+    () => petArticleSourceRows.filter((row) => cleanEvidenceText(row.abstract).length === 0),
+    [petArticleSourceRows]
+  );
+  const petPubMedIds = useMemo(() => collectPubMedIds(petRowsNeedingFetch), [petRowsNeedingFetch]);
   const petPubMedIdsKey = petPubMedIds.join(",");
+  const missingPetPubMedIds = useMemo(
+    () => petPubMedIds.filter((id) => !pubmedAbstracts[id]),
+    [petPubMedIdsKey, pubmedAbstracts]
+  );
+  const missingPetPubMedIdsKey = missingPetPubMedIds.join(",");
   useEffect(() => {
-    if (petPubMedIds.length === 0) return;
-    const missing = petPubMedIds.filter((id) => !pubmedAbstracts[id]);
-    if (missing.length === 0) return;
+    if (missingPetPubMedIds.length === 0) return;
     let cancelled = false;
-    fetchPubMedAbstracts(missing)
+    fetchPubMedAbstracts(missingPetPubMedIds)
       .then((fetched) => {
         if (cancelled || Object.keys(fetched).length === 0) return;
         setPubmedAbstracts((prev) => {
@@ -1141,7 +1159,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [petPubMedIdsKey, pubmedAbstracts, petPubMedIds]);
+  }, [missingPetPubMedIdsKey]);
   const petBriefCount = summary?.counts?.pet_owner ?? petBriefItems.length;
   const dailyBriefArticles = useMemo(() => buildDailyBriefArticles(memory), [memory]);
   const proBriefArticles = useMemo(
