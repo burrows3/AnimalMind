@@ -79,33 +79,27 @@ const BRAND_TAGLINE = "ANIMAL HEALTH NEWS";
 const BRAND_HEADLINE = "INTELLIGENCE FOR ANIMAL HEALTH";
 const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
 const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
-/** Real animal photos (Wikimedia Commons, hotlink allowed). Match content: dog/cat/bird/horse or default. */
-const REAL_ANIMAL_IMAGES: Record<string, string[]> = {
-  dog: [
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/480px-YellowLabradorLooking_new.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Golden_retriever_eating_pigs_foot.jpg/480px-Golden_retriever_eating_pigs_foot.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Guide_dog_crop.jpg/480px-Guide_dog_crop.jpg",
-  ],
-  cat: [
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/480px-Cat_November_2010-1a.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Cat_poster_1.jpg/480px-Cat_poster_1.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/480px-Cat03.jpg",
-  ],
-  bird: [
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Budgerigar_%28Melopsittacus_undulatus%29_-Brisbane-8.jpg/480px-Budgerigar_%28Melopsittacus_undulatus%29_-Brisbane-8.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Parrot_montage.jpg/480px-Parrot_montage.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Cockatiel_Male_22Jan2010.jpg/480px-Cockatiel_Male_22Jan2010.jpg",
-  ],
-  horse: [
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Knabstrupper_Horse.jpg/480px-Knabstrupper_Horse.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Nokota_Horses_cropped.jpg/480px-Nokota_Horses_cropped.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_black_horse_with_four_white_socks.jpg/480px-A_black_horse_with_four_white_socks.jpg",
-  ],
-  default: [
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/480px-YellowLabradorLooking_new.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/480px-Cat_November_2010-1a.jpg",
-  ],
-};
+/** One image per slot so each article gets a different animal (Wikimedia Commons, hotlink allowed). */
+const PET_ARTICLE_IMAGES: string[] = [
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/480px-YellowLabradorLooking_new.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/480px-Cat_November_2010-1a.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Budgerigar_%28Melopsittacus_undulatus%29_-Brisbane-8.jpg/480px-Budgerigar_%28Melopsittacus_undulatus%29_-Brisbane-8.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Knabstrupper_Horse.jpg/480px-Knabstrupper_Horse.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Golden_retriever_eating_pigs_foot.jpg/480px-Golden_retriever_eating_pigs_foot.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Cat_poster_1.jpg/480px-Cat_poster_1.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Parrot_montage.jpg/480px-Parrot_montage.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Nokota_Horses_cropped.jpg/480px-Nokota_Horses_cropped.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Guide_dog_crop.jpg/480px-Guide_dog_crop.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/480px-Cat03.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Cockatiel_Male_22Jan2010.jpg/480px-Cockatiel_Male_22Jan2010.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_black_horse_with_four_white_socks.jpg/480px-A_black_horse_with_four_white_socks.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Adult_Scottish_Fold.jpg/480px-Adult_Scottish_Fold.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Beagle_600.jpg/480px-Beagle_600.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Macaw_parrot_33_%282%29.JPG/480px-Macaw_parrot_33_%282%29.JPG",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Andalusian_Horse.jpg/480px-Andalusian_Horse.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/White_Persian_Cat.jpg/480px-White_Persian_Cat.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Siberian_Husky_pho.jpg/480px-Siberian_Husky_pho.jpg",
+];
 
 type DataSummary = {
   lastUpdated?: string | null;
@@ -145,8 +139,6 @@ type PetArticle = {
   summary: string;
   points: string[];
   sources: IngestedRow[];
-  /** Inferred from content so we show a matching real animal photo (dog, cat, bird, etc.). */
-  animalType: "dog" | "cat" | "bird" | "horse" | "default";
 };
 
 function safeHref(url: string | undefined): string {
@@ -355,16 +347,6 @@ function stableArticleId(row: IngestedRow): string {
   return `pet-art-${Math.abs(h).toString(36)}`;
 }
 
-/** Infer animal type from content so we show a matching real photo (dog, cat, bird, horse). */
-function inferAnimalType(row: IngestedRow): "dog" | "cat" | "bird" | "horse" | "default" {
-  const text = `${(row.title ?? "")} ${(row.condition_or_topic ?? "")} ${row.data_type}`.toLowerCase();
-  if (/\b(canine|dog|puppy|puppies)\b/.test(text)) return "dog";
-  if (/\b(feline|cat|kitten|kittens)\b/.test(text)) return "cat";
-  if (/\b(bird|avian|parrot|budgie|cockatiel|poultry)\b/.test(text)) return "bird";
-  if (/\b(equine|horse|pony|foal)\b/.test(text)) return "horse";
-  return "default";
-}
-
 /** Pet-owner headline from research title (short, readable). */
 function petArticleTitle(row: IngestedRow): string {
   const topic = friendlyPetTopic(row.condition_or_topic || "");
@@ -430,16 +412,13 @@ function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] 
     summary: petArticleSummary(row),
     points: petArticlePoints(row),
     sources: [row],
-    animalType: inferAnimalType(row),
   }));
 }
 
-/** Pick a real animal image: by type (dog/cat/bird/horse) for articles, or default for other cards. */
-function pickPetNewsImage(seed: string, animalType?: "dog" | "cat" | "bird" | "horse" | "default"): string {
-  const type = animalType ?? "default";
-  const pool = REAL_ANIMAL_IMAGES[type] ?? REAL_ANIMAL_IMAGES.default;
-  const idx = hashText(seed) % pool.length;
-  return pool[idx];
+/** Pick a different animal image per seed (article id) so each card gets a distinct photo. */
+function pickPetNewsImage(seed: string): string {
+  const idx = hashText(seed) % PET_ARTICLE_IMAGES.length;
+  return PET_ARTICLE_IMAGES[idx];
 }
 
 function friendlyPetTopic(topic: string): string {
@@ -490,10 +469,12 @@ export default function App() {
     hashToView(typeof window !== "undefined" ? window.location.hash.slice(1) : "")
   );
 
+  // Sync view from hash on mount (e.g. direct load of animalmind.co/#consumer) and when hash changes
   useEffect(() => {
-    const onHash = () => setView(hashToView(window.location.hash.slice(1)));
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
+    const syncFromHash = () => setView(hashToView(window.location.hash.slice(1)));
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
   }, []);
 
   useEffect(() => {
@@ -948,7 +929,7 @@ export default function App() {
                           <Card key={`pet-article-${article.id}`} className="border border-border bg-muted/10 overflow-hidden">
                             <div className="aspect-[16/10] overflow-hidden bg-muted/20 border-b border-border">
                               <img
-                                src={pickPetNewsImage(article.id, article.animalType)}
+                                src={pickPetNewsImage(article.id)}
                                 alt=""
                                 className="w-full h-full object-cover"
                               />
