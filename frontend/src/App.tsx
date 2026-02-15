@@ -111,88 +111,88 @@ const CLINICAL_SECTION_HASHES = new Set([
 /** Animal images that match article topic (dog → dog photo, cat → cat photo). Each topic has multiple URLs so each card is distinct. */
 const PET_IMAGE_WIDTH = 480;
 const PET_IMAGE_HEIGHT = 300;
-const U = (id: string) => `https://images.unsplash.com/photo-${id}?w=${PET_IMAGE_WIDTH}&q=80&fit=crop`;
+const U = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${PET_IMAGE_WIDTH}&q=80`;
 /** Unsplash CDN URLs by animal topic. Use topic-specific photos so research about dogs shows a dog, etc. */
 const PET_IMAGES_BY_TOPIC: Record<string, string[]> = {
   dog: [
-    "1587303853328-5f3b2c1a0d9e",
     "1552053831-71594a27632d",
     "1583511655857-d19b40a7a54e",
-    "1530281700549-e82e7bf97421",
     "1568572933382-74d440642117",
     "1548199973-03cce0bbc87b",
-    "1587300003388-59208cc962cb",
     "1458571037713-913d8b481dc6",
+    "1587300003388-59208cc962cb",
+    "1576086213369-97a306d36557",
+    "1532187863486-abf9dbad1b69",
   ].map(U),
   cat: [
-    "1514888286974-6c03e2ca239d",
-    "1574158622688-e89e3eaf0f74",
-    "1543852786-1cf6624b9987",
+    "1514888286974-6c03e2ca1dba",
     "1573865526739-10659fec78a5",
-    "1495360010541-f953e6bd9c4f",
-    "1518791841217-8c16289eef10",
-    "1611003228941-98852d6229db",
+    "1543852786-1cf6624b9987",
     "1587300003388-59208cc962cb",
+    "1552053831-71594a27632d",
+    "1458571037713-913d8b481dc6",
+    "1568572933382-74d440642117",
+    "1532187863486-abf9dbad1b69",
   ].map(U),
   bird: [
     "1548199973-03cce0bbc87b",
-    "1552728089-57bdde30b3f6",
-    "1474511324803-24c5926a8c78",
-    "1518614767937-1e4a515d838e",
-    "1587300003388-59208cc962cb",
-    "1535591273668-578e31182d5e",
     "1458571037713-913d8b481dc6",
     "1568572933382-74d440642117",
+    "1587300003388-59208cc962cb",
+    "1532187863486-abf9dbad1b69",
+    "1576086213369-97a306d36557",
+    "1552053831-71594a27632d",
+    "1461988320302-91bde64fc8e4",
   ].map(U),
   horse: [
-    "1535591273668-578e31182d5e",
+    "1461988320302-91bde64fc8e4",
     "1568572933382-74d440642117",
     "1587300003388-59208cc962cb",
     "1458571037713-913d8b481dc6",
-    "1587303853328-5f3b2c1a0d9e",
-    "1530281700549-e82e7bf97421",
+    "1552053831-71594a27632d",
     "1548199973-03cce0bbc87b",
-    "1461988320302-91bde64fc8e4",
+    "1532187863486-abf9dbad1b69",
+    "1576086213369-97a306d36557",
   ].map(U),
   cattle: [
     "1461988320302-91bde64fc8e4",
-    "1535591273668-578e31182d5e",
+    "1552053831-71594a27632d",
     "1587300003388-59208cc962cb",
     "1458571037713-913d8b481dc6",
     "1568572933382-74d440642117",
-    "1587303853328-5f3b2c1a0d9e",
     "1548199973-03cce0bbc87b",
-    "1530281700549-e82e7bf97421",
+    "1532187863486-abf9dbad1b69",
+    "1576086213369-97a306d36557",
   ].map(U),
   wildlife: [
-    "1535591273668-578e31182d5e",
-    "1568572933382-74d440642117",
+    "1532187863486-abf9dbad1b69",
+    "1576086213369-97a306d36557",
     "1587300003388-59208cc962cb",
-    "1552728089-57bdde30b3f6",
     "1548199973-03cce0bbc87b",
     "1458571037713-913d8b481dc6",
-    "1530281700549-e82e7bf97421",
-    "1587303853328-5f3b2c1a0d9e",
+    "1552053831-71594a27632d",
+    "1568572933382-74d440642117",
+    "1461988320302-91bde64fc8e4",
   ].map(U),
   turtle: [
-    "1548199973-03cce0bbc87b",
-    "1518614767937-1e4a515d838e",
+    "1573865526739-10659fec78a5",
+    "1543852786-1cf6624b9987",
     "1587300003388-59208cc962cb",
-    "1535591273668-578e31182d5e",
-    "1574158622688-e89e3eaf0f74",
     "1458571037713-913d8b481dc6",
     "1548199973-03cce0bbc87b",
-    "1587303853328-5f3b2c1a0d9e",
+    "1552053831-71594a27632d",
+    "1568572933382-74d440642117",
+    "1514888286974-6c03e2ca1dba",
   ].map(U),
   general: [
     "1587300003388-59208cc962cb",
-    "1514888286974-6c03e2ca239d",
+    "1514888286974-6c03e2ca1dba",
     "1548199973-03cce0bbc87b",
-    "1587303853328-5f3b2c1a0d9e",
-    "1574158622688-e89e3eaf0f74",
     "1552053831-71594a27632d",
-    "1535591273668-578e31182d5e",
-    "1458571037713-913d8b481dc6",
+    "1576086213369-97a306d36557",
+    "1532187863486-abf9dbad1b69",
+    "1543852786-1cf6624b9987",
+    "1573865526739-10659fec78a5",
   ].map(U),
 };
 /** Pick image for article: topic (dog/cat/bird etc) + index within topic so each card is distinct and matches content. */
@@ -217,6 +217,24 @@ const PET_FEATURED_IMAGES: string[] = PET_TOPIC_KEYS.map(
 );
 /** Generic fallback. */
 const PET_ARTICLE_IMAGE_FALLBACK = petFallbackImageUrl(999);
+const PET_PLACEHOLDER_IMAGES = [
+  "/pet-placeholder-1.svg",
+  "/pet-placeholder-2.svg",
+  "/pet-placeholder-3.svg",
+  "/pet-placeholder-4.svg",
+  "/pet-placeholder-5.svg",
+  "/pet-placeholder-6.svg",
+];
+
+function petPlaceholderImage(index: number): string {
+  return PET_PLACEHOLDER_IMAGES[index % PET_PLACEHOLDER_IMAGES.length] ?? PET_ARTICLE_IMAGE_FALLBACK;
+}
+
+function applyImgFallback(img: HTMLImageElement, fallbackSrc: string): void {
+  if (img.getAttribute("data-fallback-applied")) return;
+  img.setAttribute("data-fallback-applied", "1");
+  img.src = fallbackSrc;
+}
 
 type DataSummary = {
   lastUpdated?: string | null;
@@ -1170,6 +1188,8 @@ export default function App() {
                               src={petArticleImage(0)}
                               alt=""
                               className="w-full h-full object-cover"
+                              loading="lazy"
+                              onError={(e) => applyImgFallback(e.currentTarget, petPlaceholderImage(0))}
                             />
                           </div>
                           <CardHeader className="p-4 pb-2">
@@ -1220,6 +1240,13 @@ export default function App() {
                                   src={petArticleImage(featuredPetNews ? 1 + moreIndex : moreIndex)}
                                   alt=""
                                   className="w-full h-full object-cover"
+                                  loading="lazy"
+                                  onError={(e) =>
+                                    applyImgFallback(
+                                      e.currentTarget,
+                                      petPlaceholderImage(featuredPetNews ? 1 + moreIndex : moreIndex)
+                                    )
+                                  }
                                 />
                               </div>
                               <CardHeader className="p-3 pb-2">
