@@ -91,6 +91,23 @@ const PRO_MARKETING_BENEFITS = [
 ];
 const PRO_MARKETING_CREDIBILITY =
   "Built for veterinarians, researchers, and animal health professionals, with source-linked updates from trusted public data.";
+const CONSUMER_SECTION_HASHES = new Set([
+  "pet-cta",
+  "pet-brief",
+  "pet-mission",
+  "pet-topics",
+  "pet-updates",
+]);
+const CLINICAL_SECTION_HASHES = new Set([
+  "pro-cta",
+  "data",
+  "brief-articles",
+  "mission",
+  "topics",
+  "track",
+  "waitlist",
+  "memory-panel",
+]);
 /** Your animal photos (cat, turtle, fox, horse, dog, parrot, cows, lemur). Each used at most once. */
 const PET_ARTICLE_IMAGES: string[] = [
   "/pet-images/pet-1.png",
@@ -473,7 +490,12 @@ export default function App() {
   const [waitlistError, setWaitlistError] = useState("");
   const [proCtaExpanded, setProCtaExpanded] = useState(false);
 
-  const hashToView = (h: string) => (h === "consumer" || h === "clinical" ? h : "");
+  const hashToView = (h: string) => {
+    if (h === "consumer" || h === "clinical") return h;
+    if (CONSUMER_SECTION_HASHES.has(h)) return "consumer";
+    if (CLINICAL_SECTION_HASHES.has(h)) return "clinical";
+    return "";
+  };
   const [view, setView] = useState<"" | "consumer" | "clinical">(() =>
     hashToView(typeof window !== "undefined" ? window.location.hash.slice(1) : "")
   );
@@ -1248,8 +1270,8 @@ export default function App() {
               className="w-full h-44 object-cover"
             />
           </div>
-          <a href="#data" className={cn(buttonVariants({ variant: "default", size: "sm" }), "rounded-md")}>
-            View today’s digest
+          <a href="#brief-articles" className={cn(buttonVariants({ variant: "default", size: "sm" }), "rounded-md")}>
+            View today’s brief
           </a>
         </section>
 
