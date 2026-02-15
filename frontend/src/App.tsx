@@ -192,13 +192,15 @@ type PetNewsCard = {
   sources: IngestedRow[];
 };
 
-/** One article per research item, written for pet owners, with image. */
+/** One article per research item, written for pet owners, with image that matches content. */
 type PetArticle = {
   id: string;
   title: string;
   summary: string;
   points: string[];
   sources: IngestedRow[];
+  /** Image URL chosen to match the article (e.g. dog for canine cancer). */
+  imageUrl: string;
 };
 
 function safeHref(url: string | undefined): string {
@@ -495,72 +497,85 @@ function stableArticleId(row: IngestedRow): string {
   return `pet-art-${Math.abs(h).toString(36)}`;
 }
 
-/** Pet-owner headline from research title (short, readable). */
+/** Article title from the actual source; fallback only when source has no title. */
 function petArticleTitle(row: IngestedRow): string {
-  const topic = friendlyPetTopic(row.condition_or_topic || "");
   const t = (row.title || "").trim();
-  if (!t) return `${topic}: what pet owners should know`;
-  if (t.length <= 72) return t;
-  const end = t.lastIndexOf(" ", 69);
-  return (end > 0 ? t.slice(0, end) : t.slice(0, 72)) + "…";
+  if (t) {
+    if (t.length <= 72) return t;
+    const end = t.lastIndexOf(" ", 69);
+    return (end > 0 ? t.slice(0, end) : t.slice(0, 72)) + "…";
+  }
+  const topic = friendlyPetTopic(row.condition_or_topic || "");
+  return `${topic}: what pet owners should know`;
 }
 
-/** Two-sentence summary relating research to pet owners (a bit longer for each article). */
+/** One-sentence summary tied to this specific source for pet owners. */
 function petArticleSummary(row: IngestedRow): string {
   const topic = (row.condition_or_topic || "pet health").replace(/<[^>]+>/g, "").trim() || "pet health";
-  const typeLabel =
-    row.data_type === "surveillance"
-      ? "travel and outbreak"
-      : row.data_type === "pet_owner"
-        ? "owner guidance"
-        : row.data_type === "clinical"
-          ? "clinical"
-          : row.data_type === "case_data"
-            ? "case"
-            : "research";
-  return `New ${typeLabel} update on ${topic}. Here's what it means for you and your pet—and when it's worth a call to your vet or a look at the full source.`;
+  const hasTitle = (row.title || "").trim().length > 0;
+  if (hasTitle) {
+    return `This source on ${topic} is relevant for pet owners. Here's what it may mean for you and your pet—read the source for full details.`;
+  }
+  return `New update on ${topic}. Here's what it may mean for you and your pet. Read the source for full details; this is not medical advice.`;
 }
 
-/** 3–4 takeaway points for pet owners (a bit longer per article). */
+/** 2–3 takeaway points for this article; topic-specific so each article feels real. */
 function petArticlePoints(row: IngestedRow): string[] {
   const topic = (row.condition_or_topic || "").toLowerCase();
+  const title = (row.title || "").toLowerCase();
+  const text = `${topic} ${title}`;
   const points: string[] = [];
-  if (topic.includes("surveillance") || row.data_type === "surveillance") {
+  if (text.includes("surveillance") || row.data_type === "surveillance") {
     points.push("Check travel and disease notices if you're planning trips with your pet.");
-    points.push("Regional outbreaks can affect which vaccines or precautions your vet recommends.");
   }
-  if (topic.includes("poison") || topic.includes("toxin") || topic.includes("emergenc")) {
-    points.push("Keep poison control and your vet's number handy; quick action matters in emergencies.");
-    points.push("Know what's in your home and yard that could harm your pet.");
+  if (text.includes("poison") || text.includes("toxin") || text.includes("emergenc")) {
+    points.push("Keep poison control and your vet's number handy; quick action matters.");
   }
-  if (topic.includes("when to see") || topic.includes("vet")) {
-    points.push("When in doubt, contact your veterinarian—they can help you decide next steps.");
+  if (text.includes("vaccin") || text.includes("prevent")) {
+    points.push("Routine care and prevention support long-term health—ask your vet what's right for your pet.");
   }
-  if (topic.includes("vaccin") || topic.includes("prevent")) {
-    points.push("Prevention and routine care support your pet's long-term health.");
-    points.push("Ask your vet which vaccines and screenings are right for your pet's age and lifestyle.");
-  }
-  if (topic.includes("cancer") || topic.includes("canine") || topic.includes("feline")) {
+  if (text.includes("cancer") || text.includes("canine") || text.includes("feline")) {
     points.push("Early detection and regular check-ups help; your vet can explain options and what to watch for.");
   }
-  if (points.length < 2) {
-    points.push("Staying informed helps you partner with your vet and make better choices for your pet.");
+  if (text.includes("when to see") || text.includes("vet")) {
+    points.push("When in doubt, contact your veterinarian.");
+  }
+  if (points.length < 1) {
+    points.push("Staying informed helps you partner with your vet.");
   }
   points.push("Read the source for full details; this is not medical advice.");
-  return points.slice(0, 4);
+  return points.slice(0, 3);
 }
 
-/** One article per ingested research item, for pet owners, each with a dedicated image. */
+/** Choose image index (0–7) that matches article content: dog, cat, bird, horse, etc. */
+function inferPetImageIndex(row: IngestedRow): number {
+  const t = `${(row.title ?? "")} ${(row.condition_or_topic ?? "")}`.toLowerCase();
+  if (/\b(canine|dog|puppy|puppies)\b/.test(t)) return 4; // pet-5 dog
+  if (/\b(feline|cat|kitten|kittens)\b/.test(t)) return 0; // pet-1 cat
+  if (/\b(bird|avian|parrot|poultry|budgie)\b/.test(t)) return 5; // pet-6 parrot
+  if (/\b(equine|horse|pony|foal)\b/.test(t)) return 3; // pet-4 horse
+  if (/\b(cattle|cow|cows|livestock)\b/.test(t)) return 6; // pet-7 cows
+  if (/\b(wildlife|fox|exotic|lemur)\b/.test(t)) return 7; // pet-8 lemur
+  if (/\b(marine|turtle|aquatic)\b/.test(t)) return 1; // pet-2 turtle
+  if (/\b(surveillance|travel|outbreak)\b/.test(t)) return 2; // pet-3 fox (travel/wildlife)
+  return 4; // default dog for general pet
+}
+
+/** One actual article per ingested source; image matches content (e.g. dog for canine). */
 function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] {
   const petRows = toPetBriefItems(rows, 30);
   if (petRows.length === 0) return [];
-  return petRows.map((row) => ({
-    id: stableArticleId(row),
-    title: petArticleTitle(row),
-    summary: petArticleSummary(row),
-    points: petArticlePoints(row),
-    sources: [row],
-  }));
+  return petRows.map((row) => {
+    const imageIndex = inferPetImageIndex(row);
+    return {
+      id: stableArticleId(row),
+      title: petArticleTitle(row),
+      summary: petArticleSummary(row),
+      points: petArticlePoints(row),
+      sources: [row],
+      imageUrl: imageIndex < PET_ARTICLE_IMAGES.length ? PET_ARTICLE_IMAGES[imageIndex] : PET_ARTICLE_IMAGE_FALLBACK,
+    };
+  });
 }
 
 /** Pick image by seed (for featured/more pet news cards). */
@@ -1148,16 +1163,14 @@ export default function App() {
                   {!loading && !memoryLoading && (
                     <div className="mt-6 border-t border-border pt-4">
                       <h3 className="text-sm font-semibold text-foreground mb-3">Articles from today's research</h3>
-                      <p className="text-xs text-muted-foreground mb-4">Each article is based on ingested research and written for pet owners. Tap a source to read more.</p>
+                      <p className="text-xs text-muted-foreground mb-4">One article per source—each card is tied to a single research item. Image matches the topic (e.g. dog for canine). Tap View source to read the full report.</p>
                       {petArticlesFromResearch.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {petArticlesFromResearch.map((article, articleIndex) => {
-                          const petSlotsUsed = (featuredPetNews ? 1 : 0) + morePetNews.length;
-                          return (
+                        {petArticlesFromResearch.map((article) => (
                           <Card key={`pet-article-${article.id}`} className="border border-border bg-muted/10 overflow-hidden">
                             <div className="aspect-[16/10] overflow-hidden bg-muted/20 border-b border-border">
                               <img
-                                src={petArticleImage(petSlotsUsed + articleIndex)}
+                                src={article.imageUrl}
                                 alt=""
                                 className="w-full h-full object-cover"
                               />
@@ -1199,8 +1212,7 @@ export default function App() {
                               })()}
                             </CardContent>
                           </Card>
-                          );
-                        })}
+                        ))}
                       </div>
                       ) : (
                         <p className="text-sm text-muted-foreground">No articles from today's research yet. Run an ingest to see pet-relevant articles here.</p>
