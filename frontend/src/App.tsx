@@ -79,26 +79,14 @@ const BRAND_TAGLINE = "ANIMAL HEALTH NEWS";
 const BRAND_HEADLINE = "INTELLIGENCE FOR ANIMAL HEALTH";
 const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
 const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
-/** One image per slot so each article gets a different animal (Wikimedia Commons, hotlink allowed). */
+/** Local animal images so they always load (no external hotlink blocks). Different animal per article by hash. */
 const PET_ARTICLE_IMAGES: string[] = [
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/480px-YellowLabradorLooking_new.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/480px-Cat_November_2010-1a.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Budgerigar_%28Melopsittacus_undulatus%29_-Brisbane-8.jpg/480px-Budgerigar_%28Melopsittacus_undulatus%29_-Brisbane-8.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Knabstrupper_Horse.jpg/480px-Knabstrupper_Horse.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Golden_retriever_eating_pigs_foot.jpg/480px-Golden_retriever_eating_pigs_foot.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Cat_poster_1.jpg/480px-Cat_poster_1.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Parrot_montage.jpg/480px-Parrot_montage.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Nokota_Horses_cropped.jpg/480px-Nokota_Horses_cropped.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Guide_dog_crop.jpg/480px-Guide_dog_crop.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/480px-Cat03.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Cockatiel_Male_22Jan2010.jpg/480px-Cockatiel_Male_22Jan2010.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/A_black_horse_with_four_white_socks.jpg/480px-A_black_horse_with_four_white_socks.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Adult_Scottish_Fold.jpg/480px-Adult_Scottish_Fold.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Beagle_600.jpg/480px-Beagle_600.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Macaw_parrot_33_%282%29.JPG/480px-Macaw_parrot_33_%282%29.JPG",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Andalusian_Horse.jpg/480px-Andalusian_Horse.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/White_Persian_Cat.jpg/480px-White_Persian_Cat.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Siberian_Husky_pho.jpg/480px-Siberian_Husky_pho.jpg",
+  "/pet-placeholder-1.svg",
+  "/pet-placeholder-2.svg",
+  "/pet-placeholder-3.svg",
+  "/pet-placeholder-4.svg",
+  "/pet-placeholder-5.svg",
+  "/pet-placeholder-6.svg",
 ];
 
 type DataSummary = {
