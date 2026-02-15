@@ -636,6 +636,12 @@ function toPetBriefItems(rows: IngestedRow[] | null, limit = 14): IngestedRow[] 
   return unique;
 }
 
+function toPetResearchItems(rows: IngestedRow[] | null, limit = 30): IngestedRow[] {
+  const expanded = toPetBriefItems(rows, Math.max(limit * 3, limit));
+  const researchOnly = expanded.filter((row) => Boolean(extractPubMedIdFromUrl(row.url)));
+  return researchOnly.slice(0, limit);
+}
+
 function topTopics(rows: IngestedRow[], limit = 3): Array<{ topic: string; count: number }> {
   const counts = new Map<string, number>();
   for (const row of rows) {
@@ -877,7 +883,7 @@ function petArticleParagraphs(row: IngestedRow, evidenceText = ""): string[] {
 
 /** One article per source; image matches topic (dog→dog photo), distinct. Backup = same topic so no blanks. */
 function buildPetArticlesFromResearch(rows: IngestedRow[] | null, abstractByPmid: Record<string, string>): PetArticle[] {
-  const petRows = toPetBriefItems(rows, 30);
+  const petRows = toPetResearchItems(rows, 30);
   if (petRows.length === 0) return [];
   const topicUseCount: Record<PetTopicKey, number> = {
     cat: 0,
@@ -983,7 +989,7 @@ function buildPetNewsParagraphs(
 }
 
 function buildPetNewsCards(rows: IngestedRow[] | null, abstractByPmid: Record<string, string>): PetNewsCard[] {
-  const petRows = toPetBriefItems(rows, 24);
+  const petRows = toPetResearchItems(rows, 24);
   if (petRows.length === 0) return [];
   const topics = topTopics(petRows, 5);
   const topicUseCount: Record<PetTopicKey, number> = {
@@ -1114,7 +1120,7 @@ export default function App() {
 
   const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const petBriefItems = useMemo(() => toPetBriefItems(memory), [memory]);
-  const petArticleSourceRows = useMemo(() => toPetBriefItems(memory, 30), [memory]);
+  const petArticleSourceRows = useMemo(() => toPetResearchItems(memory, 30), [memory]);
   const petPubMedIds = useMemo(() => collectPubMedIds(petArticleSourceRows), [petArticleSourceRows]);
   const petPubMedIdsKey = petPubMedIds.join(",");
   useEffect(() => {
