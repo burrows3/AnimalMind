@@ -79,7 +79,7 @@ const BRAND_TAGLINE = "ANIMAL HEALTH NEWS";
 const BRAND_HEADLINE = "INTELLIGENCE FOR ANIMAL HEALTH";
 const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
 const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
-/** Your animal photos (cat, turtle, fox, horse, dog, parrot, cows, lemur). One per article by hash. */
+/** Your animal photos (cat, turtle, fox, horse, dog, parrot, cows, lemur). Each used at most once. */
 const PET_ARTICLE_IMAGES: string[] = [
   "/pet-images/pet-1.png",
   "/pet-images/pet-2.png",
@@ -90,6 +90,8 @@ const PET_ARTICLE_IMAGES: string[] = [
   "/pet-images/pet-7.png",
   "/pet-images/pet-8.png",
 ];
+/** Fallback when all 8 are used (article 9+): simple placeholder so we never reuse a photo. */
+const PET_ARTICLE_IMAGE_FALLBACK = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><rect fill="#f1f5f9" width="400" height="250"/><text x="200" y="125" font-family="system-ui,sans-serif" font-size="14" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle">Pet health</text></svg>')}`;
 
 type DataSummary = {
   lastUpdated?: string | null;
@@ -405,10 +407,15 @@ function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] 
   }));
 }
 
-/** Pick a different animal image per seed (article id) so each card gets a distinct photo. */
+/** Pick image by seed (for featured/more pet news cards). */
 function pickPetNewsImage(seed: string): string {
   const idx = hashText(seed) % PET_ARTICLE_IMAGES.length;
   return PET_ARTICLE_IMAGES[idx];
+}
+
+/** Image for research article at index: use each of the 8 photos at most once; after that, fallback. */
+function petArticleImage(index: number): string {
+  return index < PET_ARTICLE_IMAGES.length ? PET_ARTICLE_IMAGES[index] : PET_ARTICLE_IMAGE_FALLBACK;
 }
 
 function friendlyPetTopic(topic: string): string {
@@ -807,7 +814,7 @@ export default function App() {
                         <Card className="border border-border bg-muted/10 overflow-hidden shadow-sm">
                           <div className="aspect-[16/8] overflow-hidden bg-muted/20 border-b border-border">
                             <img
-                              src={pickPetNewsImage(`featured-${featuredPetNews.id}`)}
+                              src={petArticleImage(0)}
                               alt=""
                               className="w-full h-full object-cover"
                             />
@@ -853,11 +860,11 @@ export default function App() {
                       )}
                       {morePetNews.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {morePetNews.map((card) => (
+                          {morePetNews.map((card, moreIndex) => (
                             <Card key={card.id} className="border border-border bg-muted/10 overflow-hidden">
                               <div className="aspect-[16/9] overflow-hidden bg-muted/20 border-b border-border">
                                 <img
-                                  src={pickPetNewsImage(`pet-news-${card.id}`)}
+                                  src={petArticleImage(featuredPetNews ? 1 + moreIndex : moreIndex)}
                                   alt=""
                                   className="w-full h-full object-cover"
                                 />
@@ -915,11 +922,13 @@ export default function App() {
                       <p className="text-xs text-muted-foreground mb-4">Each article is based on ingested research and written for pet owners. Tap a source to read more.</p>
                       {petArticlesFromResearch.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {petArticlesFromResearch.map((article) => (
+                        {petArticlesFromResearch.map((article, articleIndex) => {
+                          const petSlotsUsed = (featuredPetNews ? 1 : 0) + morePetNews.length;
+                          return (
                           <Card key={`pet-article-${article.id}`} className="border border-border bg-muted/10 overflow-hidden">
                             <div className="aspect-[16/10] overflow-hidden bg-muted/20 border-b border-border">
                               <img
-                                src={pickPetNewsImage(article.id)}
+                                src={petArticleImage(petSlotsUsed + articleIndex)}
                                 alt=""
                                 className="w-full h-full object-cover"
                               />
@@ -961,7 +970,8 @@ export default function App() {
                               })()}
                             </CardContent>
                           </Card>
-                        ))}
+                          );
+                        })}
                       </div>
                       ) : (
                         <p className="text-sm text-muted-foreground">No articles from today's research yet. Run an ingest to see pet-relevant articles here.</p>
