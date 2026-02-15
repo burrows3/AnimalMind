@@ -91,7 +91,7 @@ const html = `<!DOCTYPE html>
 </head>
 <body>
   <h1>AnimalMind – Ingest Report</h1>
-  <p class="meta">From database, sorted by <strong>data type</strong> (surveillance / literature) and <strong>condition or topic</strong>. Hourly ingest writes here.</p>
+  <p class="meta">From database, sorted by <strong>data type</strong> (surveillance / literature) and <strong>condition or topic</strong>. Ingest runs every 3 hours.</p>
   ${bodySections}
 </body>
 </html>

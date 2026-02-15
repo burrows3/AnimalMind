@@ -2,40 +2,23 @@
 /**
  * Agent: Literature reviewer. Runs autonomously after ingest.
  * Reads literature, cancer, and case_data from DB; reasons by autonomous-agent topic;
- * writes themes and gaps so the synthesizer can find opportunities. Cost: $0 (no API calls).
+ * writes themes and gaps so the synthesizer can find opportunities. Cost: $0 by default;
+ * optional NVIDIA LLM reasoning when NVIDIA_API_KEY is set.
  */
 
+require('../lib/env');
 const fs = require('fs');
 const path = require('path');
 const { getIngestedGrouped, getIngestedMeta } = require('../lib/db');
+const { chat: nvidiaChat, isEnabled: isNvidiaEnabled } = require('../lib/nvidiaNim');
+const { TOPIC_NAMES } = require('../lib/agentTopics');
 
 const MEMORY_DIR = path.join(__dirname, '..', 'memory');
 const AGENT_OUTPUTS = path.join(MEMORY_DIR, 'agent-outputs');
 const OUT_PATH = path.join(AGENT_OUTPUTS, 'literature-review.md');
 
 /** Same 20 topics as ingest (Clinical-Adjacent + Research & Discovery). Used for reasoning. */
-const AUTONOMOUS_AGENT_TOPICS = [
-  'Early Detection of Disease Across Species',
-  'Decoding Animal Pain and Distress',
-  'Preclinical Disease States',
-  'Unexplained Recovery and Resilience',
-  'Microbiome–Behavior–Health Coupling',
-  'Biological Timing and Treatment Response',
-  'Non-Linear Dose and Response Effects',
-  'Emergent Effects of Complex Care Pathways',
-  'Silent or Masked Disease and Distress',
-  'Unintended Consequences of Standard Care',
-  'Unknown Biological Signals',
-  'Latent Protective Mechanisms',
-  'Pain Modulation Beyond Analgesics',
-  'Hidden Costs of Normal Physiology',
-  'Environmental Exposure and Sentinel Signals',
-  'Species-Specific Health Advantages',
-  'Comparative Physiology at Extremes',
-  'Genetic Intervention and Biological Integrity',
-  'Developmental Programming and Lifelong Health',
-  'Unexpected Correlations and Anomalies',
-];
+const AUTONOMOUS_AGENT_TOPICS = TOPIC_NAMES;
 
 /** One-line inferred opportunity/gap per topic (reasoning). */
 function inferOpportunity(topic) {
@@ -57,7 +40,38 @@ function inferOpportunity(topic) {
   return 'Use new literature for research gaps, teaching, or practice-relevant synthesis.';
 }
 
-function main() {
+async function buildLlmReasoning({ lastFetched, counts, topicCounts }) {
+  if (!isNvidiaEnabled()) return null;
+  const rows = topicCounts.length
+    ? topicCounts.map((t) => `- ${t.topic}: ${t.count}`).join('\n')
+    : '- (no topic-specific literature in this run)';
+  const user = [
+    `Data as of: ${lastFetched}`,
+    `Counts: literature=${counts.literature || 0}, cancer=${counts.cancer || 0}, case_data=${counts.case_data || 0}`,
+    '',
+    'Autonomous-agent topic counts:',
+    rows,
+    '',
+    'Return:',
+    '- 3-5 key patterns (bullets)',
+    '- 3-5 research gaps/opportunities (bullets)',
+    '- 2-3 collaboration ideas (bullets)',
+    'Keep it concise. No extra preamble.',
+  ].join('\n');
+  try {
+    return await nvidiaChat({
+      system: 'You are an autonomous literature analyst for animal health research.',
+      user,
+      maxTokens: 420,
+      temperature: 0.2,
+    });
+  } catch (e) {
+    console.warn('agent-literature-review: LLM unavailable:', e.message);
+    return null;
+  }
+}
+
+async function main() {
   let grouped, meta;
   try {
     grouped = getIngestedGrouped();
@@ -97,10 +111,12 @@ function main() {
   ];
 
   let topicCount = 0;
+  const topicCounts = [];
   for (const topic of AUTONOMOUS_AGENT_TOPICS) {
     const items = litByCond[topic] || [];
     if (items.length === 0) continue;
     topicCount++;
+    topicCounts.push({ topic, count: items.length });
     const opportunity = inferOpportunity(topic);
     lines.push(`- **${topic}** — ${items.length} item(s). **Reasoning:** ${opportunity}`);
   }
@@ -108,6 +124,11 @@ function main() {
     lines.push('- *No topic-specific literature in this run. Topic queries run each ingest.*', '');
   }
   lines.push('');
+  const llmReasoning = await buildLlmReasoning({ lastFetched, counts, topicCounts });
+  if (llmReasoning) {
+    lines.push('## LLM reasoning (NVIDIA)', '');
+    lines.push(llmReasoning, '');
+  }
 
   lines.push('## Themes and gaps (for synthesizer)', '');
   const types = [
@@ -139,4 +160,7 @@ function main() {
   console.log('agent-literature-review: wrote', OUT_PATH);
 }
 
-main();
+main().catch((err) => {
+  console.error('agent-literature-review: failed', err.message);
+  process.exit(1);
+});

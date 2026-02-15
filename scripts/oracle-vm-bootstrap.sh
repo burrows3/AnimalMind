@@ -59,20 +59,20 @@ mkdir -p "$REPO_DIR/memory"
 
 # Run ingest once
 echo ""
-echo "Running ingest + think + push once..."
-if node scripts/ingest-data-sources.js && node scripts/think-autonomous.js && node scripts/push-ingest-to-github.js; then
+echo "Running full ingest + autonomous agents + push once..."
+if ./scripts/run-ingest.sh; then
   echo "First run succeeded. Check GitHub for new commit."
 else
-  echo "First run had issues (e.g. push needs token). Fix and re-run: node scripts/push-ingest-to-github.js"
+  echo "First run had issues (e.g. push needs token). Fix and re-run: ./scripts/run-ingest.sh"
 fi
 
-# Cron: every 1 hour
-CRON_LINE="0 * * * * ${REPO_DIR}/scripts/run-ingest.sh >> ${CRON_LOG} 2>&1"
+# Cron: every 12 hours
+CRON_LINE="0 */12 * * * ${REPO_DIR}/scripts/run-ingest.sh >> ${CRON_LOG} 2>&1"
 if crontab -l 2>/dev/null | grep -q "run-ingest.sh"; then
-  echo "Cron already has ingest (every 1h)."
+  echo "Cron already has ingest (every 12h)."
 else
   (crontab -l 2>/dev/null; echo "$CRON_LINE") | crontab -
-  echo "Added cron every 1 hour. Verify: crontab -l"
+  echo "Added cron every 12 hours. Verify: crontab -l"
 fi
 
 # Optional PM2 for dashboard
@@ -93,4 +93,4 @@ else
 fi
 
 echo ""
-echo "=== Done. Ingest is scheduled every 1 hour. ==="
+echo "=== Done. Ingest is scheduled every 12 hours. ==="

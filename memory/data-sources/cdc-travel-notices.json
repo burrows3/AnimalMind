@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-02-12T03:35:21.098Z",
+  "fetchedAt": "2026-02-15T02:06:32.933Z",
   "source": "CDC Travel Notices RSS",
   "url": "https://wwwnc.cdc.gov/travel/rss/notices.xml",
   "items": [
@@ -37,11 +37,6 @@
       "title": "Level 1 - Rabies in Morocco",
       "link": "https://wwwnc.cdc.gov/travel/notices/level1/rabies-morocco",
       "pubDate": "Tue, 23 Dec 2025 05:00:00 GMT"
-    },
-    {
-      "title": "Level 1 - Rift Valley Fever in Mauritania and Senegal",
-      "link": "https://wwwnc.cdc.gov/travel/notices/level1/rift-valley-fever-mauritania-senegal",
-      "pubDate": "Thu, 11 Dec 2025 05:00:00 GMT"
     },
     {
       "title": "Level 2 - Chikungunya in Sri Lanka",

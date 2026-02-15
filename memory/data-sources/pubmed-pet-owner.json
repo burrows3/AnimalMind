@@ -1,0 +1,20 @@
+{
+  "fetchedAt": "2026-02-15T02:06:33.443Z",
+  "source": "PubMed",
+  "query": "((dog OR canine OR cat OR feline OR puppy OR kitten) AND (\"client education\" OR \"owner guidance\" OR \"home care\" OR prevention OR triage) AND (veterinary OR vet))",
+  "count": "16525",
+  "idlist": [
+    "41688127",
+    "41681474",
+    "41676867",
+    "41675455",
+    "41674544",
+    "41671777",
+    "41671675",
+    "41662730",
+    "41660847",
+    "41658352",
+    "41655498",
+    "41654122"
+  ]
+}

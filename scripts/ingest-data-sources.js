@@ -4,7 +4,7 @@
  * Also writes JSON snapshots to memory/data-sources/.
  *
  * Data sources:
- * 1. PubMed – literature (one health), cancer, case_data, clinical (vet practice, small animal, equine)
+ * 1. PubMed – literature (one health), cancer, case_data, clinical (vet practice, small animal, equine), pet_owner
  * 2. CDC Travel Notices (RSS) – surveillance
  * 3. Curated datasets (JSON) – cancer, imaging, vet_practice (guidelines, AVMA, AAHA, etc.)
  * 4. TCIA (Cancer Imaging Archive) – imaging collections (canine/veterinary when available)
@@ -12,30 +12,7 @@
  */
 
 /** Autonomous-agent topics: Clinical-Adjacent + Research & Discovery. Each run finds literature (PubMed) for these. */
-const AUTONOMOUS_AGENT_TOPICS = [
-  // Clinical-Adjacent
-  { topic: 'Early Detection of Disease Across Species', query: 'early detection disease animal veterinary' },
-  { topic: 'Decoding Animal Pain and Distress', query: 'animal pain distress behavior biomarkers' },
-  { topic: 'Preclinical Disease States', query: 'preclinical disease animal veterinary' },
-  { topic: 'Unexplained Recovery and Resilience', query: 'animal recovery resilience veterinary' },
-  { topic: 'Microbiome–Behavior–Health Coupling', query: 'microbiome animal behavior health' },
-  { topic: 'Biological Timing and Treatment Response', query: 'chronobiology veterinary anesthesia vaccination' },
-  { topic: 'Non-Linear Dose and Response Effects', query: 'dose response veterinary non-linear' },
-  { topic: 'Emergent Effects of Complex Care Pathways', query: 'veterinary care pathway outcomes' },
-  { topic: 'Silent or Masked Disease and Distress', query: 'masked pain disease animal stoic' },
-  { topic: 'Unintended Consequences of Standard Care', query: 'veterinary practice long-term effects' },
-  // Research & Discovery
-  { topic: 'Unknown Biological Signals', query: 'biomarker animal health uncharacterized' },
-  { topic: 'Latent Protective Mechanisms', query: 'disease resistance animal natural' },
-  { topic: 'Pain Modulation Beyond Analgesics', query: 'pain modulation animal non-drug' },
-  { topic: 'Hidden Costs of Normal Physiology', query: 'stress inflammation animal cumulative' },
-  { topic: 'Environmental Exposure and Sentinel Signals', query: 'sentinel animal environmental exposure' },
-  { topic: 'Species-Specific Health Advantages', query: 'comparative physiology animal adaptation' },
-  { topic: 'Comparative Physiology at Extremes', query: 'extreme environment animal physiology' },
-  { topic: 'Genetic Intervention and Biological Integrity', query: 'gene editing animal health' },
-  { topic: 'Developmental Programming and Lifelong Health', query: 'early life exposure animal disease' },
-  { topic: 'Unexpected Correlations and Anomalies', query: 'veterinary anomaly correlation biology' },
-];
+const { AUTONOMOUS_AGENT_TOPICS } = require('../lib/agentTopics');
 
 const fs = require('fs');
 const path = require('path');
@@ -91,6 +68,22 @@ function buildPubMedUrl(term, retmax = 15) {
   return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${q}&retmax=${retmax}&sort=date&retmode=json`;
 }
 
+function buildPubMedSummaryUrl(ids) {
+  const q = encodeURIComponent(ids.join(','));
+  return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${q}&retmode=json`;
+}
+
+const ANIMAL_DOMAIN_FILTER =
+  '(Animals[MeSH Terms] OR "Veterinary Medicine"[MeSH Terms] OR "Animal Diseases"[MeSH Terms] OR animal[Title/Abstract] OR veterinary[Title/Abstract] OR "animal health"[Title/Abstract] OR "one health"[Title/Abstract])';
+
+function buildTopicQuery(baseQuery) {
+  return `(${baseQuery}) AND ${ANIMAL_DOMAIN_FILTER}`;
+}
+
+function buildBroadenedTopicQuery(baseQuery) {
+  return `(${baseQuery}) OR ${ANIMAL_DOMAIN_FILTER}`;
+}
+
 function fetchPubMedQuery(term, retmax = 15) {
   return new Promise((resolve, reject) => {
     https
@@ -114,6 +107,87 @@ function fetchPubMedQuery(term, retmax = 15) {
       })
       .on('error', reject);
   });
+}
+
+function fetchPubMedSummary(ids) {
+  return new Promise((resolve, reject) => {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      resolve({});
+      return;
+    }
+    https
+      .get(buildPubMedSummaryUrl(ids), (res) => {
+        let body = '';
+        res.on('data', (chunk) => (body += chunk));
+        res.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            const result = data?.result || {};
+            const uids = Array.isArray(result.uids) ? result.uids : [];
+            const map = {};
+            for (const id of uids) {
+              const key = String(id);
+              const title = (result[key]?.title || '').trim();
+              if (title) map[key] = title;
+            }
+            resolve(map);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      })
+      .on('error', reject);
+  });
+}
+
+async function fetchPubMedSummaries(ids) {
+  const unique = Array.from(new Set((ids || []).map((id) => String(id)).filter(Boolean)));
+  const titleMap = {};
+  const batchSize = 200;
+  for (let i = 0; i < unique.length; i += batchSize) {
+    const batch = unique.slice(i, i + batchSize);
+    const batchMap = await fetchPubMedSummary(batch);
+    Object.assign(titleMap, batchMap);
+  }
+  return titleMap;
+}
+
+async function fetchPubMedTopicWithFallback(topicItem, retmax = 8, globalFallback) {
+  const baseQuery = topicItem.query;
+  const primaryQuery = buildTopicQuery(baseQuery);
+  let result = await fetchPubMedQuery(primaryQuery, retmax);
+  if ((result.idlist || []).length > 0) {
+    return { ...result, topic: topicItem.topic, baseQuery, query: primaryQuery, fallback: null };
+  }
+
+  const broadenedQuery = buildBroadenedTopicQuery(baseQuery);
+  result = await fetchPubMedQuery(broadenedQuery, retmax);
+  if ((result.idlist || []).length > 0) {
+    return { ...result, topic: topicItem.topic, baseQuery, query: broadenedQuery, fallback: 'broadened' };
+  }
+
+  const domainOnlyQuery = ANIMAL_DOMAIN_FILTER;
+  result = await fetchPubMedQuery(domainOnlyQuery, retmax);
+  if ((result.idlist || []).length > 0) {
+    return { ...result, topic: topicItem.topic, baseQuery, query: domainOnlyQuery, fallback: 'domain-only' };
+  }
+
+  const fallbackIdlist = (globalFallback && globalFallback.idlist) || [];
+  if (fallbackIdlist.length > 0) {
+    const fallbackQuery = globalFallback.query || 'one health animal';
+    return {
+      fetchedAt: new Date().toISOString(),
+      source: 'PubMed',
+      query: fallbackQuery,
+      count: String(fallbackIdlist.length),
+      idlist: fallbackIdlist.slice(0, retmax),
+      topic: topicItem.topic,
+      baseQuery,
+      fallback: 'global-fallback',
+    };
+  }
+
+  return { ...result, topic: topicItem.topic, baseQuery, query: domainOnlyQuery, fallback: 'domain-only' };
 }
 
 function fetchPubMed() {
@@ -252,7 +326,26 @@ function fetchTciaCollections() {
 }
 
 // --- Ingest into DB (sorted by data_type, condition_or_topic) ---
-function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults) {
+function resolvePubMedTitle(pmid, titleMap) {
+  if (!pmid || !titleMap) return null;
+  return titleMap[String(pmid)] || null;
+}
+
+function ingestIntoDb(
+  pubmed,
+  cdc,
+  ecdc,
+  pubmedCancer,
+  pubmedCaseReports,
+  pubmedClinical,
+  pubmedSmallAnimal,
+  pubmedEquine,
+  pubmedPetOwner,
+  curated,
+  tcia,
+  topicResults,
+  pubmedTitles
+) {
   const fetchedAt = new Date().toISOString();
 
   // Literature: PubMed (one health animal)
@@ -261,7 +354,7 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
       data_type: 'literature',
       source: 'pubmed',
       condition_or_topic: 'one health animal',
-      title: null,
+      title: resolvePubMedTitle(pmid, pubmedTitles),
       url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
       external_id: pmid,
       published_at: null,
@@ -279,7 +372,7 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
         data_type: 'literature',
         source: 'pubmed',
         condition_or_topic: topic,
-        title: null,
+        title: resolvePubMedTitle(pmid, pubmedTitles),
         url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
         external_id: `topic-${slug}-${pmid}`,
         published_at: null,
@@ -324,7 +417,7 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
       data_type: 'cancer',
       source: 'pubmed',
       condition_or_topic: 'animal cancer',
-      title: null,
+      title: resolvePubMedTitle(pmid, pubmedTitles),
       url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
       external_id: `cancer-${pmid}`,
       published_at: null,
@@ -338,7 +431,7 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
       data_type: 'case_data',
       source: 'pubmed',
       condition_or_topic: 'case report',
-      title: null,
+      title: resolvePubMedTitle(pmid, pubmedTitles),
       url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
       external_id: `case-${pmid}`,
       published_at: null,
@@ -357,13 +450,41 @@ function ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmed
         data_type: 'clinical',
         source: 'pubmed',
         condition_or_topic: condition,
-        title: null,
+        title: resolvePubMedTitle(pmid, pubmedTitles),
         url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
         external_id: `clinical-${pmid}`,
         published_at: null,
         fetched_at: fetchedAt,
       });
     }
+  }
+
+  // Pet owner brief: PubMed (consumer-facing companion-animal guidance terms)
+  for (const pmid of (pubmedPetOwner && pubmedPetOwner.idlist) || []) {
+    upsertIngested({
+      data_type: 'pet_owner',
+      source: 'pubmed_pet_owner',
+      condition_or_topic: 'Pet owner guidance',
+      title: resolvePubMedTitle(pmid, pubmedTitles),
+      url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
+      external_id: `pet-owner-${pmid}`,
+      published_at: null,
+      fetched_at: fetchedAt,
+    });
+  }
+
+  // Pet owner brief: curated consumer-safe resources
+  for (const item of PET_OWNER_RESOURCES) {
+    upsertIngested({
+      data_type: 'pet_owner',
+      source: 'pet_owner_resource',
+      condition_or_topic: item.condition_or_topic || 'Pet owner guidance',
+      title: item.title,
+      url: item.url,
+      external_id: item.url,
+      published_at: null,
+      fetched_at: fetchedAt,
+    });
   }
 
   // Curated: cancer, imaging, vet_practice (guidelines, resources)
@@ -549,7 +670,14 @@ async function main() {
       lastError: topicErrors.length > 0 ? topicErrors[0] : null,
     });
     topicResults.forEach((r, i) => {
-      writeJson(`pubmed-topic-${i}.json`, { topic: AUTONOMOUS_AGENT_TOPICS[i].topic, query: r.query, count: r.count, idlist: r.idlist });
+      writeJson(`pubmed-topic-${i}.json`, {
+        topic: r.topic,
+        baseQuery: r.baseQuery,
+        query: r.query,
+        fallback: r.fallback,
+        count: r.count,
+        idlist: r.idlist,
+      });
     });
 
     writeJson('pubmed-recent.json', pubmed);
@@ -564,8 +692,36 @@ async function main() {
     writeSourceHealthSnapshot(SOURCE_HEALTH_PATH, sourceHealthEntries);
     console.log('Wrote', SOURCE_HEALTH_PATH);
 
-    ingestIntoDb(pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, curated, tcia, topicResults);
-    console.log('Ingested into database (literature including autonomous-agent topics, surveillance, cancer, case_data, clinical, imaging, vet_practice).');
+    const pubmedIds = new Set([
+      ...((pubmed && pubmed.idlist) || []),
+      ...((pubmedCancer && pubmedCancer.idlist) || []),
+      ...((pubmedCaseReports && pubmedCaseReports.idlist) || []),
+      ...((pubmedClinical && pubmedClinical.idlist) || []),
+      ...((pubmedSmallAnimal && pubmedSmallAnimal.idlist) || []),
+      ...((pubmedEquine && pubmedEquine.idlist) || []),
+      ...((pubmedPetOwner && pubmedPetOwner.idlist) || []),
+      ...topicResults.flatMap((result) => result.idlist || []),
+    ]);
+    const pubmedTitles = await fetchPubMedSummaries(Array.from(pubmedIds));
+
+    ingestIntoDb(
+      pubmed,
+      cdc,
+      ecdc,
+      pubmedCancer,
+      pubmedCaseReports,
+      pubmedClinical,
+      pubmedSmallAnimal,
+      pubmedEquine,
+      pubmedPetOwner,
+      curated,
+      tcia,
+      topicResults,
+      pubmedTitles
+    );
+    console.log(
+      'Ingested into database (literature including autonomous-agent topics, surveillance, cancer, case_data, clinical, pet_owner, imaging, vet_practice).'
+    );
     console.log('Done.');
   } catch (err) {
     console.error('Ingest failed:', err.message);

@@ -44,6 +44,7 @@ function main() {
     `| Cancer (animal / veterinary) | ${counts.cancer || 0} |`,
     `| Case data (veterinary case reports) | ${counts.case_data || 0} |`,
     `| Clinical (practice, small animal, equine) | ${counts.clinical || 0} |`,
+    `| Pet owner brief items | ${counts.pet_owner || 0} |`,
     `| Imaging & radiographs | ${counts.imaging || 0} |`,
     `| Vet practice (guidelines, resources) | ${counts.vet_practice || 0} |`,
     '',
@@ -63,6 +64,7 @@ function main() {
   lines.push('- **Cancer:** Review new animal/veterinary oncology items for comparative oncology and collaboration.');
   lines.push('- **Case data:** Review new veterinary case reports for emerging patterns or teaching material.');
   lines.push('- **Clinical:** Use clinical/small animal/equine literature for protocols, differentials, and CE.');
+  lines.push('- **Pet owners:** Surface plain-language guidance and when-to-see-vet cues from pet_owner items.');
   lines.push('- **Imaging:** Use curated imaging datasets (TCIA, radiographs) for teaching or model development.');
   lines.push('- **Vet practice:** Use AAHA/AVMA/VIN/Merck resources for guidelines and client handouts.');
   lines.push('');
