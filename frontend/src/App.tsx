@@ -119,6 +119,15 @@ type PetNewsCard = {
   sources: IngestedRow[];
 };
 
+/** One article per research item, written for pet owners, with image. */
+type PetArticle = {
+  id: string;
+  title: string;
+  summary: string;
+  points: string[];
+  sources: IngestedRow[];
+};
+
 function safeHref(url: string | undefined): string {
   if (!url || typeof url !== "string") return "#";
   const u = String(url).trim();
@@ -319,6 +328,71 @@ function hashText(text: string): number {
   return hash;
 }
 
+function stableArticleId(row: IngestedRow): string {
+  const key = `${row.url ?? ""}|${row.title ?? ""}|${row.condition_or_topic ?? ""}|${row.data_type}`;
+  const h = hashText(key);
+  return `pet-art-${Math.abs(h).toString(36)}`;
+}
+
+/** Pet-owner headline from research title (short, readable). */
+function petArticleTitle(row: IngestedRow): string {
+  const topic = friendlyPetTopic(row.condition_or_topic || "");
+  const t = (row.title || "").trim();
+  if (!t) return `${topic}: what pet owners should know`;
+  if (t.length <= 72) return t;
+  const end = t.lastIndexOf(" ", 69);
+  return (end > 0 ? t.slice(0, end) : t.slice(0, 72)) + "…";
+}
+
+/** One-sentence summary relating research to pet owners. */
+function petArticleSummary(row: IngestedRow): string {
+  const topic = (row.condition_or_topic || "pet health").replace(/<[^>]+>/g, "").trim() || "pet health";
+  const typeLabel =
+    row.data_type === "surveillance"
+      ? "travel and outbreak"
+      : row.data_type === "pet_owner"
+        ? "owner guidance"
+        : row.data_type === "clinical"
+          ? "clinical"
+          : row.data_type === "case_data"
+            ? "case"
+            : "research";
+  return `New ${typeLabel} update on ${topic}. Here’s what it means for you and your pet.`;
+}
+
+/** 2–3 takeaway points for pet owners. */
+function petArticlePoints(row: IngestedRow): string[] {
+  const topic = (row.condition_or_topic || "").toLowerCase();
+  const points: string[] = [];
+  if (topic.includes("surveillance") || row.data_type === "surveillance") {
+    points.push("Check travel notices if you’re planning trips with your pet.");
+  }
+  if (topic.includes("poison") || topic.includes("toxin") || topic.includes("emergenc")) {
+    points.push("Keep poison control and your vet’s number handy for emergencies.");
+  }
+  if (topic.includes("when to see") || topic.includes("vet")) {
+    points.push("When in doubt, contact your veterinarian.");
+  }
+  if (topic.includes("vaccin") || topic.includes("prevent")) {
+    points.push("Prevention and routine care support long-term health.");
+  }
+  points.push("Read the source for full details; this is not medical advice.");
+  return points.slice(0, 3);
+}
+
+/** One article per ingested research item, for pet owners, each with a dedicated image. */
+function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] {
+  const petRows = toPetBriefItems(rows, 30);
+  if (petRows.length === 0) return [];
+  return petRows.map((row) => ({
+    id: stableArticleId(row),
+    title: petArticleTitle(row),
+    summary: petArticleSummary(row),
+    points: petArticlePoints(row),
+    sources: [row],
+  }));
+}
+
 function pickPetNewsImage(seed: string): string {
   const idx = hashText(seed) % PET_NEWS_IMAGE_POOL.length;
   return PET_NEWS_IMAGE_POOL[idx];
@@ -331,6 +405,11 @@ function friendlyPetTopic(topic: string): string {
   if (t.includes("prevent")) return "Prevention and routine care";
   if (t.includes("when to see")) return "When to call the vet";
   if (t.includes("pet owner guidance")) return "Everyday pet care";
+  if (t.includes("canine cancer") || t.includes("animal cancer")) return "Cancer in dogs and cats";
+  if (t.includes("case report")) return "Clinical cases";
+  if (t.includes("clinical practice")) return "Clinical practice";
+  if (t.includes("chikungunya") || t.includes("rabies") || t.includes("dengue")) return "Travel and disease alerts";
+  if (t.includes("small-animal") || t.includes("symptoms")) return "Pet health at home";
   return topic || "Everyday pet care";
 }
 
@@ -445,6 +524,8 @@ export default function App() {
     () => dailyBriefArticles.filter((article) => article.audience !== "pro"),
     [dailyBriefArticles]
   );
+  /** One article per ingested research item, written for pet owners; each has its own image. */
+  const petArticlesFromResearch = useMemo(() => buildPetArticlesFromResearch(memory), [memory]);
   const petNewsCards = useMemo(() => buildPetNewsCards(memory), [memory]);
   const featuredPetNews = petNewsCards[0] ?? null;
   const morePetNews = petNewsCards.slice(1);
@@ -821,33 +902,34 @@ export default function App() {
                   <p className="mt-3 text-xs text-muted-foreground">
                     Educational only. AnimalMind Pet does not replace veterinary diagnosis or emergency care.
                   </p>
-                  {petBriefArticles.length > 0 && (
+                  {petArticlesFromResearch.length > 0 && (
                     <div className="mt-6 border-t border-border pt-4">
-                      <h3 className="text-sm font-semibold text-foreground mb-3">Pet-friendly stories from today’s brief</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {petBriefArticles.map((article) => (
+                      <h3 className="text-sm font-semibold text-foreground mb-3">Articles from today’s research</h3>
+                      <p className="text-xs text-muted-foreground mb-4">Each article is based on ingested research and written for pet owners. Tap a source to read more.</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {petArticlesFromResearch.map((article) => (
                           <Card key={`pet-article-${article.id}`} className="border border-border bg-muted/10 overflow-hidden">
-                            <div className="h-28 overflow-hidden bg-muted/20 border-b border-border">
+                            <div className="aspect-[16/10] overflow-hidden bg-muted/20 border-b border-border">
                               <img
-                                src={pickPetNewsImage(`pet-story-${article.id}`)}
+                                src={pickPetNewsImage(article.id)}
                                 alt=""
                                 className="w-full h-full object-cover"
                               />
                             </div>
                             <CardHeader className="p-3 pb-2">
-                              <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Story</Badge>
-                              <CardTitle className="text-sm font-semibold">{article.title}</CardTitle>
+                              <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Article</Badge>
+                              <CardTitle className="text-sm font-semibold leading-snug">{article.title}</CardTitle>
                               <CardDescription className="text-xs">{article.summary}</CardDescription>
                             </CardHeader>
                             <CardContent className="p-3 pt-0 space-y-2">
                               <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
-                                {article.points.slice(0, 2).map((point, idx) => (
+                                {article.points.map((point, idx) => (
                                   <li key={`pet-point-${article.id}-${idx}`}>{point}</li>
                                 ))}
                               </ul>
                               {article.sources.length > 0 && (
                                 <div>
-                                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Sources</p>
+                                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Source</p>
                                   <div className="space-y-2">
                                     {article.sources.slice(0, 2).map((source, idx) => {
                                       const href = safeHref(source.url);
