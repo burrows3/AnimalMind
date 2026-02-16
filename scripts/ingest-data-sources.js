@@ -76,17 +76,17 @@ const PET_OWNER_RESOURCES = [
   {
     condition_or_topic: 'Preventive care',
     title: 'AAHA Pet Owner Education',
-    url: 'https://www.aaha.org/your-pet/',
+    url: 'https://www.aaha.org/',
   },
   {
     condition_or_topic: 'Small-animal guidance',
-    title: 'WSAVA Pet Owners',
-    url: 'https://wsava.org/pet-owners/',
+    title: 'WSAVA Global Guidelines',
+    url: 'https://wsava.org/global-guidelines/',
   },
   {
     condition_or_topic: 'Symptoms and home guidance',
-    title: 'Merck Veterinary Manual - Pet Health Center',
-    url: 'https://www.merckvetmanual.com/pethealthcenter',
+    title: 'Merck Veterinary Manual',
+    url: 'https://www.merckvetmanual.com/',
   },
   {
     condition_or_topic: 'When to see a vet',
