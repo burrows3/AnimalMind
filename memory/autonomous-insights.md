@@ -1,6 +1,6 @@
 # Autonomous insights
 
-**Last updated:** 2026-02-16T03:03:33.971Z
+**Last updated:** 2026-02-16T03:04:16.220Z
 
 The system read the latest ingested data and summarized what matters for animal health.
 
@@ -17,7 +17,7 @@ The system read the latest ingested data and summarized what matters for animal 
 | Clinical (practice, small animal, equine) | 36 |
 | Pet owner brief items | 18 |
 | Imaging & radiographs | 3 |
-| Vet practice (guidelines, resources) | 8 |
+| Vet practice (guidelines, resources) | 6 |
 
 ## Active surveillance (conditions tracked)
 

@@ -1,6 +1,12 @@
 {
   "topic": "Preclinical Disease States",
   "query": "(\"preclinical\" OR subclinical OR \"early disease\")",
-  "count": 0,
-  "idlist": []
+  "count": 337801,
+  "idlist": [
+    "41691669",
+    "41691626",
+    "41691606",
+    "41691570",
+    "41691524"
+  ]
 }
