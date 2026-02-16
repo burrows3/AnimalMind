@@ -263,26 +263,6 @@ function petTopicImageSet(topicKey: PetTopicKey, useIndex: number, usedPrimary: 
   };
 }
 
-function applyTopicImageFallback(img: HTMLImageElement, backupSrc: string, fallbackSrc: string): void {
-  const stage = img.getAttribute("data-image-fallback-stage");
-  if (stage === "backup") {
-    img.setAttribute("data-image-fallback-stage", "fallback");
-    img.src = fallbackSrc || PET_ARTICLE_IMAGE_FALLBACK;
-    return;
-  }
-  if (stage === "fallback") {
-    img.setAttribute("data-image-fallback-stage", "final");
-    img.src = PET_ARTICLE_IMAGE_FALLBACK;
-    return;
-  }
-  if (stage === "final") {
-    img.onerror = null;
-    return;
-  }
-  img.setAttribute("data-image-fallback-stage", "backup");
-  img.src = backupSrc || fallbackSrc || PET_ARTICLE_IMAGE_FALLBACK;
-}
-
 type DataSummary = {
   lastUpdated?: string | null;
   counts?: Record<string, number>;
@@ -1538,21 +1518,12 @@ export default function App() {
                   ) : petNewsCards.length > 0 ? (
                     <div className="space-y-4">
                       {featuredPetNews && (
-                        <Card className="border border-border bg-muted/10 overflow-hidden shadow-sm">
-                          <div className="aspect-[16/8] overflow-hidden bg-muted/20 border-b border-border">
-                            <img
-                              src={featuredPetNews.imageUrl}
-                              alt=""
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                              onError={(e) =>
-                                applyTopicImageFallback(
-                                  e.currentTarget,
-                                  featuredPetNews.backupImageUrl,
-                                  featuredPetNews.fallbackImageUrl
-                                )
-                              }
-                            />
+                        <Card className="border border-border border-l-4 border-l-rose-200 bg-muted/10 overflow-hidden shadow-sm">
+                          <div className="border-b border-border bg-gradient-to-r from-rose-50/60 via-amber-50/40 to-sky-50/40 px-4 py-2.5">
+                            <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                              <Heart className="size-3.5 text-rose-500" aria-hidden />
+                              Pet-friendly brief
+                            </p>
                           </div>
                           <CardHeader className="p-4 pb-2">
                             <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Featured pet news</Badge>
@@ -1600,22 +1571,13 @@ export default function App() {
                       )}
                       {morePetNews.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {morePetNews.map((card, moreIndex) => (
-                            <Card key={card.id} className="border border-border bg-muted/10 overflow-hidden">
-                              <div className="aspect-[16/9] overflow-hidden bg-muted/20 border-b border-border">
-                                <img
-                                  src={card.imageUrl}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                  onError={(e) =>
-                                    applyTopicImageFallback(
-                                      e.currentTarget,
-                                      card.backupImageUrl,
-                                      card.fallbackImageUrl
-                                    )
-                                  }
-                                />
+                          {morePetNews.map((card) => (
+                            <Card key={card.id} className="border border-border border-l-4 border-l-amber-200 bg-muted/10 overflow-hidden">
+                              <div className="border-b border-border bg-gradient-to-r from-amber-50/50 via-rose-50/35 to-background px-3 py-2">
+                                <p className="inline-flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+                                  <Heart className="size-3 text-rose-500" aria-hidden />
+                                  Pet-friendly update
+                                </p>
                               </div>
                               <CardHeader className="p-3 pb-2">
                                 <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Pet news</Badge>
@@ -1672,26 +1634,16 @@ export default function App() {
                   {!loading && !memoryLoading && (
                     <div className="mt-6 border-t border-border pt-4">
                       <h3 className="text-sm font-semibold text-foreground mb-3">Articles from today's research</h3>
-                      <p className="text-xs text-muted-foreground mb-4">One article per source—each card is tied to a single research item. Image matches the topic (e.g. dog for canine). Tap View source to read the full report.</p>
+                      <p className="text-xs text-muted-foreground mb-4">One article per source—each card is tied to a single research item, written in a clearer pet-owner voice. Tap View source to read the full report.</p>
                       {petArticlesFromResearch.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {petArticlesFromResearch.map((article) => (
-                          <Card key={`pet-article-${article.id}`} className="border border-border bg-muted/10 overflow-hidden">
-                            <div className="aspect-[16/10] overflow-hidden bg-muted/20 border-b border-border">
-                              <img
-                                src={article.imageUrl}
-                                alt=""
-                                className="w-full h-full object-cover"
-                                referrerPolicy="no-referrer"
-                                loading="lazy"
-                                onError={(e) =>
-                                  applyTopicImageFallback(
-                                    e.currentTarget,
-                                    article.backupImageUrl,
-                                    article.fallbackImageUrl
-                                  )
-                                }
-                              />
+                          <Card key={`pet-article-${article.id}`} className="border border-border border-l-4 border-l-sky-200 bg-muted/10 overflow-hidden">
+                            <div className="border-b border-border bg-gradient-to-r from-sky-50/55 via-rose-50/35 to-background px-3 py-2">
+                              <p className="inline-flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+                                <Heart className="size-3 text-rose-500" aria-hidden />
+                                Pet-friendly research take
+                              </p>
                             </div>
                             <CardHeader className="p-3 pb-2">
                               <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Article</Badge>
