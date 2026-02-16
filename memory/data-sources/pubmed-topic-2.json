@@ -1,17 +1,12 @@
 {
   "topic": "Preclinical Disease States",
-  "baseQuery": "(\"preclinical\" OR subclinical OR \"early disease\")",
-  "query": "one health animal",
-  "fallback": "global-fallback",
-  "count": "15",
+  "query": "(\"preclinical\" OR subclinical OR \"early disease\")",
+  "count": 337801,
   "idlist": [
-    "41689730",
-    "41689668",
-    "41689423",
-    "41689397",
-    "41689150",
-    "41689149",
-    "41689047",
-    "41688829"
+    "41691669",
+    "41691626",
+    "41691606",
+    "41691570",
+    "41691524"
   ]
 }

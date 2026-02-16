@@ -1,20 +1,20 @@
 {
-  "fetchedAt": "2026-02-15T02:06:33.443Z",
+  "fetchedAt": "2026-02-16T02:58:17.132Z",
   "source": "PubMed",
-  "query": "((dog OR canine OR cat OR feline OR puppy OR kitten) AND (\"client education\" OR \"owner guidance\" OR \"home care\" OR prevention OR triage) AND (veterinary OR vet))",
-  "count": "16525",
+  "query": "companion animal pet owner guidance veterinary",
+  "count": "21",
   "idlist": [
-    "41688127",
-    "41681474",
-    "41676867",
-    "41675455",
-    "41674544",
-    "41671777",
-    "41671675",
-    "41662730",
-    "41660847",
-    "41658352",
-    "41655498",
-    "41654122"
+    "41677397",
+    "41389569",
+    "41328225",
+    "40611210",
+    "40431553",
+    "40009998",
+    "38461702",
+    "38199696",
+    "35678954",
+    "34846105",
+    "34200926",
+    "34039429"
   ]
 }

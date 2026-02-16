@@ -1,17 +1,12 @@
 {
   "topic": "Unexpected Correlations and Anomalies",
-  "baseQuery": "(\"unexpected correlation\" OR anomaly OR outlier OR paradoxical)",
-  "query": "one health animal",
-  "fallback": "global-fallback",
-  "count": "15",
+  "query": "(\"unexpected correlation\" OR anomaly OR outlier OR paradoxical)",
+  "count": 884231,
   "idlist": [
-    "41689730",
-    "41689668",
-    "41689423",
-    "41689397",
-    "41689150",
-    "41689149",
-    "41689047",
-    "41688829"
+    "41691618",
+    "41691612",
+    "41691601",
+    "41691585",
+    "41691430"
   ]
 }

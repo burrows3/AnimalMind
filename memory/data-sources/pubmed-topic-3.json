@@ -1,17 +1,12 @@
 {
   "topic": "Unexplained Recovery and Resilience",
-  "baseQuery": "(\"disease resilience\" OR recovery OR \"protective factor\" OR \"spontaneous remission\")",
-  "query": "one health animal",
-  "fallback": "global-fallback",
-  "count": "15",
+  "query": "(\"disease resilience\" OR recovery OR \"protective factor\" OR \"spontaneous remission\")",
+  "count": 789740,
   "idlist": [
-    "41689730",
-    "41689668",
-    "41689423",
-    "41689397",
-    "41689150",
-    "41689149",
-    "41689047",
-    "41688829"
+    "41691733",
+    "41691712",
+    "41691711",
+    "41691708",
+    "41691699"
   ]
 }

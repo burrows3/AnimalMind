@@ -1,17 +1,12 @@
 {
   "topic": "Early Detection of Disease Across Species",
-  "baseQuery": "(\"early detection\" OR screening OR biomarker OR preclinical)",
-  "query": "one health animal",
-  "fallback": "global-fallback",
-  "count": "15",
+  "query": "(\"early detection\" OR screening OR biomarker OR preclinical)",
+  "count": 7850725,
   "idlist": [
-    "41689730",
-    "41689668",
-    "41689423",
-    "41689397",
-    "41689150",
-    "41689149",
-    "41689047",
-    "41688829"
+    "41691741",
+    "41691739",
+    "41691732",
+    "41691727",
+    "41691718"
   ]
 }

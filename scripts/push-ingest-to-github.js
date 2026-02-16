@@ -211,7 +211,7 @@ async function main() {
     console.warn('Could not write static dashboard data files:', e.message);
   }
 
-  run('git add memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md memory/agent-outputs/ memory/opportunities.md');
+  run('git add -f memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md memory/agent-outputs/ memory/opportunities.md');
   if (fs.existsSync(DOCS_SUMMARY)) run('git add docs/data-summary.json');
   if (fs.existsSync(DOCS_SOURCE_HEALTH_JSON)) run('git add docs/source-health.json');
   if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
