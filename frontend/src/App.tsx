@@ -840,6 +840,18 @@ export default function App() {
   const lastUpdated = summary?.lastUpdated
     ? new Date(summary.lastUpdated).toLocaleString()
     : null;
+  const ingestFreshnessLabel = summary?.lastUpdated
+    ? `Updated ${relativeTime(summary.lastUpdated)}`
+    : "Waiting for first ingest";
+  const countMap = summary?.counts ?? {};
+  const proSignalCount =
+    (countMap.surveillance ?? 0) +
+    (countMap.literature ?? 0) +
+    (countMap.cancer ?? 0) +
+    (countMap.case_data ?? 0) +
+    (countMap.clinical ?? 0) +
+    (countMap.imaging ?? 0) +
+    (countMap.vet_practice ?? 0);
 
   const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const petBriefItems = useMemo(() => toPetBriefItems(memory), [memory]);
@@ -908,9 +920,11 @@ export default function App() {
               </p>
             </div>
           </header>
-          <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 sm:py-12">
+          <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
+            <div aria-hidden className="landing-orb landing-orb-a" />
+            <div aria-hidden className="landing-orb landing-orb-b" />
             {/* Hero: editorial image + headline */}
-            <section className="mb-10 sm:mb-14">
+            <section className="mb-10 sm:mb-14 landing-rise-in">
               <div className="rounded-none overflow-hidden border border-border bg-card shadow-sm">
                 <div className="relative aspect-[16/9] sm:aspect-[21/9] min-h-[200px]">
                   <img
@@ -933,6 +947,20 @@ export default function App() {
               <p className="mt-4 text-sm text-muted-foreground max-w-2xl">
                 {BRAND_ONE_LINER}
               </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
+                  {ingestFreshnessLabel}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
+                  Pro signals {proSignalCount}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
+                  Pet items {petBriefCount}
+                </span>
+              </div>
+              {lastUpdated && (
+                <p className="mt-2 text-xs text-muted-foreground">Last ingest: {lastUpdated}</p>
+              )}
             </section>
 
             {/* Two editions: distinct cards with pictures */}
@@ -941,7 +969,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => navigate("clinical")}
-                className="group text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
+                className="group landing-card-rise landing-card-rise-delay-1 text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
               >
                 <div className="aspect-[16/10] overflow-hidden bg-muted/30">
                   <img
@@ -956,6 +984,9 @@ export default function App() {
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     6-hour intelligence briefs with research, outbreak, drug, and regulatory updates.
                   </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {ingestFreshnessLabel} · {proSignalCount} tracked signals
+                  </p>
                   <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
                     Enter Pro
                     <span className="inline-block group-hover:translate-x-1 transition-transform">→</span>
@@ -965,7 +996,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => navigate("consumer")}
-                className="group text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
+                className="group landing-card-rise landing-card-rise-delay-2 text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
               >
                 <div className="aspect-[16/10] overflow-hidden bg-muted/30">
                   <img
@@ -979,6 +1010,9 @@ export default function App() {
                   <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pet</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Plain-language pet guidance from the same autonomous engine powering Pro.
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {ingestFreshnessLabel} · {petBriefCount} pet-focused items
                   </p>
                   <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
                     Enter Pet
