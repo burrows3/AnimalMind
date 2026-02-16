@@ -1,6 +1,12 @@
 {
   "topic": "Latent Protective Mechanisms",
   "query": "(\"protective mechanism\" OR \"disease resistance\" OR tolerance OR \"host resilience\")",
-  "count": 0,
-  "idlist": []
+  "count": 747690,
+  "idlist": [
+    "41691695",
+    "41691689",
+    "41691621",
+    "41691617",
+    "41691594"
+  ]
 }

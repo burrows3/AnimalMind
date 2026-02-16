@@ -1,6 +1,12 @@
 {
   "topic": "Microbiome–Behavior–Health Coupling",
   "query": "(\"microbiome\" OR \"gut microbiota\") AND (behavior OR behaviour OR \"stress response\")",
-  "count": 0,
-  "idlist": []
+  "count": 22922,
+  "idlist": [
+    "41690361",
+    "41690358",
+    "41690350",
+    "41690090",
+    "41689561"
+  ]
 }
