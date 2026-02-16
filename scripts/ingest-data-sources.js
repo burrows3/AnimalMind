@@ -522,6 +522,7 @@ function ingestIntoDb(
   }
 
   // Curated: cancer, imaging, vet_practice (guidelines, resources)
+  deleteIngestedBySource('curated');
   for (const item of (curated && curated.items) || []) {
     upsertIngested({
       data_type: item.data_type || 'imaging',
