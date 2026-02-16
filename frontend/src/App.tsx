@@ -1177,7 +1177,7 @@ export default function App() {
               </p>
               <div className="rounded-lg overflow-hidden border border-border bg-muted/20 max-w-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=700&q=80"
+                  src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=700&q=80"
                   alt=""
                   className="w-full h-48 object-cover"
                 />
