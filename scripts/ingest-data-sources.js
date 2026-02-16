@@ -535,7 +535,7 @@ async function main() {
       return data;
     };
 
-    const [pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, tcia] = await Promise.all([
+    const [pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, pubmedPetOwner, tcia] = await Promise.all([
       runResilientSource({
         sourceId: 'pubmed_recent',
         snapshotFile: 'pubmed-recent.json',
@@ -590,6 +590,13 @@ async function main() {
         snapshotFile: 'pubmed-equine.json',
         fetcher: () => fetchPubMedQuery('equine veterinary medicine', 12),
         fallbackData: defaultPubMedResult('equine veterinary medicine'),
+        requiredForCoverage: false,
+      }),
+      runResilientSource({
+        sourceId: 'pubmed_pet_owner',
+        snapshotFile: 'pubmed-pet-owner.json',
+        fetcher: () => fetchPubMedQuery('companion animal pet owner guidance veterinary', 12),
+        fallbackData: defaultPubMedResult('companion animal pet owner guidance veterinary'),
         requiredForCoverage: false,
       }),
       runResilientSource({
