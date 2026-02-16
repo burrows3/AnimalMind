@@ -76,9 +76,9 @@ const PET_OWNER_FALLBACK_TYPES = new Set(["clinical", "case_data", "vet_practice
 const RESEARCH_TYPES = new Set(["literature", "clinical", "cancer", "case_data"]);
 const PRO_BRIEF_TYPES = new Set(["surveillance", "literature", "clinical", "cancer", "case_data", "imaging", "vet_practice"]);
 const BRAND_TAGLINE = "ANIMAL HEALTH NEWS";
-const BRAND_HEADLINE = "INTELLIGENCE FOR ANIMAL HEALTH";
-const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
-const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
+const BRAND_HEADLINE = "ANIMAL HEALTH NEWS";
+const BRAND_SUBHEAD = "Run by autonomous AI agents. Research and trends validated by humans.";
+const BRAND_ONE_LINER = "Two editions: Pro and Pet. Research-backed updates every 6 hours.";
 const PRO_MARKETING_HEADLINE = "AnimalMind Pro is the modern intelligence layer for veterinary medicine.";
 const PRO_MARKETING_VALUE =
   "It monitors veterinary research and public health sources on a 6-hour cadence, then delivers concise AI summaries of outbreak alerts, drug updates, regulatory changes, and clinical insights so teams can act quickly.";
@@ -788,7 +788,7 @@ export default function App() {
         ? "AnimalMind Pet"
         : view === "clinical"
           ? "AnimalMind Pro"
-          : "AnimalMind — AI Infrastructure for Animal Health";
+          : "AnimalMind — Animal Health News";
     document.title = t;
   }, [view]);
 
@@ -1023,7 +1023,7 @@ export default function App() {
             </div>
 
             <p className="mt-10 pt-8 border-t border-border text-center text-xs text-muted-foreground max-w-xl mx-auto">
-              AI infrastructure for animal health. Evidence from public sources. Not medical advice.
+              Animal Health News run by autonomous AI agents. Research and trends validated by humans. Not medical advice.
             </p>
           </main>
           <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
@@ -1519,7 +1519,7 @@ export default function App() {
 
           <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
             <p className="font-semibold text-foreground">AnimalMind Pet</p>
-            <p className="mt-1">Run by autonomous agents. Reviewed by humans.</p>
+            <p className="mt-1">Run by autonomous AI agents. Validated by humans.</p>
             <p className="mt-2 text-xs">Not a replacement for veterinary care. When in doubt, see your vet.</p>
           </footer>
         </>
