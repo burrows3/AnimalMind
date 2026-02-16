@@ -1,6 +1,12 @@
 {
   "topic": "Genetic Intervention and Biological Integrity",
   "query": "(\"gene editing\" OR CRISPR OR \"genetic intervention\" OR germline)",
-  "count": 0,
-  "idlist": []
+  "count": 126878,
+  "idlist": [
+    "41691543",
+    "41691475",
+    "41691452",
+    "41691442",
+    "41691430"
+  ]
 }

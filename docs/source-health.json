@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generatedAt": "2026-02-16T02:58:17.931Z",
+    "generatedAt": "2026-02-16T03:00:26.138Z",
     "overallStatus": "sufficient",
     "coveragePercent": 100,
     "totalSources": 12,
@@ -8,8 +8,8 @@
     "staleSources": 0,
     "errorSources": 0,
     "noDataSources": 0,
-    "newestUpdate": "2026-02-16T02:58:17.929Z",
-    "oldestUpdate": "2026-02-16T02:58:16.962Z"
+    "newestUpdate": "2026-02-16T03:00:26.136Z",
+    "oldestUpdate": "2026-02-16T03:00:25.324Z"
   },
   "details": [
     {
@@ -21,8 +21,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:17.253Z",
-      "ageMs": 31201,
+      "lastUpdate": "2026-02-16T03:00:25.577Z",
+      "ageMs": 734,
       "lastError": null
     },
     {
@@ -34,8 +34,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:17.137Z",
-      "ageMs": 31317,
+      "lastUpdate": "2026-02-16T03:00:25.445Z",
+      "ageMs": 866,
       "lastError": null
     },
     {
@@ -47,8 +47,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:17.090Z",
-      "ageMs": 31364,
+      "lastUpdate": "2026-02-16T03:00:25.441Z",
+      "ageMs": 870,
       "lastError": null
     },
     {
@@ -60,8 +60,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:17.099Z",
-      "ageMs": 31355,
+      "lastUpdate": "2026-02-16T03:00:25.489Z",
+      "ageMs": 822,
       "lastError": null
     },
     {
@@ -73,8 +73,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:17.125Z",
-      "ageMs": 31329,
+      "lastUpdate": "2026-02-16T03:00:25.541Z",
+      "ageMs": 770,
       "lastError": null
     },
     {
@@ -86,8 +86,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:17.106Z",
-      "ageMs": 31348,
+      "lastUpdate": "2026-02-16T03:00:25.482Z",
+      "ageMs": 829,
       "lastError": null
     },
     {
@@ -99,8 +99,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:17.132Z",
-      "ageMs": 31322,
+      "lastUpdate": "2026-02-16T03:00:25.491Z",
+      "ageMs": 820,
       "lastError": null
     },
     {
@@ -112,8 +112,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:17.929Z",
-      "ageMs": 30525,
+      "lastUpdate": "2026-02-16T03:00:26.136Z",
+      "ageMs": 175,
       "lastError": null
     },
     {
@@ -125,8 +125,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:16.962Z",
-      "ageMs": 31492,
+      "lastUpdate": "2026-02-16T03:00:25.324Z",
+      "ageMs": 987,
       "lastError": null
     },
     {
@@ -138,8 +138,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:17.077Z",
-      "ageMs": 31377,
+      "lastUpdate": "2026-02-16T03:00:25.594Z",
+      "ageMs": 717,
       "lastError": null
     },
     {
@@ -151,8 +151,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:17.443Z",
-      "ageMs": 31011,
+      "lastUpdate": "2026-02-16T03:00:25.864Z",
+      "ageMs": 447,
       "lastError": null
     },
     {
@@ -164,8 +164,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T02:58:17.442Z",
-      "ageMs": 31012,
+      "lastUpdate": "2026-02-16T03:00:25.863Z",
+      "ageMs": 448,
       "lastError": null
     }
   ],

@@ -1,6 +1,12 @@
 {
   "topic": "Species-Specific Health Advantages",
   "query": "(\"comparative physiology\" OR \"species specific\" OR adaptation)",
-  "count": 0,
-  "idlist": []
+  "count": 1073044,
+  "idlist": [
+    "41691740",
+    "41691735",
+    "41691717",
+    "41691690",
+    "41691669"
+  ]
 }

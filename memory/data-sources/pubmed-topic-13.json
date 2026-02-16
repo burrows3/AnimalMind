@@ -1,6 +1,12 @@
 {
   "topic": "Hidden Costs of Normal Physiology",
   "query": "(\"chronic stress\" OR \"low grade inflammation\" OR \"allostatic load\")",
-  "count": 0,
-  "idlist": []
+  "count": 24449,
+  "idlist": [
+    "41689566",
+    "41689410",
+    "41689003",
+    "41688328",
+    "41687948"
+  ]
 }

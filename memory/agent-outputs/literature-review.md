@@ -1,8 +1,8 @@
 # Literature reviewer
 
 **Agent:** Literature reviewer (autonomous)
-**Last run:** 2026-02-16T02:58:18.061Z
-**Data as of:** 2026-02-16T02:58:17.962Z
+**Last run:** 2026-02-16T03:00:26.266Z
+**Data as of:** 2026-02-16T03:00:26.169Z
 
 ---
 
@@ -10,7 +10,7 @@
 
 | Type | Count |
 |------|-------|
-| Literature (one health) | 95 |
+| Literature (one health) | 110 |
 | Cancer (animal/veterinary) | 16 |
 | Case data (veterinary case reports) | 15 |
 
@@ -28,8 +28,11 @@ The agent reasons over ingested literature for each autonomous-agent topic (Clin
 - **Emergent Effects of Complex Care Pathways** — 5 item(s). **Reasoning:** Analyze combination effects beyond single interventions.
 - **Silent or Masked Disease and Distress** — 5 item(s). **Reasoning:** Aggregate behavior, physiology, and biomarker studies to improve recognition in stoic species.
 - **Unintended Consequences of Standard Care** — 5 item(s). **Reasoning:** Track long-term effects of common practices to refine guidelines.
+- **Unknown Biological Signals** — 5 item(s). **Reasoning:** Explore uncharacterized signals and anomalies for new biology or biomarkers.
 - **Latent Protective Mechanisms** — 5 item(s). **Reasoning:** Explore uncharacterized signals and anomalies for new biology or biomarkers.
+- **Hidden Costs of Normal Physiology** — 5 item(s). **Reasoning:** Quantify cumulative cost of stress and inflammation for prevention.
 - **Environmental Exposure and Sentinel Signals** — 5 item(s). **Reasoning:** Use animal sentinel data for environmental and human health early warning.
+- **Species-Specific Health Advantages** — 5 item(s). **Reasoning:** Translate extreme physiology and adaptations into medical insights.
 - **Comparative Physiology at Extremes** — 5 item(s). **Reasoning:** Translate extreme physiology and adaptations into medical insights.
 - **Genetic Intervention and Biological Integrity** — 5 item(s). **Reasoning:** Integrate gene editing and early-life effects into health and welfare assessment.
 - **Developmental Programming and Lifelong Health** — 5 item(s). **Reasoning:** Integrate gene editing and early-life effects into health and welfare assessment.

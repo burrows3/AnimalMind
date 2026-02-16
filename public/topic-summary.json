@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-16T02:58:17.962Z",
+  "updatedAt": "2026-02-16T03:00:26.169Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
@@ -43,7 +43,7 @@
     },
     {
       "topic": "Unknown Biological Signals",
-      "count": 0
+      "count": 5
     },
     {
       "topic": "Latent Protective Mechanisms",
@@ -55,7 +55,7 @@
     },
     {
       "topic": "Hidden Costs of Normal Physiology",
-      "count": 0
+      "count": 5
     },
     {
       "topic": "Environmental Exposure and Sentinel Signals",
@@ -63,7 +63,7 @@
     },
     {
       "topic": "Species-Specific Health Advantages",
-      "count": 0
+      "count": 5
     },
     {
       "topic": "Comparative Physiology at Extremes",
@@ -84,7 +84,7 @@
   ],
   "totals": {
     "topicCount": 20,
-    "topicsWithItems": 16,
-    "totalItems": 80
+    "topicsWithItems": 19,
+    "totalItems": 95
   }
 }
