@@ -1,8 +1,8 @@
 # Literature reviewer
 
 **Agent:** Literature reviewer (autonomous)
-**Last run:** 2026-02-16T03:09:35.780Z
-**Data as of:** 2026-02-16T03:09:35.661Z
+**Last run:** 2026-02-16T06:30:09.301Z
+**Data as of:** 2026-02-16T06:30:09.163Z
 
 ---
 
@@ -10,7 +10,7 @@
 
 | Type | Count |
 |------|-------|
-| Literature (one health) | 115 |
+| Literature (one health) | 122 |
 | Cancer (animal/veterinary) | 16 |
 | Case data (veterinary case reports) | 15 |
 
@@ -43,7 +43,7 @@ The agent reasons over ingested literature for each autonomous-agent topic (Clin
 
 ### One-health / animal literature
 
-- **one health animal** — 15 item(s). Use for partnerships, research gaps, or teaching.
+- **one health animal** — 22 item(s). Use for partnerships, research gaps, or teaching.
 
 ### Animal / veterinary oncology
 

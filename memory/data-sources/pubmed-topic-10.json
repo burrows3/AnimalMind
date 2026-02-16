@@ -1,12 +1,6 @@
 {
   "topic": "Unknown Biological Signals",
   "query": "(\"novel biomarker\" OR \"unknown biomarker\" OR uncharacterized OR omics)",
-  "count": 85829,
-  "idlist": [
-    "41691678",
-    "41691677",
-    "41691674",
-    "41691557",
-    "41691486"
-  ]
+  "count": 0,
+  "idlist": []
 }
