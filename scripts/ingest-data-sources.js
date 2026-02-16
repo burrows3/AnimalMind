@@ -62,6 +62,39 @@ function conditionFromCdcTitle(title) {
   return (match ? match[1].trim() : afterLevel) || 'Other';
 }
 
+const PET_OWNER_RESOURCES = [
+  {
+    condition_or_topic: 'Household zoonotic safety',
+    title: 'CDC Healthy Pets, Healthy People',
+    url: 'https://www.cdc.gov/healthypets/',
+  },
+  {
+    condition_or_topic: 'Poisoning and emergencies',
+    title: 'ASPCA Animal Poison Control',
+    url: 'https://www.aspca.org/pet-care/animal-poison-control',
+  },
+  {
+    condition_or_topic: 'Preventive care',
+    title: 'AAHA Pet Owner Education',
+    url: 'https://www.aaha.org/your-pet/',
+  },
+  {
+    condition_or_topic: 'Small-animal guidance',
+    title: 'WSAVA Pet Owners',
+    url: 'https://wsava.org/pet-owners/',
+  },
+  {
+    condition_or_topic: 'Symptoms and home guidance',
+    title: 'Merck Veterinary Manual - Pet Health Center',
+    url: 'https://www.merckvetmanual.com/pethealthcenter',
+  },
+  {
+    condition_or_topic: 'When to see a vet',
+    title: 'AVMA Pet Owner Resources',
+    url: 'https://www.avma.org/resources/pet-owners',
+  },
+];
+
 // --- 1. PubMed (E-utilities) ---
 function buildPubMedUrl(term, retmax = 15) {
   const q = encodeURIComponent(term);
