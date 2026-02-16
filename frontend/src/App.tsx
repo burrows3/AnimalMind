@@ -1214,7 +1214,7 @@ export default function App() {
                 onClick={() => navigate("")}
                 className="flex items-center gap-2 text-foreground no-underline min-h-[44px]"
               >
-                <AnimalMindLogo className="size-8 text-foreground shrink-0" />
+                <AnimalMindLogo className="size-12 text-foreground shrink-0" />
                 <span className="text-xl font-semibold tracking-tight">AnimalMind</span>
               </button>
               <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
@@ -1322,7 +1322,7 @@ export default function App() {
                 onClick={() => navigate("")}
                 className="flex items-center gap-2 text-foreground min-h-[44px]"
               >
-                <AnimalMindLogo className="size-7 text-foreground shrink-0" />
+                <AnimalMindLogo className="size-10 text-foreground shrink-0" />
                 <span className="text-base font-semibold">AnimalMind</span>
               </button>
               <div className="flex items-center gap-4">
@@ -1795,7 +1795,7 @@ export default function App() {
                 onClick={() => navigate("")}
                 className="flex items-center gap-2 text-foreground min-h-[44px] py-1 text-left"
               >
-                <AnimalMindLogo className="size-7 sm:size-8 text-foreground shrink-0" />
+                <AnimalMindLogo className="size-10 sm:size-12 text-foreground shrink-0" />
                 <span className="text-base sm:text-xl font-semibold tracking-tight">AnimalMind Pro</span>
               </button>
               <div className="flex flex-wrap items-center gap-0.5 sm:gap-2 text-sm">
