@@ -1,6 +1,12 @@
 {
   "topic": "Silent or Masked Disease and Distress",
   "query": "(\"subclinical\" OR masked OR \"silent disease\" OR occult OR stoic)",
-  "count": 0,
-  "idlist": []
+  "count": 197040,
+  "idlist": [
+    "41691476",
+    "41691469",
+    "41691239",
+    "41690769",
+    "41690392"
+  ]
 }
