@@ -17,7 +17,7 @@ const { AUTONOMOUS_AGENT_TOPICS } = require('../lib/agentTopics');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const { upsertIngested } = require('../lib/db');
+const { upsertIngested, deleteIngestedBySource } = require('../lib/db');
 const { runSourceTask, writeSourceHealthSnapshot } = require('../lib/ingestFetch');
 const { getSourceMeta } = require('../lib/sourceCatalog');
 
@@ -507,6 +507,7 @@ function ingestIntoDb(
   }
 
   // Pet owner brief: curated consumer-safe resources
+  deleteIngestedBySource('pet_owner_resource');
   for (const item of PET_OWNER_RESOURCES) {
     upsertIngested({
       data_type: 'pet_owner',
