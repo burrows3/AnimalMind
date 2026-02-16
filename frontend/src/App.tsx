@@ -381,20 +381,14 @@ function deriveHealthFromLastUpdated(lastUpdated: string | null | undefined): So
   };
 }
 
-/** Animal Mind logo: animal head (profile) + mind dot. Same as favicon. */
+/** AnimalMind logo: dog, cat, bird + ANIMAL MIND wordmark. */
 function AnimalMindLogo({ className }: { className?: string }) {
   return (
-    <svg
-      className={cn("shrink-0", className)}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <ellipse cx="16" cy="18" rx="10" ry="9" fill="currentColor" />
-      <path fill="currentColor" d="M10 10 L8 16 L12 14 Z" />
-      <circle cx="24" cy="10" r="4" fill="currentColor" />
-    </svg>
+    <img
+      src="/logo.png"
+      alt="AnimalMind"
+      className={cn("shrink-0 w-auto object-contain", className)}
+    />
   );
 }
 

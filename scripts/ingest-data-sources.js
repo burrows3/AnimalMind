@@ -286,6 +286,9 @@ function loadCuratedDatasets() {
   }
 }
 
+// --- Curated pet-owner resources (consumer-safe links; optional) ---
+const PET_OWNER_RESOURCES = [];
+
 // --- 4. TCIA (Cancer Imaging Archive) – imaging collections (canine/veterinary) ---
 const TCIA_COLLECTIONS_URL = 'https://www.cancerimagingarchive.net/api/v1/collections/';
 
@@ -535,7 +538,7 @@ async function main() {
       return data;
     };
 
-    const [pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, tcia] = await Promise.all([
+    const [pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, pubmedPetOwner, tcia] = await Promise.all([
       runResilientSource({
         sourceId: 'pubmed_recent',
         snapshotFile: 'pubmed-recent.json',
@@ -590,6 +593,13 @@ async function main() {
         snapshotFile: 'pubmed-equine.json',
         fetcher: () => fetchPubMedQuery('equine veterinary medicine', 12),
         fallbackData: defaultPubMedResult('equine veterinary medicine'),
+        requiredForCoverage: false,
+      }),
+      runResilientSource({
+        sourceId: 'pubmed_pet_owner',
+        snapshotFile: 'pubmed-pet-owner.json',
+        fetcher: () => fetchPubMedQuery('pet owner guidance companion animal care', 15),
+        fallbackData: defaultPubMedResult('pet owner guidance companion animal care'),
         requiredForCoverage: false,
       }),
       runResilientSource({
@@ -687,6 +697,7 @@ async function main() {
     writeJson('pubmed-clinical.json', pubmedClinical);
     writeJson('pubmed-small-animal.json', pubmedSmallAnimal);
     writeJson('pubmed-equine.json', pubmedEquine);
+    writeJson('pubmed-pet-owner.json', pubmedPetOwner);
     writeJson('ecdc-avian-flu.json', ecdc);
     writeJson('tcia-imaging.json', tcia);
     writeSourceHealthSnapshot(SOURCE_HEALTH_PATH, sourceHealthEntries);

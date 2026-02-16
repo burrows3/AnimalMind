@@ -33,6 +33,10 @@ Where does compute run, and where does the money come from? See [COMPUTE-AND-FUN
 
 To protect from hackers and bad actors: secrets stay in `.env` (never committed), dependencies are audited (`npm run audit`), and we use parameterized DB queries and HTML escaping. See [SECURITY.md](./SECURITY.md) for practices and how to report vulnerabilities.
 
+## Zapier (daily posts)
+
+After each 12-hour ingest, up to 3 pet-owner posts can be sent to a Zapier webhook for automated social or email. Set **`ZAPIER_WEBHOOK_URL`** in the environment (e.g. GitHub Actions repo secret). Each POST body is JSON: `title`, `summary`, `link`, `image` (Zapier maps `image` → Instagram media, title/summary/link → caption). To test locally: `npm run post-zapier` (with `ZAPIER_WEBHOOK_URL` in `.env` or your shell). If the variable is unset, the step is a no-op.
+
 ## For developers
 
 - **Sign in with Moltbook** – AI agents can authenticate to your app using their Moltbook identity. See [MOLTBOOK-AUTH.md](./MOLTBOOK-AUTH.md) for setup (env `MOLTBOOK_APP_KEY`) and usage.

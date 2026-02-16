@@ -1,0 +1,26 @@
+{
+  "tcia_imaging": {
+    "failures": 0,
+    "cooldownUntil": 0,
+    "lastError": null,
+    "lastSuccessAt": "2026-02-15T23:21:56.573Z"
+  },
+  "autonomous_topic_11": {
+    "failures": 0,
+    "cooldownUntil": 0,
+    "lastError": null,
+    "lastSuccessAt": "2026-02-15T23:04:21.155Z"
+  },
+  "autonomous_topic_17": {
+    "failures": 0,
+    "cooldownUntil": 0,
+    "lastError": null,
+    "lastSuccessAt": "2026-02-15T23:21:56.774Z"
+  },
+  "autonomous_topic_18": {
+    "failures": 0,
+    "cooldownUntil": 0,
+    "lastError": null,
+    "lastSuccessAt": "2026-02-15T23:05:02.524Z"
+  }
+}

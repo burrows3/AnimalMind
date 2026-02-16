@@ -10,6 +10,7 @@ if node scripts/ingest-data-sources.js; then
     && node scripts/agent-literature-review.js \
     && node scripts/agent-synthesize-opportunities.js \
     && node scripts/push-ingest-to-github.js; then
+    node scripts/post-to-zapier.js || true
     echo "$(date -Iseconds) ok" >> memory/ingest.log
   else
     echo "$(date -Iseconds) FAIL" >> memory/ingest.log
