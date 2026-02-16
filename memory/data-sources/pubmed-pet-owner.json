@@ -1,7 +1,20 @@
 {
-  "fetchedAt": "2026-02-15T23:21:55.946Z",
+  "fetchedAt": "2026-02-16T03:09:33.868Z",
   "source": "PubMed",
-  "query": "pet owner guidance companion animal care",
-  "count": 0,
-  "idlist": []
+  "query": "companion animal pet owner guidance veterinary",
+  "count": "21",
+  "idlist": [
+    "41677397",
+    "41389569",
+    "41328225",
+    "40611210",
+    "40431553",
+    "40009998",
+    "38461702",
+    "38199696",
+    "35678954",
+    "34846105",
+    "34200926",
+    "34039429"
+  ]
 }

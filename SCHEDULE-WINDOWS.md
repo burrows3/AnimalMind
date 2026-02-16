@@ -1,6 +1,6 @@
-# Running the ingest every 12 hours on Windows (autonomous)
+# Running the ingest every 6 hours on Windows (autonomous)
 
-**Most efficient:** use **Windows Task Scheduler**. No extra process runs between runs; the task simply triggers every 12 hours. No Node daemon, no cron service—just a scheduled task.
+**Most efficient:** use **Windows Task Scheduler**. No extra process runs between runs; the task simply triggers every 6 hours. No Node daemon, no cron service—just a scheduled task.
 
 ## One-click setup (recommended)
 
@@ -10,7 +10,7 @@ Run this **once** from the repo (no need to open Task Scheduler yourself):
 scripts\setup-hourly-task.cmd
 ```
 
-That creates the scheduled task **AnimalMind Ingest** to run every 12 hours. If you get "access denied," right‑click the script → **Run as administrator**. To run the task now: `schtasks /run /tn "AnimalMind Ingest"`. To remove it: `schtasks /delete /tn "AnimalMind Ingest" /f`.
+That creates the scheduled task **AnimalMind Ingest** to run every 6 hours. If you get "access denied," right‑click the script → **Run as administrator**. To run the task now: `schtasks /run /tn "AnimalMind Ingest"`. To remove it: `schtasks /delete /tn "AnimalMind Ingest" /f`.
 
 ---
 
@@ -26,14 +26,14 @@ If you prefer to create the task by hand:
 
 3. **General**
    - Name: `AnimalMind Ingest`
-  - Description: `Data ingest every 12 hours (PubMed + CDC) for animal health insights`
+  - Description: `Data ingest every 6 hours (PubMed + CDC) for animal health insights`
    - Select **Run whether user is logged on or not** (and enter your password when prompted) so it runs when the machine is locked or you’re away.
    - Optionally: **Run with highest privileges** only if you need it (usually not).
 
 4. **Triggers**
    - New → **On a schedule**
-  - Settings: **Daily**, repeat every **12 hours**, for a duration of **Indefinitely**
-  - Or: **Repeat task every**: 12 hours, for duration **Indefinitely**
+  - Settings: **Daily**, repeat every **6 hours**, for a duration of **Indefinitely**
+  - Or: **Repeat task every**: 6 hours, for duration **Indefinitely**
    - Start: today (or when you want it to start).
    - Enabled: yes.
 
@@ -60,7 +60,7 @@ If you prefer to create the task by hand:
 
 ## When does ingestion run next?
 
-- **Schedule:** The task **AnimalMind Ingest** runs **every 12 hours** (on the hour), as set by `scripts\setup-hourly-task.cmd` (`/sc hourly /mo 12 /st 00:00`).
+- **Schedule:** The task **AnimalMind Ingest** runs **every 6 hours** (on the hour), as set by `scripts\setup-hourly-task.cmd` (`/sc hourly /mo 6 /st 00:00`).
 - **See exact next run:** Open **Task Scheduler** → **Task Scheduler Library** → **AnimalMind Ingest** → **Next Run Time** in the list, or run:
   ```cmd
   schtasks /query /tn "AnimalMind Ingest" /fo LIST /v
@@ -73,7 +73,7 @@ If you prefer to create the task by hand:
 - In Task Scheduler, right‑click **AnimalMind Ingest** → **Run**. Check that `memory\data-sources\pubmed-recent.json` and `memory\data-sources\cdc-travel-notices.json` update and that `memory\ingest.log` gets a new line (e.g. `01/31/2026 12:00:00 ok`).
 - **Task Scheduler Library** → **AnimalMind Ingest** → **History** shows last run and result.
 
-## What runs every 12 hours
+## What runs every 6 hours
 
 - **Program:** `scripts\run-ingest.cmd`  
   Runs the full autonomous chain from the repo root: `node scripts\ingest-data-sources.js` → `node scripts\think-autonomous.js` → `node scripts\agent-surveillance-review.js` → `node scripts\agent-literature-review.js` → `node scripts\agent-synthesize-opportunities.js` → `node scripts\push-ingest-to-github.js` (commit and push). It appends one line to `memory\ingest.log` per run (`ok`/`FAIL`).
@@ -81,19 +81,19 @@ If you prefer to create the task by hand:
 
 ## Why Task Scheduler
 
-- **Efficient:** No process running between runs; OS wakes the task every 12 hours.
+- **Efficient:** No process running between runs; OS wakes the task every 6 hours.
 - **Native:** No extra services or cron ports; works on any Windows machine.
 - **Autonomous:** With "Run whether user is logged on or not," it keeps running when you're not there.
 
 ## If the computer was asleep
 
 - **Scheduled tasks do not run while the PC is asleep.** Any hour that falls while the machine is sleeping is skipped. Nothing runs until the next scheduled time after wake.
-- **To run after wake:** In the task **Settings** tab, enable **"Run task as soon as possible after a scheduled start is missed."** Then when you wake the PC, the task will run once for the missed time (and then resume the normal 12-hour schedule).
+- **To run after wake:** In the task **Settings** tab, enable **"Run task as soon as possible after a scheduled start is missed."** Then when you wake the PC, the task will run once for the missed time (and then resume the normal 6-hour schedule).
 - **For 24/7 ingest:** Use a machine that stays on (e.g. a server or cloud VM). See [ORACLE-CLOUD-VM-SETUP.md](./ORACLE-CLOUD-VM-SETUP.md) for a VM that runs ingest even when your laptop is closed.
 
-## Why every 12 hours?
+## Why every 6 hours?
 
-- **Balanced freshness:** Surveillance (CDC) and literature (PubMed) updates appear twice per day without running continuously.
-- **Same VM cost:** The droplet is billed per month, not per run; running every 12 hours does not increase cost.
+- **Balanced freshness:** Surveillance (CDC) and literature (PubMed) updates appear four times per day without running continuously.
+- **Same VM cost:** The droplet is billed per month, not per run; running every 6 hours does not increase cost.
 - **Focused updates:** Agent outputs and pushed commits reflect new data on a steady cadence.
 

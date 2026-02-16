@@ -1,6 +1,12 @@
 {
   "topic": "Biological Timing and Treatment Response",
   "query": "(\"chronobiology\" OR circadian OR \"time of day\") AND (treatment OR anesthesia OR vaccination)",
-  "count": 0,
-  "idlist": []
+  "count": 36785,
+  "idlist": [
+    "41690609",
+    "41688826",
+    "41685186",
+    "41683784",
+    "41683698"
+  ]
 }

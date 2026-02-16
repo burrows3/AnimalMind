@@ -81,13 +81,18 @@ const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
 const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
 const PRO_MARKETING_HEADLINE = "AnimalMind Pro is the modern intelligence layer for veterinary medicine.";
 const PRO_MARKETING_VALUE =
-  "It monitors veterinary research and public health sources in real time, then delivers concise AI summaries of outbreak alerts, drug updates, regulatory changes, and clinical insights so teams can act quickly.";
+  "It monitors veterinary research and public health sources on a 6-hour cadence, then delivers concise AI summaries of outbreak alerts, drug updates, regulatory changes, and clinical insights so teams can act quickly.";
 const PRO_MARKETING_BENEFITS = [
   "Track new research, surveillance signals, and regulatory changes in one place.",
   "Get prioritized outbreak alerts by region, species, and clinical relevance.",
   "Stay current on drug approvals, safety signals, label changes, and withdrawals.",
   "Focus on high-signal updates designed to reduce noise for busy clinicians.",
   "Replace hours of manual review with brief updates you can scan in minutes.",
+];
+const PRO_MISSION_POINTS = [
+  "Shared digest view keeps teams aligned on what changed and why it matters.",
+  "Source-linked cards make triage and verification fast during clinical workflows.",
+  "A predictable 6-hour cadence improves freshness without introducing alert fatigue.",
 ];
 const PRO_MARKETING_CREDIBILITY =
   "Built for veterinarians, researchers, and animal health professionals, with source-linked updates from trusted public data.";
@@ -1043,7 +1048,6 @@ export default function App() {
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [waitlistError, setWaitlistError] = useState("");
-  const [proCtaExpanded, setProCtaExpanded] = useState(false);
 
   const hashToView = (h: string) => {
     if (h === "consumer" || h === "clinical") return h;
@@ -1122,6 +1126,18 @@ export default function App() {
   const lastUpdated = summary?.lastUpdated
     ? new Date(summary.lastUpdated).toLocaleString()
     : null;
+  const ingestFreshnessLabel = summary?.lastUpdated
+    ? `Updated ${relativeTime(summary.lastUpdated)}`
+    : "Waiting for first ingest";
+  const countMap = summary?.counts ?? {};
+  const proSignalCount =
+    (countMap.surveillance ?? 0) +
+    (countMap.literature ?? 0) +
+    (countMap.cancer ?? 0) +
+    (countMap.case_data ?? 0) +
+    (countMap.clinical ?? 0) +
+    (countMap.imaging ?? 0) +
+    (countMap.vet_practice ?? 0);
 
   const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const petBriefItems = useMemo(() => toPetBriefItems(memory), [memory]);
@@ -1222,9 +1238,11 @@ export default function App() {
               </p>
             </div>
           </header>
-          <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 sm:py-12">
+          <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
+            <div aria-hidden className="landing-orb landing-orb-a" />
+            <div aria-hidden className="landing-orb landing-orb-b" />
             {/* Hero: editorial image + headline */}
-            <section className="mb-10 sm:mb-14">
+            <section className="mb-10 sm:mb-14 landing-rise-in">
               <div className="rounded-none overflow-hidden border border-border bg-card shadow-sm">
                 <div className="relative aspect-[16/9] sm:aspect-[21/9] min-h-[200px]">
                   <img
@@ -1247,6 +1265,20 @@ export default function App() {
               <p className="mt-4 text-sm text-muted-foreground max-w-2xl">
                 {BRAND_ONE_LINER}
               </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
+                  {ingestFreshnessLabel}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
+                  Pro signals {proSignalCount}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
+                  Pet items {petBriefCount}
+                </span>
+              </div>
+              {lastUpdated && (
+                <p className="mt-2 text-xs text-muted-foreground">Last ingest: {lastUpdated}</p>
+              )}
             </section>
 
             {/* Two editions: distinct cards with pictures */}
@@ -1255,7 +1287,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => navigate("clinical")}
-                className="group text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
+                className="group landing-card-rise landing-card-rise-delay-1 text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
               >
                 <div className="aspect-[16/10] overflow-hidden bg-muted/30">
                   <img
@@ -1268,7 +1300,10 @@ export default function App() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Clinical & Research</p>
                   <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pro</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Real-time intelligence briefs with research, outbreak, drug, and regulatory updates.
+                    6-hour intelligence briefs with research, outbreak, drug, and regulatory updates.
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {ingestFreshnessLabel} · {proSignalCount} tracked signals
                   </p>
                   <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
                     Enter Pro
@@ -1279,7 +1314,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => navigate("consumer")}
-                className="group text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
+                className="group landing-card-rise landing-card-rise-delay-2 text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
               >
                 <div className="aspect-[16/10] overflow-hidden bg-muted/30">
                   <img
@@ -1293,6 +1328,9 @@ export default function App() {
                   <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pet</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Plain-language pet guidance from the same autonomous engine powering Pro.
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {ingestFreshnessLabel} · {petBriefCount} pet-focused items
                   </p>
                   <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
                     Enter Pet
@@ -1893,56 +1931,15 @@ export default function App() {
               <div className="shrink-0 w-full sm:w-auto">
                 {waitlistStatus === "success" ? (
                   <p className="text-sm text-foreground font-medium py-2">You’re on the list. We’ll notify you when the daily brief launches.</p>
-                ) : proCtaExpanded ? (
-                  <form
-                    className="flex flex-col sm:flex-row gap-2"
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      const email = waitlistEmail.trim();
-                      if (!email) return;
-                      setWaitlistStatus("loading");
-                      setWaitlistError("");
-                      const result = await submitWaitlist(email);
-                      if (result.ok) {
-                        setWaitlistStatus("success");
-                        setWaitlistEmail("");
-                      } else if (result.error === "MAILTO") {
-                        window.location.href = `mailto:pro@animalmind.co?subject=Pro%20early%20access&body=${encodeURIComponent(`Please add me for early access.\nEmail: ${email}`)}`;
-                        setWaitlistStatus("success");
-                        setWaitlistEmail("");
-                      } else {
-                        setWaitlistStatus("error");
-                        setWaitlistError(result.error || "Something went wrong.");
-                      }
-                    }}
-                  >
-                    <input
-                      type="email"
-                      placeholder="Your email"
-                      value={waitlistEmail}
-                      onChange={(e) => setWaitlistEmail(e.target.value)}
-                      disabled={waitlistStatus === "loading"}
-                      className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
-                      aria-label="Email"
-                    />
-                    <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
-                      {waitlistStatus === "loading" ? "…" : "Notify me"}
-                    </Button>
-                  </form>
                 ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full sm:w-auto rounded-md font-medium border-border bg-background min-h-[44px]"
-                    onClick={() => setProCtaExpanded(true)}
+                  <a
+                    href="#waitlist"
+                    className="inline-flex w-full sm:w-auto items-center justify-center rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/40 hover:border-foreground/30 min-h-[44px]"
                   >
-                    Early access to the brief
-                  </Button>
+                    Join the updates list
+                  </a>
                 )}
               </div>
-              {waitlistStatus === "error" && waitlistError && (
-                <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
-              )}
             </div>
           </div>
           <p className="px-4 sm:px-6 py-3 border-t border-border/80 text-xs text-muted-foreground">
@@ -1981,11 +1978,11 @@ export default function App() {
             </div>
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
-                {PRO_MARKETING_VALUE}
+                AnimalMind Pro helps teams move from scattered monitoring to a consistent, source-linked operating rhythm.
               </p>
               <ul className="list-disc pl-5 space-y-1.5">
-                {PRO_MARKETING_BENEFITS.map((benefit) => (
-                  <li key={`mission-${benefit}`}>{benefit}</li>
+                {PRO_MISSION_POINTS.map((point) => (
+                  <li key={`mission-${point}`}>{point}</li>
                 ))}
               </ul>
               <p>{PRO_MARKETING_CREDIBILITY}</p>

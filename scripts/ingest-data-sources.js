@@ -17,7 +17,7 @@ const { AUTONOMOUS_AGENT_TOPICS } = require('../lib/agentTopics');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const { upsertIngested } = require('../lib/db');
+const { upsertIngested, deleteIngestedBySource } = require('../lib/db');
 const { runSourceTask, writeSourceHealthSnapshot } = require('../lib/ingestFetch');
 const { getSourceMeta } = require('../lib/sourceCatalog');
 
@@ -61,6 +61,39 @@ function conditionFromCdcTitle(title) {
   const match = afterLevel.match(/^(.+?)\s+in\s+/i);
   return (match ? match[1].trim() : afterLevel) || 'Other';
 }
+
+const PET_OWNER_RESOURCES = [
+  {
+    condition_or_topic: 'Household zoonotic safety',
+    title: 'CDC Healthy Pets, Healthy People',
+    url: 'https://www.cdc.gov/healthypets/',
+  },
+  {
+    condition_or_topic: 'Poisoning and emergencies',
+    title: 'ASPCA Animal Poison Control',
+    url: 'https://www.aspca.org/pet-care/animal-poison-control',
+  },
+  {
+    condition_or_topic: 'Preventive care',
+    title: 'AAHA Pet Owner Education',
+    url: 'https://www.aaha.org/',
+  },
+  {
+    condition_or_topic: 'Small-animal guidance',
+    title: 'WSAVA Global Guidelines',
+    url: 'https://wsava.org/global-guidelines/',
+  },
+  {
+    condition_or_topic: 'Symptoms and home guidance',
+    title: 'Merck Veterinary Manual',
+    url: 'https://www.merckvetmanual.com/',
+  },
+  {
+    condition_or_topic: 'When to see a vet',
+    title: 'AVMA Pet Owner Resources',
+    url: 'https://www.avma.org/resources/pet-owners',
+  },
+];
 
 // --- 1. PubMed (E-utilities) ---
 function buildPubMedUrl(term, retmax = 15) {
@@ -286,9 +319,6 @@ function loadCuratedDatasets() {
   }
 }
 
-// --- Curated pet-owner resources (consumer-safe links; optional) ---
-const PET_OWNER_RESOURCES = [];
-
 // --- 4. TCIA (Cancer Imaging Archive) – imaging collections (canine/veterinary) ---
 const TCIA_COLLECTIONS_URL = 'https://www.cancerimagingarchive.net/api/v1/collections/';
 
@@ -477,6 +507,7 @@ function ingestIntoDb(
   }
 
   // Pet owner brief: curated consumer-safe resources
+  deleteIngestedBySource('pet_owner_resource');
   for (const item of PET_OWNER_RESOURCES) {
     upsertIngested({
       data_type: 'pet_owner',
@@ -491,6 +522,7 @@ function ingestIntoDb(
   }
 
   // Curated: cancer, imaging, vet_practice (guidelines, resources)
+  deleteIngestedBySource('curated');
   for (const item of (curated && curated.items) || []) {
     upsertIngested({
       data_type: item.data_type || 'imaging',
@@ -598,8 +630,8 @@ async function main() {
       runResilientSource({
         sourceId: 'pubmed_pet_owner',
         snapshotFile: 'pubmed-pet-owner.json',
-        fetcher: () => fetchPubMedQuery('pet owner guidance companion animal care', 15),
-        fallbackData: defaultPubMedResult('pet owner guidance companion animal care'),
+        fetcher: () => fetchPubMedQuery('companion animal pet owner guidance veterinary', 12),
+        fallbackData: defaultPubMedResult('companion animal pet owner guidance veterinary'),
         requiredForCoverage: false,
       }),
       runResilientSource({
@@ -697,7 +729,6 @@ async function main() {
     writeJson('pubmed-clinical.json', pubmedClinical);
     writeJson('pubmed-small-animal.json', pubmedSmallAnimal);
     writeJson('pubmed-equine.json', pubmedEquine);
-    writeJson('pubmed-pet-owner.json', pubmedPetOwner);
     writeJson('ecdc-avian-flu.json', ecdc);
     writeJson('tcia-imaging.json', tcia);
     writeSourceHealthSnapshot(SOURCE_HEALTH_PATH, sourceHealthEntries);

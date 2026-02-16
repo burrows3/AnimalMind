@@ -32,7 +32,7 @@
     },
     {
       "title": "AAHA Guidelines",
-      "url": "https://www.aaha.org/aaha-guidelines/",
+      "url": "https://www.aaha.org/",
       "data_type": "vet_practice",
       "condition_or_topic": "Practice guidelines",
       "description": "AAHA guidelines for canine/feline practice: wellness, vaccination, nutrition, pain management, dentistry, behavior."
@@ -60,7 +60,7 @@
     },
     {
       "title": "IVIS (International Veterinary Information Service)",
-      "url": "https://www.ivis.org/",
+      "url": "https://www.ivis.org/library",
       "data_type": "vet_practice",
       "condition_or_topic": "Books and resources",
       "description": "Free veterinary books, proceedings, and educational material (small animal, equine, food animal, exotics)."

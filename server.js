@@ -12,6 +12,9 @@ const { summarizeSourceHealth } = require('./lib/dataFreshness');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const INTERNAL_API_KEY = (process.env.INTERNAL_API_KEY || '').trim();
+
+app.disable('x-powered-by');
 
 // In-memory rate limit: max requests per window per IP (throttle bulk extraction)
 const RATE_WINDOW_MS = 60 * 1000;
@@ -39,18 +42,65 @@ function rateLimit(req, res, next) {
   next();
 }
 
+function requireInternalApiKey(req, res, next) {
+  if (!INTERNAL_API_KEY) {
+    return res.status(404).json({ error: 'Not found.' });
+  }
+  const key = req.get('x-internal-api-key');
+  if (!key || key !== INTERNAL_API_KEY) {
+    return res.status(404).json({ error: 'Not found.' });
+  }
+  return next();
+}
+
+function isBlockedPath(requestPath) {
+  const lowered = (requestPath || '').toLowerCase();
+  if (lowered.includes('..')) return true;
+  if (
+    lowered.startsWith('/.git') ||
+    lowered.startsWith('/.env') ||
+    lowered.startsWith('/.cursor') ||
+    lowered.startsWith('/scripts') ||
+    lowered.startsWith('/lib') ||
+    lowered.startsWith('/memory')
+  ) {
+    return true;
+  }
+  return /\.(map|md|markdown|tsx?|jsx?|cjs|mjs|env|ini|log|sql|bak|dist-info)$/i.test(lowered);
+}
+
+app.use((req, res, next) => {
+  if (isBlockedPath(req.path || '')) {
+    return res.status(404).send('Not found.');
+  }
+  return next();
+});
+
 // Security headers: no secrets in UI; reduce XSS, clickjacking, and info leakage
 app.use((req, res, next) => {
+  const forwardedProto = String(req.headers['x-forwarded-proto'] || '').toLowerCase();
+  const isSecure = req.secure || forwardedProto === 'https';
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-DNS-Prefetch-Control', 'off');
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet, noimageindex');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'");
+  if (isSecure) {
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  }
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self' mailto:"
+  );
   next();
 });
 
 // API: ingested data + meta (counts, last updated) for dashboard. Read-only; no credentials.
-app.get('/api/ingested', rateLimit, (req, res) => {
+app.get('/api/ingested', rateLimit, requireInternalApiKey, (req, res) => {
   try {
     const meta = getIngestedMeta();
     const data = getIngestedGrouped();
@@ -117,7 +167,7 @@ function readJsonSafe(filePath) {
   }
 }
 
-app.get('/api/repurpose/signals', rateLimit, (req, res) => {
+app.get('/api/repurpose/signals', rateLimit, requireInternalApiKey, (req, res) => {
   const indexPath = path.join(__dirname, 'memory', 'repurpose', 'signals.json');
   const data = readJsonSafe(indexPath);
   if (!data) {
@@ -126,7 +176,7 @@ app.get('/api/repurpose/signals', rateLimit, (req, res) => {
   return res.json(data);
 });
 
-app.get('/api/repurpose/signals/:id', rateLimit, (req, res) => {
+app.get('/api/repurpose/signals/:id', rateLimit, requireInternalApiKey, (req, res) => {
   const fileName = `${req.params.id}.json`;
   const filePath = path.join(__dirname, 'memory', 'repurpose', 'signals', fileName);
   const data = readJsonSafe(filePath);
@@ -136,7 +186,7 @@ app.get('/api/repurpose/signals/:id', rateLimit, (req, res) => {
   return res.json(data);
 });
 
-app.get('/api/repurpose/documents', rateLimit, (req, res) => {
+app.get('/api/repurpose/documents', rateLimit, requireInternalApiKey, (req, res) => {
   const docsPath = path.join(__dirname, 'memory', 'repurpose', 'documents.json');
   const data = readJsonSafe(docsPath);
   if (!data) {
@@ -146,7 +196,13 @@ app.get('/api/repurpose/documents', rateLimit, (req, res) => {
 });
 
 // Static frontend
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(
+  express.static(path.join(__dirname, 'public'), {
+    dotfiles: 'deny',
+    etag: false,
+    index: false,
+  })
+);
 
 // Fallback: serve index.html for /
 app.get('/', (req, res) => {

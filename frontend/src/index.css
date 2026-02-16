@@ -60,3 +60,80 @@ body {
 .font-editorial {
   font-family: var(--font-sans);
 }
+
+@keyframes landingRiseIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landingFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0) scale(1.03);
+  }
+}
+
+.landing-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+  filter: blur(36px);
+  background: radial-gradient(circle at center, rgba(15, 15, 15, 0.08) 0%, rgba(15, 15, 15, 0) 70%);
+}
+
+.landing-orb-a {
+  width: 18rem;
+  height: 18rem;
+  right: -6rem;
+  top: 2rem;
+}
+
+.landing-orb-b {
+  width: 16rem;
+  height: 16rem;
+  left: -7rem;
+  top: 24rem;
+}
+
+.landing-rise-in,
+.landing-card-rise {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing-rise-in {
+    animation: landingRiseIn 480ms ease-out both;
+  }
+
+  .landing-card-rise {
+    animation: landingRiseIn 520ms ease-out both;
+  }
+
+  .landing-card-rise-delay-1 {
+    animation-delay: 120ms;
+  }
+
+  .landing-card-rise-delay-2 {
+    animation-delay: 200ms;
+  }
+
+  .landing-orb {
+    animation: landingFloat 12s ease-in-out infinite;
+  }
+
+  .landing-orb-b {
+    animation-delay: 1.8s;
+  }
+}

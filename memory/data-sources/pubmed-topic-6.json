@@ -1,6 +1,12 @@
 {
   "topic": "Non-Linear Dose and Response Effects",
   "query": "(\"dose response\" OR hormesis OR nonlinear OR \"non linear\")",
-  "count": 0,
-  "idlist": []
+  "count": 737462,
+  "idlist": [
+    "41691709",
+    "41691702",
+    "41691574",
+    "41691539",
+    "41691436"
+  ]
 }

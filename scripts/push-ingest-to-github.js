@@ -8,6 +8,8 @@ const { execSync } = require('child_process');
 const https = require('https');
 const path = require('path');
 const fs = require('fs');
+const { getAgentReasoning } = require(path.join(__dirname, '..', 'lib', 'agentReasoning'));
+const { getTopicSummary } = require(path.join(__dirname, '..', 'lib', 'topicSummary'));
 
 const REPO_ROOT = path.join(__dirname, '..');
 const DB_PATH = path.join(REPO_ROOT, 'memory', 'animalmind.db');
@@ -16,6 +18,14 @@ const DOCS_SUMMARY = path.join(REPO_ROOT, 'docs', 'data-summary.json');
 const DOCS_DATA_DIR = path.join(REPO_ROOT, 'docs', 'data');
 const DOCS_INGESTED_JSON = path.join(DOCS_DATA_DIR, 'ingested.json');
 const DOCS_SOURCE_HEALTH_JSON = path.join(REPO_ROOT, 'docs', 'source-health.json');
+const DOCS_REASONING_JSON = path.join(REPO_ROOT, 'docs', 'agent-reasoning.json');
+const DOCS_TOPIC_SUMMARY = path.join(REPO_ROOT, 'docs', 'topic-summary.json');
+const PUBLIC_SUMMARY = path.join(REPO_ROOT, 'public', 'data-summary.json');
+const PUBLIC_SOURCE_HEALTH_JSON = path.join(REPO_ROOT, 'public', 'source-health.json');
+const PUBLIC_DATA_DIR = path.join(REPO_ROOT, 'public', 'data');
+const PUBLIC_INGESTED_JSON = path.join(PUBLIC_DATA_DIR, 'ingested.json');
+const PUBLIC_REASONING_JSON = path.join(REPO_ROOT, 'public', 'agent-reasoning.json');
+const PUBLIC_TOPIC_SUMMARY = path.join(REPO_ROOT, 'public', 'topic-summary.json');
 const INGESTED_EXPORT_LIMIT = 200;
 const INGESTED_PER_TYPE_LIMIT = 40;
 
@@ -98,7 +108,7 @@ async function fetchPubMedTitles(ids) {
 
 function extractPubMedId(url) {
   if (!url || typeof url !== 'string') return null;
-  const match = url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)\//i);
+  const match = url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)(?:\/|$|\?)/i);
   return match ? match[1] : null;
 }
 
@@ -150,6 +160,8 @@ async function main() {
     if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
     fs.writeFileSync(DOCS_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
     fs.writeFileSync(DOCS_SOURCE_HEALTH_JSON, JSON.stringify(sourceHealth, null, 2), 'utf8');
+    fs.writeFileSync(PUBLIC_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
+    fs.writeFileSync(PUBLIC_SOURCE_HEALTH_JSON, JSON.stringify(sourceHealth, null, 2), 'utf8');
     // Export ingested rows for landing page "Browse data" (embed memory)
     const rows = selectDashboardRows(getIngestedSorted());
     const missingPubMedIds = new Set();
@@ -199,13 +211,14 @@ async function main() {
     console.warn('Could not write static dashboard data files:', e.message);
   }
 
-  run('git add memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md memory/agent-outputs/ memory/opportunities.md');
+  run('git add -f memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md memory/agent-outputs/ memory/opportunities.md');
   if (fs.existsSync(DOCS_SUMMARY)) run('git add docs/data-summary.json');
   if (fs.existsSync(DOCS_SOURCE_HEALTH_JSON)) run('git add docs/source-health.json');
   if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
   if (fs.existsSync(DOCS_REASONING_JSON)) run('git add docs/agent-reasoning.json');
   if (fs.existsSync(DOCS_TOPIC_SUMMARY)) run('git add docs/topic-summary.json');
   if (fs.existsSync(PUBLIC_SUMMARY)) run('git add public/data-summary.json');
+  if (fs.existsSync(PUBLIC_SOURCE_HEALTH_JSON)) run('git add public/source-health.json');
   if (fs.existsSync(PUBLIC_INGESTED_JSON)) run('git add public/data/ingested.json');
   if (fs.existsSync(PUBLIC_REASONING_JSON)) run('git add public/agent-reasoning.json');
   if (fs.existsSync(PUBLIC_TOPIC_SUMMARY)) run('git add public/topic-summary.json');

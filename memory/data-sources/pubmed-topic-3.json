@@ -1,6 +1,12 @@
 {
   "topic": "Unexplained Recovery and Resilience",
   "query": "(\"disease resilience\" OR recovery OR \"protective factor\" OR \"spontaneous remission\")",
-  "count": 0,
-  "idlist": []
+  "count": 789740,
+  "idlist": [
+    "41691733",
+    "41691712",
+    "41691711",
+    "41691708",
+    "41691699"
+  ]
 }

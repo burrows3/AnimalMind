@@ -31,10 +31,17 @@ function copyDir(srcDir, destDir) {
   }
 }
 
+function resetDir(dir) {
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(dir, { recursive: true });
+}
+
 // public/ (Express)
 const publicDir = path.join(REPO_ROOT, "public");
 copyFile(path.join(DIST, "index.html"), path.join(publicDir, "index.html"));
-copyDir(path.join(DIST, "assets"), path.join(publicDir, "assets"));
+const publicAssetsDir = path.join(publicDir, "assets");
+resetDir(publicAssetsDir);
+copyDir(path.join(DIST, "assets"), publicAssetsDir);
 const faviconSrc = path.join(DIST, "favicon.svg");
 if (fs.existsSync(faviconSrc)) {
   copyFile(faviconSrc, path.join(publicDir, "favicon.svg"));
@@ -56,7 +63,9 @@ console.log("Copied build to public/");
 // docs/ (GitHub Pages)
 const docsDir = path.join(REPO_ROOT, "docs");
 copyFile(path.join(DIST, "index.html"), path.join(docsDir, "index.html"));
-copyDir(path.join(DIST, "assets"), path.join(docsDir, "assets"));
+const docsAssetsDir = path.join(docsDir, "assets");
+resetDir(docsAssetsDir);
+copyDir(path.join(DIST, "assets"), docsAssetsDir);
 if (fs.existsSync(faviconSrc)) {
   copyFile(faviconSrc, path.join(docsDir, "favicon.svg"));
 }
