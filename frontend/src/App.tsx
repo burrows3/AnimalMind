@@ -113,99 +113,82 @@ const CLINICAL_SECTION_HASHES = new Set([
   "waitlist",
   "memory-panel",
 ]);
-/** Animal images that match article topic (dog → dog photo, cat → cat photo). Each topic has multiple URLs so each card is distinct. */
+/** Animal images are generated per topic from research data so cards stay relevant and never drift to non-animal scenes. */
 const PET_IMAGE_WIDTH = 480;
 const PET_IMAGE_HEIGHT = 300;
-const U = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${PET_IMAGE_WIDTH}&q=80`;
-/** Unsplash CDN URLs by animal topic. Use topic-specific photos so research about dogs shows a dog, etc. */
-const PET_IMAGES_BY_TOPIC: Record<string, string[]> = {
-  dog: [
-    "1552053831-71594a27632d",
-    "1583511655857-d19b40a7a54e",
-    "1568572933382-74d440642117",
-    "1548199973-03cce0bbc87b",
-    "1458571037713-913d8b481dc6",
-    "1587300003388-59208cc962cb",
-    "1576086213369-97a306d36557",
-    "1532187863486-abf9dbad1b69",
-  ].map(U),
-  cat: [
-    "1514888286974-6c03e2ca1dba",
-    "1573865526739-10659fec78a5",
-    "1543852786-1cf6624b9987",
-    "1587300003388-59208cc962cb",
-    "1552053831-71594a27632d",
-    "1458571037713-913d8b481dc6",
-    "1568572933382-74d440642117",
-    "1532187863486-abf9dbad1b69",
-  ].map(U),
-  bird: [
-    "1548199973-03cce0bbc87b",
-    "1458571037713-913d8b481dc6",
-    "1568572933382-74d440642117",
-    "1587300003388-59208cc962cb",
-    "1532187863486-abf9dbad1b69",
-    "1576086213369-97a306d36557",
-    "1552053831-71594a27632d",
-    "1461988320302-91bde64fc8e4",
-  ].map(U),
-  horse: [
-    "1461988320302-91bde64fc8e4",
-    "1568572933382-74d440642117",
-    "1587300003388-59208cc962cb",
-    "1458571037713-913d8b481dc6",
-    "1552053831-71594a27632d",
-    "1548199973-03cce0bbc87b",
-    "1532187863486-abf9dbad1b69",
-    "1576086213369-97a306d36557",
-  ].map(U),
-  cattle: [
-    "1461988320302-91bde64fc8e4",
-    "1552053831-71594a27632d",
-    "1587300003388-59208cc962cb",
-    "1458571037713-913d8b481dc6",
-    "1568572933382-74d440642117",
-    "1548199973-03cce0bbc87b",
-    "1532187863486-abf9dbad1b69",
-    "1576086213369-97a306d36557",
-  ].map(U),
-  wildlife: [
-    "1532187863486-abf9dbad1b69",
-    "1576086213369-97a306d36557",
-    "1587300003388-59208cc962cb",
-    "1548199973-03cce0bbc87b",
-    "1458571037713-913d8b481dc6",
-    "1552053831-71594a27632d",
-    "1568572933382-74d440642117",
-    "1461988320302-91bde64fc8e4",
-  ].map(U),
-  turtle: [
-    "1573865526739-10659fec78a5",
-    "1543852786-1cf6624b9987",
-    "1587300003388-59208cc962cb",
-    "1458571037713-913d8b481dc6",
-    "1548199973-03cce0bbc87b",
-    "1552053831-71594a27632d",
-    "1568572933382-74d440642117",
-    "1514888286974-6c03e2ca1dba",
-  ].map(U),
-  general: [
-    "1587300003388-59208cc962cb",
-    "1514888286974-6c03e2ca1dba",
-    "1548199973-03cce0bbc87b",
-    "1552053831-71594a27632d",
-    "1576086213369-97a306d36557",
-    "1532187863486-abf9dbad1b69",
-    "1543852786-1cf6624b9987",
-    "1573865526739-10659fec78a5",
-  ].map(U),
+const PET_TOPICS = ["dog", "cat", "bird", "horse", "cattle", "wildlife", "turtle", "general"] as const;
+type PetTopicKey = (typeof PET_TOPICS)[number];
+const PET_TOPIC_LABEL: Record<PetTopicKey, string> = {
+  dog: "Canine",
+  cat: "Feline",
+  bird: "Avian",
+  horse: "Equine",
+  cattle: "Bovine",
+  wildlife: "Wildlife",
+  turtle: "Reptile",
+  general: "Pet care",
 };
-/** Pick image for article: topic (dog/cat/bird etc) + index within topic so each card is distinct and matches content. */
-function petImageUrlForArticle(topicKey: string, useIndexWithinTopic: number): string {
-  const pool = PET_IMAGES_BY_TOPIC[topicKey] ?? PET_IMAGES_BY_TOPIC.general;
-  const url = pool[useIndexWithinTopic % pool.length];
-  return url ?? PET_IMAGES_BY_TOPIC.general[useIndexWithinTopic % PET_IMAGES_BY_TOPIC.general.length];
+const PET_TOPIC_BASE_HUE: Record<PetTopicKey, number> = {
+  dog: 28,
+  cat: 285,
+  bird: 195,
+  horse: 32,
+  cattle: 16,
+  wildlife: 132,
+  turtle: 166,
+  general: 210,
+};
+
+function petTopicShapeSvg(topicKey: PetTopicKey, fill: string, stroke: string): string {
+  if (topicKey === "cat") {
+    return `<path d="M240 86 L205 56 L190 90 L240 98 Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/><path d="M240 86 L275 56 L290 90 L240 98 Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="240" cy="138" r="52" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="220" cy="132" rx="8" ry="11" fill="${stroke}"/><ellipse cx="260" cy="132" rx="8" ry="11" fill="${stroke}"/><circle cx="240" cy="148" r="5" fill="${stroke}"/>`;
+  }
+  if (topicKey === "bird") {
+    return `<ellipse cx="240" cy="148" rx="70" ry="48" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="188" cy="118" r="28" fill="${fill}" stroke="${stroke}" stroke-width="2"/><path d="M160 118 L134 106 L134 130 Z" fill="${stroke}"/><ellipse cx="256" cy="148" rx="34" ry="24" fill="rgba(255,255,255,0.22)" stroke="${stroke}" stroke-width="1.5"/><circle cx="196" cy="112" r="4" fill="${stroke}"/>`;
+  }
+  if (topicKey === "horse") {
+    return `<ellipse cx="235" cy="162" rx="88" ry="42" fill="${fill}" stroke="${stroke}" stroke-width="2"/><rect x="278" y="112" width="34" height="70" rx="14" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="314" cy="122" rx="34" ry="24" fill="${fill}" stroke="${stroke}" stroke-width="2"/><path d="M336 103 L346 88 L328 93 Z" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/><rect x="180" y="188" width="10" height="32" rx="5" fill="${stroke}"/><rect x="222" y="188" width="10" height="32" rx="5" fill="${stroke}"/><rect x="258" y="188" width="10" height="32" rx="5" fill="${stroke}"/><rect x="294" y="188" width="10" height="32" rx="5" fill="${stroke}"/>`;
+  }
+  if (topicKey === "cattle") {
+    return `<ellipse cx="235" cy="162" rx="90" ry="44" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="318" cy="138" rx="40" ry="30" fill="${fill}" stroke="${stroke}" stroke-width="2"/><path d="M283 124 Q266 102 250 122" fill="none" stroke="${stroke}" stroke-width="4" stroke-linecap="round"/><path d="M353 124 Q370 102 386 122" fill="none" stroke="${stroke}" stroke-width="4" stroke-linecap="round"/><ellipse cx="334" cy="146" rx="7" ry="6" fill="${stroke}"/><rect x="182" y="192" width="10" height="28" rx="5" fill="${stroke}"/><rect x="224" y="192" width="10" height="28" rx="5" fill="${stroke}"/><rect x="266" y="192" width="10" height="28" rx="5" fill="${stroke}"/><rect x="308" y="192" width="10" height="28" rx="5" fill="${stroke}"/>`;
+  }
+  if (topicKey === "wildlife") {
+    return `<path d="M240 86 L200 54 L186 98 L240 108 Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/><path d="M240 86 L280 54 L294 98 L240 108 Z" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="240" cy="144" r="54" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="219" cy="136" rx="7" ry="10" fill="${stroke}"/><ellipse cx="261" cy="136" rx="7" ry="10" fill="${stroke}"/><path d="M212 164 Q240 182 268 164" fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  if (topicKey === "turtle") {
+    return `<ellipse cx="238" cy="148" rx="78" ry="54" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="320" cy="146" r="22" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="189" cy="126" rx="16" ry="10" fill="rgba(255,255,255,0.24)"/><ellipse cx="238" cy="121" rx="16" ry="10" fill="rgba(255,255,255,0.24)"/><ellipse cx="287" cy="126" rx="16" ry="10" fill="rgba(255,255,255,0.24)"/><ellipse cx="213" cy="165" rx="16" ry="10" fill="rgba(255,255,255,0.24)"/><ellipse cx="262" cy="170" rx="16" ry="10" fill="rgba(255,255,255,0.24)"/><ellipse cx="190" cy="176" rx="18" ry="12" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="286" cy="176" rx="18" ry="12" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+  }
+  if (topicKey === "general") {
+    return `<circle cx="194" cy="128" r="18" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="236" cy="114" r="16" fill="${fill}" stroke="${stroke}" stroke-width="2"/><circle cx="278" cy="128" r="18" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="236" cy="170" rx="52" ry="34" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+  }
+  return `<ellipse cx="240" cy="170" rx="84" ry="36" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="240" cy="126" rx="58" ry="50" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="240" cy="76" rx="36" ry="38" fill="${fill}" stroke="${stroke}" stroke-width="2"/><ellipse cx="204" cy="64" rx="18" ry="28" fill="${fill}" stroke="${stroke}" stroke-width="2" transform="rotate(-28 204 64)"/><ellipse cx="276" cy="64" rx="18" ry="28" fill="${fill}" stroke="${stroke}" stroke-width="2" transform="rotate(28 276 64)"/><circle cx="224" cy="76" r="6" fill="${stroke}"/><circle cx="256" cy="76" r="6" fill="${stroke}"/><ellipse cx="240" cy="90" rx="8" ry="6" fill="${stroke}"/>`;
 }
+
+function petTopicSvgImage(topicKey: PetTopicKey, variant = 0): string {
+  const baseHue = PET_TOPIC_BASE_HUE[topicKey];
+  const hue = (baseHue + variant * 19) % 360;
+  const bg = `hsl(${hue}, 48%, 95%)`;
+  const fill = `hsl(${hue}, 44%, 74%)`;
+  const stroke = `hsl(${hue}, 34%, 30%)`;
+  const shape = petTopicShapeSvg(topicKey, fill, stroke);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PET_IMAGE_WIDTH} ${PET_IMAGE_HEIGHT}" fill="none"><rect width="${PET_IMAGE_WIDTH}" height="${PET_IMAGE_HEIGHT}" fill="${bg}"/>${shape}<text x="${PET_IMAGE_WIDTH / 2}" y="${PET_IMAGE_HEIGHT - 20}" font-family="system-ui,sans-serif" font-size="13" fill="${stroke}" text-anchor="middle" dominant-baseline="middle">${PET_TOPIC_LABEL[topicKey]}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function buildPetTopicImagePool(topicKey: PetTopicKey, size = 10): string[] {
+  return Array.from({ length: size }, (_, idx) => petTopicSvgImage(topicKey, idx));
+}
+
+const PET_IMAGES_BY_TOPIC: Record<PetTopicKey, string[]> = {
+  dog: buildPetTopicImagePool("dog"),
+  cat: buildPetTopicImagePool("cat"),
+  bird: buildPetTopicImagePool("bird"),
+  horse: buildPetTopicImagePool("horse"),
+  cattle: buildPetTopicImagePool("cattle"),
+  wildlife: buildPetTopicImagePool("wildlife"),
+  turtle: buildPetTopicImagePool("turtle"),
+  general: buildPetTopicImagePool("general"),
+};
 /** Distinct fallback image per article index (no blanks). */
 function petFallbackImageUrl(articleIndex: number): string {
   const h = (articleIndex * 47 + 137) % 360;
@@ -214,14 +197,6 @@ function petFallbackImageUrl(articleIndex: number): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${PET_IMAGE_WIDTH} ${PET_IMAGE_HEIGHT}"><rect fill="${bg}" width="${PET_IMAGE_WIDTH}" height="${PET_IMAGE_HEIGHT}"/><ellipse cx="240" cy="140" rx="80" ry="50" fill="${fg}" opacity="0.25"/><text x="240" y="200" font-family="system-ui,sans-serif" font-size="13" fill="${fg}" text-anchor="middle" dominant-baseline="middle">Pet health</text></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
-/** Map inferPetImageIndex (0–7) to topic key. */
-const PET_TOPIC_KEYS = ["cat", "turtle", "wildlife", "horse", "dog", "bird", "cattle", "wildlife"] as const;
-/** Featured/more cards: one animal image per topic. */
-const PET_FEATURED_IMAGES: string[] = PET_TOPIC_KEYS.map(
-  (topic) => PET_IMAGES_BY_TOPIC[topic]?.[0] ?? PET_IMAGES_BY_TOPIC.general[0]
-);
-/** Generic fallback. */
-const PET_ARTICLE_IMAGE_FALLBACK = petFallbackImageUrl(999);
 const PET_PLACEHOLDER_IMAGES = [
   "/pet-placeholder-1.svg",
   "/pet-placeholder-2.svg",
@@ -230,15 +205,62 @@ const PET_PLACEHOLDER_IMAGES = [
   "/pet-placeholder-5.svg",
   "/pet-placeholder-6.svg",
 ];
+const PET_ARTICLE_IMAGE_FALLBACK = PET_PLACEHOLDER_IMAGES[0] ?? petFallbackImageUrl(999);
 
-function petPlaceholderImage(index: number): string {
-  return PET_PLACEHOLDER_IMAGES[index % PET_PLACEHOLDER_IMAGES.length] ?? PET_ARTICLE_IMAGE_FALLBACK;
+function inferPetTopicKeyFromText(text: string): PetTopicKey {
+  const t = text.toLowerCase();
+  if (/\b(canine|dog|puppy|puppies)\b/.test(t)) return "dog";
+  if (/\b(feline|cat|kitten|kittens)\b/.test(t)) return "cat";
+  if (/\b(bird|avian|parrot|poultry|budgie)\b/.test(t)) return "bird";
+  if (/\b(equine|horse|pony|foal)\b/.test(t)) return "horse";
+  if (/\b(cattle|cow|cows|livestock|bovine)\b/.test(t)) return "cattle";
+  if (/\b(marine|turtle|aquatic|reptile)\b/.test(t)) return "turtle";
+  if (/\b(wildlife|fox|exotic|lemur|zoonotic|rabies|dengue|chikungunya|outbreak|travel|surveillance)\b/.test(t)) {
+    return "wildlife";
+  }
+  return "dog";
 }
 
-function applyImgFallback(img: HTMLImageElement, fallbackSrc: string): void {
-  if (img.getAttribute("data-fallback-applied")) return;
-  img.setAttribute("data-fallback-applied", "1");
-  img.src = fallbackSrc;
+function inferPetTopicKey(row: { title?: string; condition_or_topic?: string }): PetTopicKey {
+  return inferPetTopicKeyFromText(`${row.title ?? ""} ${row.condition_or_topic ?? ""}`);
+}
+
+function petTopicPlaceholderImage(topicKey: PetTopicKey, offset = 0): string {
+  return petTopicSvgImage(topicKey, 100 + offset);
+}
+
+function pickDistinctImage(pool: string[], startIndex: number, used: Set<string>): string {
+  if (pool.length === 0) return PET_ARTICLE_IMAGE_FALLBACK;
+  for (let i = 0; i < pool.length; i += 1) {
+    const candidate = pool[(startIndex + i) % pool.length];
+    if (!used.has(candidate)) {
+      used.add(candidate);
+      return candidate;
+    }
+  }
+  const fallback = pool[startIndex % pool.length] ?? pool[0];
+  used.add(fallback);
+  return fallback;
+}
+
+function pickBackupImage(pool: string[], startIndex: number, primary: string): string {
+  if (pool.length === 0) return primary;
+  for (let i = 0; i < pool.length; i += 1) {
+    const candidate = pool[(startIndex + i) % pool.length];
+    if (candidate !== primary) return candidate;
+  }
+  return primary;
+}
+
+function petTopicImageSet(topicKey: PetTopicKey, useIndex: number, usedPrimary: Set<string>) {
+  const pool = PET_IMAGES_BY_TOPIC[topicKey] ?? PET_IMAGES_BY_TOPIC.general;
+  const primary = pickDistinctImage(pool, useIndex, usedPrimary);
+  const backup = pickBackupImage(pool, useIndex + 1, primary);
+  return {
+    imageUrl: primary,
+    backupImageUrl: backup,
+    fallbackImageUrl: petTopicPlaceholderImage(topicKey, useIndex),
+  };
 }
 
 type DataSummary = {
@@ -290,6 +312,7 @@ type IngestedRow = {
   condition_or_topic?: string;
   title?: string;
   url?: string;
+  abstract?: string;
 };
 
 type BriefAudience = "pro" | "pet" | "all";
@@ -308,7 +331,11 @@ type PetNewsCard = {
   title: string;
   summary: string;
   tip: string;
+  paragraphs: string[];
   sources: IngestedRow[];
+  imageUrl: string;
+  backupImageUrl: string;
+  fallbackImageUrl: string;
 };
 
 /** One article per research item, written for pet owners, with image that matches content. */
@@ -322,7 +349,7 @@ type PetArticle = {
   imageUrl: string;
   /** Backup image URL (same topic, tried when primary fails to avoid blanks). */
   backupImageUrl: string;
-  /** Final fallback when both primary and backup fail (distinct SVG). */
+  /** Final fallback when both primary and backup fail (local animal placeholder). */
   fallbackImageUrl: string;
 };
 
@@ -341,6 +368,102 @@ function sourceHostLabel(url: string | undefined): string {
     return host || "Source";
   } catch {
     return "Source";
+  }
+}
+
+function extractPubMedIdFromUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  const match = url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)(?:\/|$|\?)/i);
+  return match ? match[1] : null;
+}
+
+function collectPubMedIds(rows: IngestedRow[]): string[] {
+  const ids = new Set<string>();
+  for (const row of rows) {
+    const id = extractPubMedIdFromUrl(row.url);
+    if (id) ids.add(id);
+  }
+  return Array.from(ids);
+}
+
+function buildPubMedEfetchUrl(ids: string[]): string {
+  const joined = encodeURIComponent(ids.join(","));
+  return `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${joined}&retmode=xml`;
+}
+
+function parsePubMedAbstractsXml(xml: string): Record<string, string> {
+  const map: Record<string, string> = {};
+  if (typeof DOMParser !== "undefined") {
+    const doc = new DOMParser().parseFromString(xml, "text/xml");
+    const parserErrors = doc.getElementsByTagName("parsererror");
+    if (parserErrors.length === 0) {
+      const articles = Array.from(doc.getElementsByTagName("PubmedArticle"));
+      for (const article of articles) {
+        const pmidNode = article.getElementsByTagName("PMID")[0];
+        const pmid = pmidNode?.textContent?.trim();
+        if (!pmid) continue;
+        const abstractNodes = Array.from(article.getElementsByTagName("AbstractText"));
+        const abstract = abstractNodes
+          .map((n) => (n.textContent || "").replace(/\s+/g, " ").trim())
+          .filter(Boolean)
+          .join(" ");
+        if (abstract) map[pmid] = abstract;
+      }
+      return map;
+    }
+  }
+  const blocks = xml.match(/<PubmedArticle>[\s\S]*?<\/PubmedArticle>/g) || [];
+  for (const block of blocks) {
+    const pmid = block.match(/<PMID[^>]*>(\d+)<\/PMID>/)?.[1];
+    if (!pmid) continue;
+    const abstracts = Array.from(block.matchAll(/<AbstractText[^>]*>([\s\S]*?)<\/AbstractText>/g))
+      .map((m) => m[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+    if (abstracts.length > 0) map[pmid] = abstracts.join(" ");
+  }
+  return map;
+}
+
+async function fetchPubMedAbstracts(ids: string[]): Promise<Record<string, string>> {
+  const unique = Array.from(new Set(ids.filter(Boolean)));
+  if (unique.length === 0) return {};
+  const out: Record<string, string> = {};
+  const chunkSize = 100;
+  for (let i = 0; i < unique.length; i += chunkSize) {
+    const batch = unique.slice(i, i + chunkSize);
+    const res = await fetch(buildPubMedEfetchUrl(batch), { cache: "no-store" });
+    if (!res.ok) continue;
+    const xml = await res.text();
+    Object.assign(out, parsePubMedAbstractsXml(xml));
+    // Respect NCBI unauthenticated rate limits.
+    if (i + chunkSize < unique.length) {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    }
+  }
+  return out;
+}
+
+const PUBMED_ABSTRACT_CACHE_KEY = "animalmind_pubmed_abstracts_v1";
+
+function readPubMedAbstractCache(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(PUBMED_ABSTRACT_CACHE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return {};
+    return parsed;
+  } catch {
+    return {};
+  }
+}
+
+function writePubMedAbstractCache(cache: Record<string, string>): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(PUBMED_ABSTRACT_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Ignore quota/storage errors.
   }
 }
 
@@ -404,20 +527,14 @@ function deriveHealthFromLastUpdated(lastUpdated: string | null | undefined): So
   };
 }
 
-/** Animal Mind logo: animal head (profile) + mind dot. Same as favicon. */
+/** AnimalMind logo: dog, cat, bird + ANIMAL MIND wordmark. */
 function AnimalMindLogo({ className }: { className?: string }) {
   return (
-    <svg
-      className={cn("shrink-0", className)}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <ellipse cx="16" cy="18" rx="10" ry="9" fill="currentColor" />
-      <path fill="currentColor" d="M10 10 L8 16 L12 14 Z" />
-      <circle cx="24" cy="10" r="4" fill="currentColor" />
-    </svg>
+    <img
+      src="/logo.png"
+      alt="AnimalMind"
+      className={cn("shrink-0 w-auto object-contain", className)}
+    />
   );
 }
 
@@ -499,6 +616,12 @@ function toPetBriefItems(rows: IngestedRow[] | null, limit = 14): IngestedRow[] 
   return unique;
 }
 
+function toPetResearchItems(rows: IngestedRow[] | null, limit = 30): IngestedRow[] {
+  const expanded = toPetBriefItems(rows, Math.max(limit * 3, limit));
+  const researchOnly = expanded.filter((row) => Boolean(extractPubMedIdFromUrl(row.url)));
+  return researchOnly.slice(0, limit);
+}
+
 function topTopics(rows: IngestedRow[], limit = 3): Array<{ topic: string; count: number }> {
   const counts = new Map<string, number>();
   for (const row of rows) {
@@ -546,11 +669,11 @@ function buildDailyBriefArticles(rows: IngestedRow[] | null): BriefArticle[] {
       audience: "all",
       title: "Surveillance watchlist: conditions to track now",
       summary: `Current feed signals emphasize ${formatTopics(topics)}.`,
-      points: [
-        `Top tracked conditions: ${topics.map((t) => `${t.topic} (${t.count})`).join(", ")}.`,
-        "Use this watchlist for travel advice, triage preparation, and clinic communication.",
-        "Cross-check outbreak context before operational decisions.",
-      ],
+      points: ensureThreeParagraphs([
+        `Top tracked conditions in this cycle are ${topics.map((t) => `${t.topic} (${t.count})`).join(", ")}. These represent the strongest surveillance-linked research themes in the current ingest window.`,
+        "Use this watchlist to guide travel counseling, triage planning, and proactive communication with owners when conditions begin to trend upward.",
+        "Before operational changes, open the source links to validate geography, species relevance, and reporting timeframes that can shift the practical risk profile.",
+      ], formatTopics(topics)),
       sources: uniqueRows(surveillanceRows, 4),
     });
   }
@@ -562,11 +685,11 @@ function buildDailyBriefArticles(rows: IngestedRow[] | null): BriefArticle[] {
       audience: "pro",
       title: "Research pulse: today’s strongest evidence signals",
       summary: `New research activity clusters around ${formatTopics(topics)}.`,
-      points: [
-        `${researchRows.length} research-linked items are represented in today’s ingest slice.`,
-        "Use these signals to prioritize rounds, education updates, and literature review.",
-        "Focus first on topics that appear repeatedly across multiple source types.",
-      ],
+      points: ensureThreeParagraphs([
+        `${researchRows.length} research-linked records are represented in this digest, with repeated concentration around ${formatTopics(topics)}.`,
+        "Treat these themes as near-term reading priorities for rounds, case discussions, protocol reviews, and internal education updates.",
+        "Start with topics appearing across multiple source types, because repeated cross-source recurrence usually indicates higher signal quality.",
+      ], formatTopics(topics)),
       sources: uniqueRows(researchRows, 4),
     });
   }
@@ -578,11 +701,11 @@ function buildDailyBriefArticles(rows: IngestedRow[] | null): BriefArticle[] {
       audience: "pet",
       title: "Pet news you can use today",
       summary: `Friendly, source-backed updates focused on ${formatTopics(topics)}.`,
-      points: [
-        "What to watch at home today.",
-        "When to contact your veterinarian sooner.",
-        "Trusted links for deeper reading.",
-      ],
+      points: ensureThreeParagraphs([
+        `Today's owner-facing research themes center on ${formatTopics(topics)}, which helps prioritize what is most relevant for at-home observation.`,
+        "Each article emphasizes concrete monitoring triggers so owners can escalate to veterinary care earlier when trends suggest increased risk.",
+        "Every summary links back to source material so decisions stay grounded in verifiable research context, not generalized advice.",
+      ], formatTopics(topics)),
       sources: uniqueRows(petRows, 4),
     });
   }
@@ -594,11 +717,11 @@ function buildDailyBriefArticles(rows: IngestedRow[] | null): BriefArticle[] {
       audience: "pro",
       title: "Operations brief: what to monitor in the next cycle",
       summary: `Cross-source monitoring currently centers on ${formatTopics(topics)}.`,
-      points: [
-        "Align care pathways and communication around repeated topic clusters.",
-        "Flag items that overlap surveillance and clinical evidence for team review.",
-        "Carry high-signal topics into the next daily brief for continuity.",
-      ],
+      points: ensureThreeParagraphs([
+        `Current operations-relevant clusters are ${formatTopics(topics)}, giving teams a focused set of signals to carry into shift handoffs and planning.`,
+        "Align internal communication and care pathways around repeated clusters, especially where clinical and surveillance evidence overlap.",
+        "Carry these same high-signal topics into the next cycle to preserve continuity and reduce context switching across the team.",
+      ], formatTopics(topics)),
       sources: uniqueRows(proRows, 3),
     });
   }
@@ -633,92 +756,154 @@ function petArticleTitle(row: IngestedRow): string {
 }
 
 /** One-sentence summary tied to this specific source for pet owners. */
-function petArticleSummary(row: IngestedRow): string {
-  const topic = (row.condition_or_topic || "pet health").replace(/<[^>]+>/g, "").trim() || "pet health";
+function petArticleSummary(row: IngestedRow, evidenceText = ""): string {
+  const topic = articleTopicText(row);
   const hasTitle = (row.title || "").trim().length > 0;
+  const evidence = firstSentences(evidenceText, 1, 170);
+  if (evidence) {
+    return `What this research reports on ${topic}: ${evidence}`;
+  }
   if (hasTitle) {
     return `This source on ${topic} is relevant for pet owners. Here's what it may mean for you and your pet—read the source for full details.`;
   }
   return `New update on ${topic}. Here's what it may mean for you and your pet. Read the source for full details; this is not medical advice.`;
 }
 
-/** 2–3 takeaway points for this article; topic-specific so each article feels real. */
-function petArticlePoints(row: IngestedRow): string[] {
-  const topic = (row.condition_or_topic || "").toLowerCase();
-  const title = (row.title || "").toLowerCase();
-  const text = `${topic} ${title}`;
-  const points: string[] = [];
-  if (text.includes("surveillance") || row.data_type === "surveillance") {
-    points.push("Check travel and disease notices if you're planning trips with your pet.");
-  }
-  if (text.includes("poison") || text.includes("toxin") || text.includes("emergenc")) {
-    points.push("Keep poison control and your vet's number handy; quick action matters.");
-  }
-  if (text.includes("vaccin") || text.includes("prevent")) {
-    points.push("Routine care and prevention support long-term health—ask your vet what's right for your pet.");
-  }
-  if (text.includes("cancer") || text.includes("canine") || text.includes("feline")) {
-    points.push("Early detection and regular check-ups help; your vet can explain options and what to watch for.");
-  }
-  if (text.includes("when to see") || text.includes("vet")) {
-    points.push("When in doubt, contact your veterinarian.");
-  }
-  if (points.length < 1) {
-    points.push("Staying informed helps you partner with your vet.");
-  }
-  points.push("Read the source for full details; this is not medical advice.");
-  return points.slice(0, 3);
+function articleTopicText(row: IngestedRow): string {
+  const cleaned = (row.condition_or_topic || "pet health")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || "pet health";
 }
 
-/** Choose image index (0–7) that matches article content: dog, cat, bird, horse, etc. */
-function inferPetImageIndex(row: IngestedRow): number {
-  const t = `${(row.title ?? "")} ${(row.condition_or_topic ?? "")}`.toLowerCase();
-  if (/\b(canine|dog|puppy|puppies)\b/.test(t)) return 4; // pet-5 dog
-  if (/\b(feline|cat|kitten|kittens)\b/.test(t)) return 0; // pet-1 cat
-  if (/\b(bird|avian|parrot|poultry|budgie)\b/.test(t)) return 5; // pet-6 parrot
-  if (/\b(equine|horse|pony|foal)\b/.test(t)) return 3; // pet-4 horse
-  if (/\b(cattle|cow|cows|livestock)\b/.test(t)) return 6; // pet-7 cows
-  if (/\b(wildlife|fox|exotic|lemur)\b/.test(t)) return 7; // pet-8 lemur
-  if (/\b(marine|turtle|aquatic)\b/.test(t)) return 1; // pet-2 turtle
-  if (/\b(surveillance|travel|outbreak)\b/.test(t)) return 2; // pet-3 fox (travel/wildlife)
-  return 4; // default dog for general pet
+function shortHeadline(text: string, max = 96): string {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned) return "";
+  if (cleaned.length <= max) return cleaned;
+  const clipped = cleaned.slice(0, max);
+  const breakAt = clipped.lastIndexOf(" ");
+  const safe = breakAt > 50 ? clipped.slice(0, breakAt) : clipped;
+  return `${safe}…`;
+}
+
+function cleanEvidenceText(text: string | undefined): string {
+  if (!text) return "";
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function rowEvidenceText(row: IngestedRow, abstractByPmid: Record<string, string>): string {
+  const fromRow = cleanEvidenceText(row.abstract);
+  if (fromRow) return fromRow;
+  const pmid = extractPubMedIdFromUrl(row.url);
+  if (!pmid) return "";
+  return cleanEvidenceText(abstractByPmid[pmid]);
+}
+
+function firstSentences(text: string, maxSentences = 2, maxChars = 320): string {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned) return "";
+  const matches = cleaned.match(/[^.!?]+[.!?]?/g) || [cleaned];
+  const picked: string[] = [];
+  let length = 0;
+  for (const s of matches) {
+    const sentence = s.trim();
+    if (!sentence) continue;
+    if (picked.length >= maxSentences) break;
+    if (length + sentence.length > maxChars && picked.length > 0) break;
+    picked.push(sentence);
+    length += sentence.length + 1;
+  }
+  const joined = picked.join(" ").trim();
+  return joined.length > maxChars ? `${joined.slice(0, maxChars - 1)}…` : joined;
+}
+
+function sourceEvidenceSnippet(rows: IngestedRow[], abstractByPmid: Record<string, string>): string {
+  const snippets: string[] = [];
+  for (const row of rows) {
+    const evidence = rowEvidenceText(row, abstractByPmid);
+    if (!evidence) continue;
+    const snippet = firstSentences(evidence, 1, 220);
+    if (!snippet) continue;
+    snippets.push(snippet);
+    if (snippets.length >= 2) break;
+  }
+  return snippets.join(" ");
+}
+
+function ensureThreeParagraphs(paragraphs: string[], topic: string): string[] {
+  const cleaned = paragraphs
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+  while (cleaned.length < 3) {
+    cleaned.push(`This update remains focused on ${topic}. Review the linked source for full methods and context.`);
+  }
+  return cleaned.slice(0, 3);
+}
+
+/** Exactly three research-focused paragraphs per article card. */
+function petArticleParagraphs(row: IngestedRow, evidenceText = ""): string[] {
+  const topic = articleTopicText(row);
+  const text = `${row.title || ""} ${row.condition_or_topic || ""}`.toLowerCase();
+  const sourceLabel = LABELS[row.data_type] ?? row.data_type.replace(/_/g, " ");
+  const citedTitle = shortHeadline(row.title || "", 110);
+  const headlineContext = citedTitle
+    ? `A new report titled “${citedTitle}” is one of today’s strongest signals in this topic.`
+    : "A newly ingested report is one of today’s strongest signals in this topic.";
+
+  const intro = `Research desk: ${topic} is active in today’s ${sourceLabel} feed. ${headlineContext} This article summarizes what researchers are flagging and why the update is relevant to everyday pet care decisions.`;
+  const evidenceSummary = firstSentences(evidenceText, 2, 360);
+  let interpretation = evidenceSummary
+    ? `What the study reports: ${evidenceSummary}`
+    : `From a research perspective, this signal should be treated as a trend indicator rather than a diagnosis. The practical read is to monitor appetite, comfort, activity, and behavior over time, then compare changes against the source details and your veterinarian’s guidance.`;
+  if (!evidenceSummary) {
+    if (/\b(surveillance|travel|outbreak|zoonotic|rabies|dengue|chikungunya)\b/.test(text) || row.data_type === "surveillance") {
+      interpretation = `This story intersects with surveillance research, where geography and timing can change risk quickly. The key reporting angle is location-specific exposure: check whether your region, travel plans, or species category appears directly in the source evidence.`;
+    } else if (/\b(poison|toxin|toxic|emergenc)\b/.test(text)) {
+      interpretation = `This signal points toward toxin or emergency relevance. Across published veterinary evidence, outcomes are strongly tied to early recognition and rapid escalation, so speed and preparation matter more than waiting to “see if it passes.”`;
+    } else if (/\b(vaccin|prevent|prophylaxis)\b/.test(text)) {
+      interpretation = `This update emphasizes prevention research. The recurring finding in this area is that timing, consistency, and individualized preventive planning with your veterinarian reduce avoidable complications and improve long-term protection.`;
+    } else if (/\b(cancer|oncolog|tumou|tumor|canine|feline)\b/.test(text)) {
+      interpretation = `This article intersects with oncology-related evidence, where trend detection and follow-up planning often shape both treatment options and quality-of-life outcomes. The research takeaway is to prioritize clear baselines and structured rechecks.`;
+    }
+  }
+
+  const action = `What this means for pets: use this report as context, not a substitute for care. If your pet shows symptoms related to ${topic}, contact your veterinarian promptly, and use the linked source to discuss risk factors, urgency, and next-step options.`;
+  return ensureThreeParagraphs([intro, interpretation, action], topic);
 }
 
 /** One article per source; image matches topic (dog→dog photo), distinct. Backup = same topic so no blanks. */
-function buildPetArticlesFromResearch(rows: IngestedRow[] | null): PetArticle[] {
-  const petRows = toPetBriefItems(rows, 30);
+function buildPetArticlesFromResearch(rows: IngestedRow[] | null, abstractByPmid: Record<string, string>): PetArticle[] {
+  const petRows = toPetResearchItems(rows, 30);
   if (petRows.length === 0) return [];
-  const topicUseCount: Record<string, number> = {};
+  const topicUseCount: Record<PetTopicKey, number> = {
+    cat: 0,
+    turtle: 0,
+    wildlife: 0,
+    horse: 0,
+    dog: 0,
+    bird: 0,
+    cattle: 0,
+    general: 0,
+  };
+  const usedPrimary = new Set<string>();
   return petRows.map((row, articleIndex) => {
-    const imageIndex = inferPetImageIndex(row);
-    const topicKey = PET_TOPIC_KEYS[imageIndex] ?? "dog";
-    const useIndex = topicUseCount[topicKey] ?? 0;
+    const topicKey = inferPetTopicKey(row);
+    const useIndex = topicUseCount[topicKey];
     topicUseCount[topicKey] = useIndex + 1;
-    const pool = PET_IMAGES_BY_TOPIC[topicKey] ?? PET_IMAGES_BY_TOPIC.general;
-    const primary = pool[useIndex % pool.length] ?? pool[0];
-    const backup = pool[(useIndex + 1) % pool.length] ?? pool[0];
+    const images = petTopicImageSet(topicKey, useIndex, usedPrimary);
+    const evidenceText = rowEvidenceText(row, abstractByPmid);
     return {
       id: stableArticleId(row),
       title: petArticleTitle(row),
-      summary: petArticleSummary(row),
-      points: petArticlePoints(row),
+      summary: petArticleSummary(row, evidenceText),
+      points: petArticleParagraphs(row, evidenceText),
       sources: [row],
-      imageUrl: primary,
-      backupImageUrl: backup,
-      fallbackImageUrl: petFallbackImageUrl(articleIndex),
+      imageUrl: images.imageUrl,
+      backupImageUrl: images.backupImageUrl,
+      fallbackImageUrl: images.fallbackImageUrl || petTopicPlaceholderImage(topicKey, articleIndex),
     };
   });
-}
-
-/** Pick image by seed (for featured/more pet news cards). */
-function pickPetNewsImage(seed: string): string {
-  const idx = hashText(seed) % PET_FEATURED_IMAGES.length;
-  return PET_FEATURED_IMAGES[idx];
-}
-
-/** Image for research article at index (featured/more cards). */
-function petArticleImage(index: number): string {
-  return index < PET_FEATURED_IMAGES.length ? PET_FEATURED_IMAGES[index] : PET_ARTICLE_IMAGE_FALLBACK;
 }
 
 function friendlyPetTopic(topic: string): string {
@@ -736,19 +921,99 @@ function friendlyPetTopic(topic: string): string {
   return topic || "Everyday pet care";
 }
 
-function buildPetNewsCards(rows: IngestedRow[] | null): PetNewsCard[] {
-  const petRows = toPetBriefItems(rows, 24);
+function petNewsResearchAngle(topicKey: PetTopicKey, sourceText: string): string {
+  if (/\b(surveillance|travel|outbreak|zoonotic|rabies|dengue|chikungunya)\b/.test(sourceText) || topicKey === "wildlife") {
+    return "Research context: this cluster is tied to surveillance-style reporting, where geography and timing can move faster than weekly care routines. Read source locations carefully before assuming risk applies to your household.";
+  }
+  if (/\b(poison|toxin|toxic|emergenc)\b/.test(sourceText)) {
+    return "Research context: toxin and emergency literature consistently shows that earlier recognition improves outcomes. The most useful lens here is rapid symptom tracking and early escalation, not delayed observation.";
+  }
+  if (/\b(vaccin|prevent|prophylaxis|tick|flea)\b/.test(sourceText)) {
+    return "Research context: prevention-focused evidence tends to reward consistency and timing. These updates are best interpreted as risk-reduction guidance to review with your veterinarian, not one-size-fits-all instructions.";
+  }
+  if (/\b(cancer|oncolog|tumou|tumor)\b/.test(sourceText)) {
+    return "Research context: oncology updates often emphasize early trend detection and structured follow-up. The practical reporting angle is whether this signal changes what to monitor between routine exams.";
+  }
+  if (topicKey === "bird" || topicKey === "turtle") {
+    return "Research context: species-specific care signals can be easy to miss because early signs are subtle. The evidence value here is in pattern tracking over time, especially appetite, activity, and behavior shifts.";
+  }
+  return "Research context: this topic appears repeatedly across today’s ingested sources, suggesting a meaningful signal rather than a one-off headline. Use the linked reports to check scope, methods, and limitations.";
+}
+
+function petNewsMeaningForPets(topicLabel: string, topicKey: PetTopicKey): string {
+  if (topicKey === "wildlife") {
+    return `What this means for pets: keep vaccines and parasite prevention current, and reduce high-risk exposure settings while this ${topicLabel.toLowerCase()} signal is active in public reporting.`;
+  }
+  if (topicKey === "dog" || topicKey === "cat") {
+    return `What this means for pets: for ${topicLabel.toLowerCase()}, watch for changes in appetite, comfort, energy, and behavior, and bring source-backed notes to your next veterinary conversation.`;
+  }
+  if (topicKey === "bird" || topicKey === "turtle") {
+    return `What this means for pets: in ${topicLabel.toLowerCase()} topics, subtle early signs matter; if your pet's baseline changes, contact your veterinarian sooner and share the source context.`;
+  }
+  return `What this means for pets: treat this ${topicLabel.toLowerCase()} coverage as decision support. Use it to ask better questions at your next vet visit, especially around risk factors and prevention timing.`;
+}
+
+function buildPetNewsParagraphs(
+  topicLabel: string,
+  topicRaw: string,
+  topicKey: PetTopicKey,
+  topicCount: number,
+  sourceRows: IngestedRow[],
+  evidenceSummary: string
+): string[] {
+  const updatesLabel = topicCount === 1 ? "update" : "updates";
+  const sourceMix = Array.from(
+    new Set(sourceRows.map((row) => LABELS[row.data_type] ?? row.data_type.replace(/_/g, " ")))
+  ).slice(0, 3);
+  const sourceMixText = sourceMix.length > 0 ? sourceMix.join(", ") : "public sources";
+  const leadTitle = shortHeadline(sourceRows[0]?.title || "", 90);
+  const lead = leadTitle
+    ? `Research desk lead: ${topicCount} ${updatesLabel} this cycle center on ${topicLabel.toLowerCase()}, with evidence drawn from ${sourceMixText}. One representative report is “${leadTitle}.”`
+    : `Research desk lead: ${topicCount} ${updatesLabel} this cycle center on ${topicLabel.toLowerCase()}, with evidence drawn from ${sourceMixText}.`;
+  const sourceText = `${topicRaw} ${sourceRows.map((row) => `${row.title || ""} ${row.condition_or_topic || ""}`).join(" ")}`.toLowerCase();
+  const researchAngle = evidenceSummary
+    ? `What current studies report: ${evidenceSummary}`
+    : petNewsResearchAngle(topicKey, sourceText);
+  const meaning = petNewsMeaningForPets(topicLabel, topicKey);
+  return ensureThreeParagraphs([lead, researchAngle, meaning], topicLabel);
+}
+
+function buildPetNewsCards(rows: IngestedRow[] | null, abstractByPmid: Record<string, string>): PetNewsCard[] {
+  const petRows = toPetResearchItems(rows, 24);
   if (petRows.length === 0) return [];
   const topics = topTopics(petRows, 5);
+  const topicUseCount: Record<PetTopicKey, number> = {
+    cat: 0,
+    turtle: 0,
+    wildlife: 0,
+    horse: 0,
+    dog: 0,
+    bird: 0,
+    cattle: 0,
+    general: 0,
+  };
+  const usedPrimary = new Set<string>();
   return topics.slice(0, 4).map((topic, idx) => {
     const groupRows = petRows.filter((r) => (r.condition_or_topic || "Everyday pet care") === topic.topic);
+    const sourceRows = uniqueRows(groupRows.length > 0 ? groupRows : petRows, 2);
+    const topicSignals = [topic.topic, ...sourceRows.map((row) => `${row.title || ""} ${row.condition_or_topic || ""}`)].join(" ");
+    const topicKey = inferPetTopicKeyFromText(topicSignals);
+    const useIndex = topicUseCount[topicKey];
+    topicUseCount[topicKey] = useIndex + 1;
+    const images = petTopicImageSet(topicKey, useIndex + idx, usedPrimary);
     const label = friendlyPetTopic(topic.topic);
+    const evidenceSummary = sourceEvidenceSnippet(sourceRows, abstractByPmid);
+    const paragraphs = buildPetNewsParagraphs(label, topic.topic, topicKey, topic.count, sourceRows, evidenceSummary);
     return {
       id: `pet-news-${idx}-${topic.topic}`,
-      title: `${label}: what pet owners should know`,
-      summary: `${topic.count} update${topic.count === 1 ? "" : "s"} in today’s brief.`,
-      tip: "If your pet seems worse, uncomfortable, or not eating/drinking normally, contact your vet.",
-      sources: uniqueRows(groupRows.length > 0 ? groupRows : petRows, 2),
+      title: `${label}: new research signals pet owners should watch`,
+      summary: `${topic.count} research ${topic.count === 1 ? "signal" : "signals"} in today’s pet brief.`,
+      tip: "If symptoms worsen or your pet is not eating/drinking normally, contact your veterinarian promptly.",
+      paragraphs,
+      sources: sourceRows,
+      imageUrl: images.imageUrl,
+      backupImageUrl: images.backupImageUrl,
+      fallbackImageUrl: images.fallbackImageUrl,
     };
   });
 }
@@ -759,6 +1024,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [pubmedAbstracts, setPubmedAbstracts] = useState<Record<string, string>>(() => readPubMedAbstractCache());
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [waitlistError, setWaitlistError] = useState("");
@@ -855,6 +1121,35 @@ export default function App() {
 
   const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const petBriefItems = useMemo(() => toPetBriefItems(memory), [memory]);
+  const petArticleSourceRows = useMemo(() => toPetResearchItems(memory, 30), [memory]);
+  const petRowsNeedingFetch = useMemo(
+    () => petArticleSourceRows.filter((row) => cleanEvidenceText(row.abstract).length === 0),
+    [petArticleSourceRows]
+  );
+  const petPubMedIds = useMemo(() => collectPubMedIds(petRowsNeedingFetch), [petRowsNeedingFetch]);
+  const petPubMedIdsKey = petPubMedIds.join(",");
+  const missingPetPubMedIds = useMemo(
+    () => petPubMedIds.filter((id) => !pubmedAbstracts[id]),
+    [petPubMedIdsKey, pubmedAbstracts]
+  );
+  const missingPetPubMedIdsKey = missingPetPubMedIds.join(",");
+  useEffect(() => {
+    if (missingPetPubMedIds.length === 0) return;
+    let cancelled = false;
+    fetchPubMedAbstracts(missingPetPubMedIds)
+      .then((fetched) => {
+        if (cancelled || Object.keys(fetched).length === 0) return;
+        setPubmedAbstracts((prev) => {
+          const next = { ...prev, ...fetched };
+          writePubMedAbstractCache(next);
+          return next;
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [missingPetPubMedIdsKey]);
   const petBriefCount = summary?.counts?.pet_owner ?? petBriefItems.length;
   const dailyBriefArticles = useMemo(() => buildDailyBriefArticles(memory), [memory]);
   const proBriefArticles = useMemo(
@@ -866,8 +1161,11 @@ export default function App() {
     [dailyBriefArticles]
   );
   /** One article per ingested research item, written for pet owners; each has its own image. */
-  const petArticlesFromResearch = useMemo(() => buildPetArticlesFromResearch(memory), [memory]);
-  const petNewsCards = useMemo(() => buildPetNewsCards(memory), [memory]);
+  const petArticlesFromResearch = useMemo(
+    () => buildPetArticlesFromResearch(memory, pubmedAbstracts),
+    [memory, pubmedAbstracts]
+  );
+  const petNewsCards = useMemo(() => buildPetNewsCards(memory, pubmedAbstracts), [memory, pubmedAbstracts]);
   const featuredPetNews = petNewsCards[0] ?? null;
   const morePetNews = petNewsCards.slice(1);
   const sourceHealthSummary = summary?.sourceHealthSummary ?? null;
@@ -912,7 +1210,7 @@ export default function App() {
                 onClick={() => navigate("")}
                 className="flex items-center gap-2 text-foreground no-underline min-h-[44px]"
               >
-                <AnimalMindLogo className="size-8 text-foreground shrink-0" />
+                <AnimalMindLogo className="size-12 text-foreground shrink-0" />
                 <span className="text-xl font-semibold tracking-tight">AnimalMind</span>
               </button>
               <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
@@ -1042,7 +1340,7 @@ export default function App() {
                 onClick={() => navigate("")}
                 className="flex items-center gap-2 text-foreground min-h-[44px]"
               >
-                <AnimalMindLogo className="size-7 text-foreground shrink-0" />
+                <AnimalMindLogo className="size-10 text-foreground shrink-0" />
                 <span className="text-base font-semibold">AnimalMind</span>
               </button>
               <div className="flex items-center gap-4">
@@ -1220,15 +1518,12 @@ export default function App() {
                   ) : petNewsCards.length > 0 ? (
                     <div className="space-y-4">
                       {featuredPetNews && (
-                        <Card className="border border-border bg-muted/10 overflow-hidden shadow-sm">
-                          <div className="aspect-[16/8] overflow-hidden bg-muted/20 border-b border-border">
-                            <img
-                              src={petArticleImage(0)}
-                              alt=""
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                              onError={(e) => applyImgFallback(e.currentTarget, petPlaceholderImage(0))}
-                            />
+                        <Card className="border border-border border-l-4 border-l-rose-200 bg-muted/10 overflow-hidden shadow-sm">
+                          <div className="border-b border-border bg-gradient-to-r from-rose-50/60 via-amber-50/40 to-sky-50/40 px-4 py-2.5">
+                            <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                              <Heart className="size-3.5 text-rose-500" aria-hidden />
+                              Pet-friendly brief
+                            </p>
                           </div>
                           <CardHeader className="p-4 pb-2">
                             <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Featured pet news</Badge>
@@ -1236,7 +1531,12 @@ export default function App() {
                             <CardDescription className="text-sm">{featuredPetNews.summary}</CardDescription>
                           </CardHeader>
                           <CardContent className="p-4 pt-0 space-y-3">
-                            <p className="text-sm text-muted-foreground">{featuredPetNews.tip}</p>
+                            <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
+                              {featuredPetNews.paragraphs.map((paragraph, idx) => (
+                                <p key={`featured-pet-paragraph-${idx}`}>{paragraph}</p>
+                              ))}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{featuredPetNews.tip}</p>
                             {featuredPetNews.sources.length > 0 && (
                               <div>
                                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Trusted sources</p>
@@ -1271,21 +1571,13 @@ export default function App() {
                       )}
                       {morePetNews.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {morePetNews.map((card, moreIndex) => (
-                            <Card key={card.id} className="border border-border bg-muted/10 overflow-hidden">
-                              <div className="aspect-[16/9] overflow-hidden bg-muted/20 border-b border-border">
-                                <img
-                                  src={petArticleImage(featuredPetNews ? 1 + moreIndex : moreIndex)}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                  onError={(e) =>
-                                    applyImgFallback(
-                                      e.currentTarget,
-                                      petPlaceholderImage(featuredPetNews ? 1 + moreIndex : moreIndex)
-                                    )
-                                  }
-                                />
+                          {morePetNews.map((card) => (
+                            <Card key={card.id} className="border border-border border-l-4 border-l-amber-200 bg-muted/10 overflow-hidden">
+                              <div className="border-b border-border bg-gradient-to-r from-amber-50/50 via-rose-50/35 to-background px-3 py-2">
+                                <p className="inline-flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+                                  <Heart className="size-3 text-rose-500" aria-hidden />
+                                  Pet-friendly update
+                                </p>
                               </div>
                               <CardHeader className="p-3 pb-2">
                                 <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Pet news</Badge>
@@ -1293,6 +1585,11 @@ export default function App() {
                                 <CardDescription className="text-xs">{card.summary}</CardDescription>
                               </CardHeader>
                               <CardContent className="p-3 pt-0 space-y-2">
+                                <div className="space-y-1.5 text-xs text-muted-foreground leading-relaxed">
+                                  {card.paragraphs.map((paragraph, paragraphIdx) => (
+                                    <p key={`pet-news-paragraph-${card.id}-${paragraphIdx}`}>{paragraph}</p>
+                                  ))}
+                                </div>
                                 <p className="text-xs text-muted-foreground">{card.tip}</p>
                                 {card.sources.length > 0 && (
                                   <div className="space-y-2">
@@ -1337,29 +1634,16 @@ export default function App() {
                   {!loading && !memoryLoading && (
                     <div className="mt-6 border-t border-border pt-4">
                       <h3 className="text-sm font-semibold text-foreground mb-3">Articles from today's research</h3>
-                      <p className="text-xs text-muted-foreground mb-4">One article per source—each card is tied to a single research item. Image matches the topic (e.g. dog for canine). Tap View source to read the full report.</p>
+                      <p className="text-xs text-muted-foreground mb-4">One article per source—each card is tied to a single research item, written in a clearer pet-owner voice. Tap View source to read the full report.</p>
                       {petArticlesFromResearch.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {petArticlesFromResearch.map((article) => (
-                          <Card key={`pet-article-${article.id}`} className="border border-border bg-muted/10 overflow-hidden">
-                            <div className="aspect-[16/10] overflow-hidden bg-muted/20 border-b border-border">
-                              <img
-                                src={article.imageUrl}
-                                alt=""
-                                className="w-full h-full object-cover"
-                                referrerPolicy="no-referrer"
-                                loading="lazy"
-                                onError={(e) => {
-                                  const img = e.currentTarget;
-                                  img.onerror = null;
-                                  if (!img.getAttribute("data-tried-backup")) {
-                                    img.setAttribute("data-tried-backup", "1");
-                                    img.src = article.backupImageUrl;
-                                  } else {
-                                    img.src = article.fallbackImageUrl;
-                                  }
-                                }}
-                              />
+                          <Card key={`pet-article-${article.id}`} className="border border-border border-l-4 border-l-sky-200 bg-muted/10 overflow-hidden">
+                            <div className="border-b border-border bg-gradient-to-r from-sky-50/55 via-rose-50/35 to-background px-3 py-2">
+                              <p className="inline-flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+                                <Heart className="size-3 text-rose-500" aria-hidden />
+                                Pet-friendly research take
+                              </p>
                             </div>
                             <CardHeader className="p-3 pb-2">
                               <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Article</Badge>
@@ -1367,11 +1651,11 @@ export default function App() {
                               <CardDescription className="text-xs">{article.summary}</CardDescription>
                             </CardHeader>
                             <CardContent className="p-3 pt-0 space-y-2">
-                              <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+                              <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
                                 {article.points.map((point, idx) => (
-                                  <li key={`pet-point-${article.id}-${idx}`}>{point}</li>
+                                  <p key={`pet-point-${article.id}-${idx}`}>{point}</p>
                                 ))}
-                              </ul>
+                              </div>
                               {article.sources.length > 0 && (() => {
                                 const source = article.sources[0];
                                 const href = safeHref(source.url);
@@ -1422,40 +1706,6 @@ export default function App() {
                 <p>
                   Educational only; never a replacement for professional veterinary care.
                 </p>
-              </div>
-            </section>
-
-            {/* Topics we cover — cards with professional images */}
-            <section id="pet-topics" aria-labelledby="pet-topics-heading" className="pb-10">
-              <h2 id="pet-topics-heading" className="section-label mb-3">What we cover</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Card className="border border-border bg-card overflow-hidden">
-                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
-                    <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=80" alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-base font-semibold">Dogs & cats</CardTitle>
-                    <CardDescription className="text-sm">Companion animal health, behavior, and care—backed by current research.</CardDescription>
-                  </CardHeader>
-                </Card>
-                <Card className="border border-border bg-card overflow-hidden">
-                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
-                    <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=80" alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-base font-semibold">When to see a vet</CardTitle>
-                    <CardDescription className="text-sm">Signs to watch for and when to seek professional care.</CardDescription>
-                  </CardHeader>
-                </Card>
-                <Card className="border border-border bg-card overflow-hidden">
-                  <div className="aspect-4/3 overflow-hidden bg-muted/30">
-                    <img src="https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&q=80" alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-base font-semibold">Evidence in plain language</CardTitle>
-                    <CardDescription className="text-sm">What studies and guidelines say—without the jargon.</CardDescription>
-                  </CardHeader>
-                </Card>
               </div>
             </section>
 
@@ -1535,7 +1785,7 @@ export default function App() {
                 onClick={() => navigate("")}
                 className="flex items-center gap-2 text-foreground min-h-[44px] py-1 text-left"
               >
-                <AnimalMindLogo className="size-7 sm:size-8 text-foreground shrink-0" />
+                <AnimalMindLogo className="size-10 sm:size-12 text-foreground shrink-0" />
                 <span className="text-base sm:text-xl font-semibold tracking-tight">AnimalMind Pro</span>
               </button>
               <div className="flex flex-wrap items-center gap-0.5 sm:gap-2 text-sm">
@@ -1912,11 +2162,11 @@ export default function App() {
                       <CardDescription className="text-sm">{article.summary}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0 space-y-3">
-                      <ul className="list-disc pl-4 space-y-1 text-sm text-muted-foreground">
+                      <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
                         {article.points.map((point, idx) => (
-                          <li key={`pro-point-${article.id}-${idx}`}>{point}</li>
+                          <p key={`pro-point-${article.id}-${idx}`}>{point}</p>
                         ))}
-                      </ul>
+                      </div>
                       {article.sources.length > 0 && (
                         <div>
                           <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Source links</p>
