@@ -998,12 +998,12 @@ function buildPetNewsParagraphs(
   const sourceMixText = sourceMix.length > 0 ? sourceMix.join(", ") : "public sources";
   const leadTitle = shortHeadline(sourceRows[0]?.title || "", 90);
   const lead = leadTitle
-    ? `Today’s pet brief includes ${topicCount} ${updatesLabel} related to ${topicLabel.toLowerCase()} from ${sourceMixText}. One linked source is “${leadTitle}.”`
-    : `Today’s pet brief includes ${topicCount} ${updatesLabel} related to ${topicLabel.toLowerCase()} from ${sourceMixText}.`;
+    ? `In this issue: ${topicCount} ${updatesLabel} on ${topicLabel.toLowerCase()} from ${sourceMixText}. One source article is “${leadTitle}.”`
+    : `In this issue: ${topicCount} ${updatesLabel} on ${topicLabel.toLowerCase()} from ${sourceMixText}.`;
   const researchAngle = evidenceSummary
-    ? `What linked sources say: ${evidenceSummary}`
-    : "What linked sources say: We could not extract enough abstract detail in this feed, so please open the source links for full context.";
-  const meaning = `Pet-owner takeaway: Use this update for awareness and questions to ask your vet. For urgent symptoms, contact your veterinarian right away.`;
+    ? `From the linked studies: ${evidenceSummary}`
+    : "From the linked studies: We could not read enough abstract detail in this feed, so please open the source links for full context.";
+  const meaning = "Owner takeaway: Use this as a quick update and a conversation starter with your vet. If symptoms feel urgent, contact your veterinarian right away.";
   return ensurePetOwnerParagraphs([lead, researchAngle, meaning], topicLabel);
 }
 
@@ -1035,9 +1035,9 @@ function buildPetNewsCards(rows: IngestedRow[] | null, abstractByPmid: Record<st
     const paragraphs = buildPetNewsParagraphs(label, topic.count, sourceRows, evidenceSummary);
     return {
       id: `pet-news-${idx}-${topic.topic}`,
-      title: `${label}: new research signals pet owners should watch`,
-      summary: `${topic.count} research ${topic.count === 1 ? "signal" : "signals"} in today’s pet brief.`,
-      tip: "If symptoms worsen or your pet is not eating/drinking normally, contact your veterinarian promptly.",
+      title: `${label}: what new pet research is saying`,
+      summary: `${topic.count} source-backed ${topic.count === 1 ? "update" : "updates"} in this issue.`,
+      tip: "If symptoms get worse, your pet is not eating/drinking, or behavior changes quickly, contact your veterinarian.",
       paragraphs,
       sources: sourceRows,
       imageUrl: images.imageUrl,
@@ -1586,7 +1586,7 @@ export default function App() {
                             </p>
                           </div>
                           <CardHeader className="p-4 pb-2">
-                            <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Featured pet news</Badge>
+                            <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Featured story</Badge>
                             <CardTitle className="text-base font-semibold">{featuredPetNews.title}</CardTitle>
                             <CardDescription className="text-sm">{featuredPetNews.summary}</CardDescription>
                           </CardHeader>
@@ -1640,7 +1640,7 @@ export default function App() {
                                 </p>
                               </div>
                               <CardHeader className="p-3 pb-2">
-                                <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Pet news</Badge>
+                                <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Quick read</Badge>
                                 <CardTitle className="text-sm font-semibold">{card.title}</CardTitle>
                                 <CardDescription className="text-xs">{card.summary}</CardDescription>
                               </CardHeader>
