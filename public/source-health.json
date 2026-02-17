@@ -1,17 +1,5 @@
 {
-  "lastUpdated": "2026-02-17T03:17:09.014Z",
-  "counts": {
-    "surveillance": 22,
-    "literature": 292,
-    "cancer": 29,
-    "case_data": 44,
-    "clinical": 85,
-    "pet_owner": 35,
-    "recall": 0,
-    "imaging": 3,
-    "vet_practice": 6
-  },
-  "sourceHealthSummary": {
+  "summary": {
     "generatedAt": "2026-02-17T03:17:08.883Z",
     "overallStatus": "sufficient",
     "coveragePercent": 100,
@@ -23,7 +11,7 @@
     "newestUpdate": "2026-02-17T03:17:08.861Z",
     "oldestUpdate": "2026-02-17T03:17:05.710Z"
   },
-  "sourceHealthDetails": [
+  "details": [
     {
       "sourceId": "pubmed_recent",
       "name": "PubMed core literature",
