@@ -1465,7 +1465,7 @@ export default function App() {
                   AnimalMind Pet Safety Dashboard
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Live monitoring of federal pet food & drug recalls.
+                  Live monitoring of pet-only animal-health recalls from official regulators.
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-3 sm:px-6">
@@ -1522,7 +1522,7 @@ export default function App() {
                   </ul>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    No active pet food or drug recall signals are in the current ingest snapshot yet.
+                    No pet-only recall alerts from FDA, CFIA, FSA, or FSANZ are in the current ingest snapshot yet.
                   </p>
                 )}
               </div>
