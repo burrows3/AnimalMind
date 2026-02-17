@@ -113,6 +113,9 @@ app.get('/api/ingested', rateLimit, requireInternalApiKey, (req, res) => {
 // API: dashboard payload (summary + flat ingested list + key insights). Rate-limited to prevent bulk extraction.
 const INGESTED_EXPORT_LIMIT = 280;
 const INGESTED_PER_TYPE_LIMIT = 40;
+const PET_OWNER_KEYWORDS =
+  /\b(dog|dogs|canine|cat|cats|feline|pet|pets|puppy|kitten|owner|home care|triage|poison|toxin|flea|tick|vaccin|vomit|diarrhea|itch|cough|ear|dental|behavior)\b/i;
+const PET_OWNER_FALLBACK_TYPES = new Set(['clinical', 'case_data', 'vet_practice', 'surveillance', 'literature', 'cancer']);
 
 function selectDashboardRows(rows, perTypeLimit = INGESTED_PER_TYPE_LIMIT, totalLimit = INGESTED_EXPORT_LIMIT) {
   const selected = [];
@@ -124,6 +127,34 @@ function selectDashboardRows(rows, perTypeLimit = INGESTED_PER_TYPE_LIMIT, total
     selected.push(row);
     byTypeCount[type] += 1;
     if (selected.length >= totalLimit) break;
+  }
+  return selected;
+}
+
+function extractPubMedId(url) {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.match(/pubmed\.ncbi\.nlm\.nih\.gov\/(\d+)(?:\/|$|\?)/i);
+  return match ? match[1] : null;
+}
+
+function isPetRelevantRow(row) {
+  if (!row) return false;
+  if (row.data_type === 'pet_owner') return true;
+  if (!PET_OWNER_FALLBACK_TYPES.has(row.data_type)) return false;
+  const text = `${row.title || ''} ${row.condition_or_topic || ''}`;
+  return PET_OWNER_KEYWORDS.test(text);
+}
+
+function selectPetResearchRows(rows) {
+  const selected = [];
+  const seen = new Set();
+  for (const row of rows || []) {
+    if (!isPetRelevantRow(row)) continue;
+    if (!extractPubMedId(row.url)) continue;
+    const key = `${row.url || ''}|${row.title || ''}|${row.condition_or_topic || ''}|${row.data_type}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    selected.push(row);
   }
   return selected;
 }
@@ -155,6 +186,23 @@ app.get('/api/dashboard', rateLimit, (req, res) => {
       sourceHealthDetails: sourceHealth.details,
       intelligenceGaps: sourceHealth.intelligenceGaps,
     });
+  } catch (e) {
+    res.status(500).json({ error: 'Service temporarily unavailable.' });
+  }
+});
+
+// API: complete pet-relevant research list (uncapped). Used for "View all research" in Pet edition.
+app.get('/api/pet-research', rateLimit, (req, res) => {
+  try {
+    const rows = selectPetResearchRows(getIngestedSorted()).map((r) => ({
+      data_type: r.data_type,
+      condition_or_topic: r.condition_or_topic || '',
+      title: r.title || '',
+      url: r.url || '',
+      published_at: r.published_at || null,
+      fetched_at: r.fetched_at || null,
+    }));
+    res.json({ count: rows.length, ingested: rows });
   } catch (e) {
     res.status(500).json({ error: 'Service temporarily unavailable.' });
   }

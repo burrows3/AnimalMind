@@ -597,10 +597,41 @@ async function fetchDashboard(): Promise<{
   return { summary, ingested };
 }
 
+/** Fetch the complete pet-relevant research list (uncapped), with static fallback for docs/public builds. */
+async function fetchAllPetResearch(): Promise<IngestedRow[] | null> {
+  try {
+    const r = await fetch(`${base}/api/pet-research`, { cache: "no-store" });
+    if (r.ok) {
+      const payload = await r.json();
+      return Array.isArray(payload.ingested) ? payload.ingested : null;
+    }
+  } catch {
+    // e.g. static hosting: no API server
+  }
+  try {
+    const r = await fetch(`${base}/data/pet-research.json`, { cache: "no-store" });
+    if (!r.ok) return null;
+    const payload = await r.json();
+    return Array.isArray(payload) ? payload : null;
+  } catch {
+    return null;
+  }
+}
+
 function rowTimestampMs(value: string | null | undefined): number {
   if (!value) return 0;
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatIngestedDate(value: string | null | undefined): string {
+  const ms = rowTimestampMs(value);
+  if (!ms) return "";
+  return new Date(ms).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function petRowSortScore(row: IngestedRow): number {
@@ -1062,6 +1093,10 @@ export default function App() {
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [waitlistError, setWaitlistError] = useState("");
+  const [showAllPetResearch, setShowAllPetResearch] = useState(false);
+  const [allPetResearchLoading, setAllPetResearchLoading] = useState(false);
+  const [allPetResearchError, setAllPetResearchError] = useState("");
+  const [allPetResearchRows, setAllPetResearchRows] = useState<IngestedRow[] | null>(null);
 
   const hashToView = (h: string) => {
     if (h === "consumer" || h === "clinical") return h;
@@ -1103,9 +1138,31 @@ export default function App() {
       .then(({ summary: s, ingested: i }) => {
         setSummary(s);
         setMemory(i);
+        setShowAllPetResearch(false);
+        setAllPetResearchRows(null);
+        setAllPetResearchError("");
       })
       .finally(() => setRefreshing(false));
   }, []);
+
+  const toggleAllPetResearch = useCallback(async () => {
+    if (showAllPetResearch) {
+      setShowAllPetResearch(false);
+      return;
+    }
+    setShowAllPetResearch(true);
+    if (allPetResearchRows !== null || allPetResearchLoading) return;
+    setAllPetResearchLoading(true);
+    setAllPetResearchError("");
+    const rows = await fetchAllPetResearch();
+    if (rows === null) {
+      setAllPetResearchRows([]);
+      setAllPetResearchError("Full pet research list is not available yet.");
+    } else {
+      setAllPetResearchRows(rows);
+    }
+    setAllPetResearchLoading(false);
+  }, [showAllPetResearch, allPetResearchRows, allPetResearchLoading]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1199,6 +1256,11 @@ export default function App() {
     () => buildPetArticlesFromResearch(memory, pubmedAbstracts),
     [memory, pubmedAbstracts]
   );
+  const allPetResearchList = useMemo(
+    () => toPetResearchItems(allPetResearchRows, Number.MAX_SAFE_INTEGER),
+    [allPetResearchRows]
+  );
+  const allPetResearchCount = allPetResearchList.length;
   const petNewsCards = useMemo(() => buildPetNewsCards(memory, pubmedAbstracts), [memory, pubmedAbstracts]);
   const featuredPetNews = petNewsCards[0] ?? null;
   const morePetNews = petNewsCards.slice(1);
@@ -1667,8 +1729,71 @@ export default function App() {
                   </p>
                   {!loading && !memoryLoading && (
                     <div className="mt-6 border-t border-border pt-4">
-                      <h3 className="text-sm font-semibold text-foreground mb-3">Articles from today's research</h3>
-                      <p className="text-xs text-muted-foreground mb-4">One article per source—each card is tied to a single research item, written in a clearer pet-owner voice. Tap View source to read the full report.</p>
+                      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <h3 className="text-sm font-semibold text-foreground mb-1">Articles from today's research</h3>
+                          <p className="text-xs text-muted-foreground">
+                            One article per source—each card is tied to a single research item, written in a clearer pet-owner voice. Tap View source to read the full report.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-md min-h-[40px] shrink-0"
+                          disabled={allPetResearchLoading}
+                          onClick={toggleAllPetResearch}
+                        >
+                          {allPetResearchLoading
+                            ? "Loading full list…"
+                            : showAllPetResearch
+                              ? "Hide full research list"
+                              : allPetResearchRows
+                                ? `View all pet research (${allPetResearchCount})`
+                                : "View all pet research"}
+                        </Button>
+                      </div>
+                      {showAllPetResearch && (
+                        <div className="mb-4 rounded-md border border-border bg-muted/20 p-3">
+                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">All pet-relevant research</p>
+                          {allPetResearchLoading ? (
+                            <p className="text-sm text-muted-foreground">Loading the complete pet research list…</p>
+                          ) : allPetResearchError ? (
+                            <p className="text-sm text-muted-foreground">{allPetResearchError}</p>
+                          ) : allPetResearchCount > 0 ? (
+                            <ul className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                              {allPetResearchList.map((row, idx) => {
+                                const href = safeHref(row.url);
+                                const dateLabel = formatIngestedDate(row.published_at ?? row.fetched_at);
+                                const title = petArticleTitle(row);
+                                return (
+                                  <li key={`pet-research-all-${idx}`} className="rounded-md border border-border bg-background px-3 py-2">
+                                    {href !== "#" ? (
+                                      <a
+                                        href={href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex w-full items-center justify-between gap-2 text-xs font-medium text-foreground hover:text-foreground/90"
+                                      >
+                                        <span className="truncate">{title}</span>
+                                        <ExternalLink className="size-3.5 shrink-0" aria-hidden />
+                                      </a>
+                                    ) : (
+                                      <span className="inline-flex w-full items-center text-xs text-muted-foreground">{title}</span>
+                                    )}
+                                    <p className="mt-1 text-[11px] text-muted-foreground">
+                                      {LABELS[row.data_type] ?? row.data_type.replace(/_/g, " ")}
+                                      {dateLabel ? ` · ${dateLabel}` : ""}
+                                    </p>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No pet-relevant research items are available yet.</p>
+                          )}
+                        </div>
+                      )}
                       {petArticlesFromResearch.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {petArticlesFromResearch.map((article) => (

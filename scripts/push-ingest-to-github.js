@@ -17,6 +17,7 @@ const DATA_DIR = path.join(REPO_ROOT, 'memory', 'data-sources');
 const DOCS_SUMMARY = path.join(REPO_ROOT, 'docs', 'data-summary.json');
 const DOCS_DATA_DIR = path.join(REPO_ROOT, 'docs', 'data');
 const DOCS_INGESTED_JSON = path.join(DOCS_DATA_DIR, 'ingested.json');
+const DOCS_PET_RESEARCH_JSON = path.join(DOCS_DATA_DIR, 'pet-research.json');
 const DOCS_SOURCE_HEALTH_JSON = path.join(REPO_ROOT, 'docs', 'source-health.json');
 const DOCS_REASONING_JSON = path.join(REPO_ROOT, 'docs', 'agent-reasoning.json');
 const DOCS_TOPIC_SUMMARY = path.join(REPO_ROOT, 'docs', 'topic-summary.json');
@@ -24,10 +25,14 @@ const PUBLIC_SUMMARY = path.join(REPO_ROOT, 'public', 'data-summary.json');
 const PUBLIC_SOURCE_HEALTH_JSON = path.join(REPO_ROOT, 'public', 'source-health.json');
 const PUBLIC_DATA_DIR = path.join(REPO_ROOT, 'public', 'data');
 const PUBLIC_INGESTED_JSON = path.join(PUBLIC_DATA_DIR, 'ingested.json');
+const PUBLIC_PET_RESEARCH_JSON = path.join(PUBLIC_DATA_DIR, 'pet-research.json');
 const PUBLIC_REASONING_JSON = path.join(REPO_ROOT, 'public', 'agent-reasoning.json');
 const PUBLIC_TOPIC_SUMMARY = path.join(REPO_ROOT, 'public', 'topic-summary.json');
 const INGESTED_EXPORT_LIMIT = 200;
 const INGESTED_PER_TYPE_LIMIT = 40;
+const PET_OWNER_KEYWORDS =
+  /\b(dog|dogs|canine|cat|cats|feline|pet|pets|puppy|kitten|owner|home care|triage|poison|toxin|flea|tick|vaccin|vomit|diarrhea|itch|cough|ear|dental|behavior)\b/i;
+const PET_OWNER_FALLBACK_TYPES = new Set(['clinical', 'case_data', 'vet_practice', 'surveillance', 'literature', 'cancer']);
 
 function run(cmd, opts = {}) {
   return execSync(cmd, { encoding: 'utf8', cwd: REPO_ROOT, ...opts });
@@ -112,6 +117,28 @@ function extractPubMedId(url) {
   return match ? match[1] : null;
 }
 
+function isPetRelevantRow(row) {
+  if (!row) return false;
+  if (row.data_type === 'pet_owner') return true;
+  if (!PET_OWNER_FALLBACK_TYPES.has(row.data_type)) return false;
+  const text = `${row.title || ''} ${row.condition_or_topic || ''}`;
+  return PET_OWNER_KEYWORDS.test(text);
+}
+
+function selectPetResearchRows(rows) {
+  const selected = [];
+  const seen = new Set();
+  for (const row of rows || []) {
+    if (!isPetRelevantRow(row)) continue;
+    if (!extractPubMedId(row.url)) continue;
+    const key = `${row.url || ''}|${row.title || ''}|${row.condition_or_topic || ''}|${row.data_type}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    selected.push(row);
+  }
+  return selected;
+}
+
 function selectDashboardRows(rows, perTypeLimit = INGESTED_PER_TYPE_LIMIT, totalLimit = INGESTED_EXPORT_LIMIT) {
   const selected = [];
   const byTypeCount = {};
@@ -163,15 +190,17 @@ async function main() {
     fs.writeFileSync(PUBLIC_SUMMARY, JSON.stringify(summary, null, 2), 'utf8');
     fs.writeFileSync(PUBLIC_SOURCE_HEALTH_JSON, JSON.stringify(sourceHealth, null, 2), 'utf8');
     // Export ingested rows for landing page "Browse data" (embed memory)
-    const rows = selectDashboardRows(getIngestedSorted());
+    const allRows = getIngestedSorted();
+    const rows = selectDashboardRows(allRows);
+    const petResearchRows = selectPetResearchRows(allRows);
     const missingPubMedIds = new Set();
-    for (const row of rows) {
+    for (const row of [...rows, ...petResearchRows]) {
       if (row.title) continue;
       const pmid = extractPubMedId(row.url);
       if (pmid) missingPubMedIds.add(pmid);
     }
     const pubmedTitleMap = await fetchPubMedTitles(Array.from(missingPubMedIds));
-    const mappedRows = rows.map((r) => {
+    const mapRowForExport = (r) => {
       const pmid = extractPubMedId(r.url);
       const fallbackTitle =
         (pmid && pubmedTitleMap[pmid]) ||
@@ -186,11 +215,15 @@ async function main() {
         published_at: r.published_at || null,
         fetched_at: r.fetched_at || null,
       };
-    });
+    };
+    const mappedRows = rows.map(mapRowForExport);
+    const mappedPetResearchRows = petResearchRows.map(mapRowForExport);
     if (!fs.existsSync(DOCS_DATA_DIR)) fs.mkdirSync(DOCS_DATA_DIR, { recursive: true });
     if (!fs.existsSync(PUBLIC_DATA_DIR)) fs.mkdirSync(PUBLIC_DATA_DIR, { recursive: true });
     fs.writeFileSync(DOCS_INGESTED_JSON, JSON.stringify(mappedRows), 'utf8');
     fs.writeFileSync(PUBLIC_INGESTED_JSON, JSON.stringify(mappedRows), 'utf8');
+    fs.writeFileSync(DOCS_PET_RESEARCH_JSON, JSON.stringify(mappedPetResearchRows), 'utf8');
+    fs.writeFileSync(PUBLIC_PET_RESEARCH_JSON, JSON.stringify(mappedPetResearchRows), 'utf8');
     const reasoning = getAgentReasoning();
     fs.writeFileSync(DOCS_REASONING_JSON, JSON.stringify(reasoning, null, 2), 'utf8');
     fs.writeFileSync(PUBLIC_REASONING_JSON, JSON.stringify(reasoning, null, 2), 'utf8');
@@ -217,11 +250,13 @@ async function main() {
   if (fs.existsSync(DOCS_SUMMARY)) run('git add docs/data-summary.json');
   if (fs.existsSync(DOCS_SOURCE_HEALTH_JSON)) run('git add docs/source-health.json');
   if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
+  if (fs.existsSync(DOCS_PET_RESEARCH_JSON)) run('git add docs/data/pet-research.json');
   if (fs.existsSync(DOCS_REASONING_JSON)) run('git add docs/agent-reasoning.json');
   if (fs.existsSync(DOCS_TOPIC_SUMMARY)) run('git add docs/topic-summary.json');
   if (fs.existsSync(PUBLIC_SUMMARY)) run('git add public/data-summary.json');
   if (fs.existsSync(PUBLIC_SOURCE_HEALTH_JSON)) run('git add public/source-health.json');
   if (fs.existsSync(PUBLIC_INGESTED_JSON)) run('git add public/data/ingested.json');
+  if (fs.existsSync(PUBLIC_PET_RESEARCH_JSON)) run('git add public/data/pet-research.json');
   if (fs.existsSync(PUBLIC_REASONING_JSON)) run('git add public/agent-reasoning.json');
   if (fs.existsSync(PUBLIC_TOPIC_SUMMARY)) run('git add public/topic-summary.json');
   if (fs.existsSync(path.join(REPO_ROOT, 'docs', 'index.html'))) run('git add docs/index.html');
