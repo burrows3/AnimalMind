@@ -1405,7 +1405,7 @@ export default function App() {
               </button>
               <div className="flex items-center gap-4">
                 <a href="#pet-brief" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Today's brief</a>
-                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Notify me</a>
+                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Get Free Weekly Animal Health Insights</a>
                 <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
               </div>
             </nav>
@@ -1510,7 +1510,7 @@ export default function App() {
                         aria-label="Email"
                       />
                       <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
-                        {waitlistStatus === "loading" ? "…" : "Notify me"}
+                        {waitlistStatus === "loading" ? "…" : "Get Free Weekly Animal Health Insights"}
                       </Button>
                     </form>
                   )}
@@ -1835,7 +1835,7 @@ export default function App() {
             {/* Updates */}
             <section id="pet-updates" aria-labelledby="pet-updates-heading" className="py-12 border-t border-border">
               <h2 id="pet-updates-heading" className="section-label mb-2">Updates</h2>
-              <p className="text-lg font-semibold text-foreground mb-1">Get notified</p>
+              <p className="text-lg font-semibold text-foreground mb-1">Get Free Weekly Animal Health Insights</p>
               <p className="text-sm text-muted-foreground mb-4 max-w-md">
                 We’ll email you when AnimalMind Pet launches and when we add new guidance. No spam.
               </p>
@@ -1874,7 +1874,7 @@ export default function App() {
                     aria-label="Email for updates"
                   />
                   <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
-                    {waitlistStatus === "loading" ? "…" : "Notify me"}
+                    {waitlistStatus === "loading" ? "…" : "Get Free Weekly Animal Health Insights"}
                   </Button>
                 </form>
               )}
@@ -2356,7 +2356,7 @@ export default function App() {
         {/* Updates / Waitlist — Supabase or mailto */}
         <section id="waitlist" aria-labelledby="waitlist-heading" className="py-12 border-t border-border">
           <h2 id="waitlist-heading" className="section-label mb-2">Updates</h2>
-          <p className="text-lg font-semibold text-foreground mb-1">Notify me</p>
+          <p className="text-lg font-semibold text-foreground mb-1">Get Free Weekly Animal Health Insights</p>
           <p className="text-sm text-muted-foreground mb-4 max-w-md">
             Get notified when we add new digests, daily briefs, or major updates. No spam.
           </p>
@@ -2395,7 +2395,7 @@ export default function App() {
                 aria-label="Email for updates"
               />
               <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
-                {waitlistStatus === "loading" ? "…" : "Notify me"}
+                {waitlistStatus === "loading" ? "…" : "Get Free Weekly Animal Health Insights"}
               </Button>
             </form>
           )}
