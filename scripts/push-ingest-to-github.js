@@ -183,6 +183,8 @@ async function main() {
         condition_or_topic: r.condition_or_topic,
         title: r.title || fallbackTitle,
         url: r.url || '',
+        published_at: r.published_at || null,
+        fetched_at: r.fetched_at || null,
       };
     });
     if (!fs.existsSync(DOCS_DATA_DIR)) fs.mkdirSync(DOCS_DATA_DIR, { recursive: true });

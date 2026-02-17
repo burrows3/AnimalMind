@@ -313,6 +313,8 @@ type IngestedRow = {
   title?: string;
   url?: string;
   abstract?: string;
+  published_at?: string | null;
+  fetched_at?: string | null;
 };
 
 type BriefAudience = "pro" | "pet" | "all";
@@ -595,6 +597,38 @@ async function fetchDashboard(): Promise<{
   return { summary, ingested };
 }
 
+function rowTimestampMs(value: string | null | undefined): number {
+  if (!value) return 0;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function petRowSortScore(row: IngestedRow): number {
+  if (extractPubMedIdFromUrl(row.url)) return 3; // Research-linked rows should lead pet-owner cards.
+  if (row.data_type === "pet_owner") return 2;
+  if (PET_OWNER_FALLBACK_TYPES.has(row.data_type)) return 1;
+  return 0;
+}
+
+function sortPetRowsNewestFirst(rows: IngestedRow[]): IngestedRow[] {
+  return [...rows].sort((a, b) => {
+    const scoreDelta = petRowSortScore(b) - petRowSortScore(a);
+    if (scoreDelta !== 0) return scoreDelta;
+
+    const aDate = rowTimestampMs(a.published_at ?? a.fetched_at);
+    const bDate = rowTimestampMs(b.published_at ?? b.fetched_at);
+    if (aDate !== bDate) return bDate - aDate;
+
+    const typeDelta = (a.data_type || "").localeCompare(b.data_type || "");
+    if (typeDelta !== 0) return typeDelta;
+
+    const titleDelta = (a.title || "").localeCompare(b.title || "");
+    if (titleDelta !== 0) return titleDelta;
+
+    return (a.url || "").localeCompare(b.url || "");
+  });
+}
+
 function toPetBriefItems(rows: IngestedRow[] | null, limit = 14): IngestedRow[] {
   if (!rows || rows.length === 0) return [];
   const explicit = rows.filter((r) => r.data_type === "pet_owner");
@@ -603,7 +637,7 @@ function toPetBriefItems(rows: IngestedRow[] | null, limit = 14): IngestedRow[] 
     const text = `${r.title || ""} ${r.condition_or_topic || ""}`;
     return PET_OWNER_KEYWORDS.test(text);
   });
-  const combined = [...explicit, ...fallback];
+  const combined = sortPetRowsNewestFirst([...explicit, ...fallback]);
   const seen = new Set<string>();
   const unique: IngestedRow[] = [];
   for (const item of combined) {
