@@ -170,7 +170,8 @@ app.get('/api/dashboard', rateLimit, (req, res) => {
       sourceHealthDetails: sourceHealth.details,
       intelligenceGaps: sourceHealth.intelligenceGaps,
     };
-    const rows = selectDashboardRows(getIngestedSorted())
+    // Avoid scanning the entire DB on every request; the dashboard exports are capped anyway.
+    const rows = selectDashboardRows(getIngestedSorted({ limit: 5000 }))
       .map((r) => ({
         data_type: r.data_type,
         condition_or_topic: r.condition_or_topic || '',
