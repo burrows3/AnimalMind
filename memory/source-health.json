@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-17T03:17:08.883Z",
+  "generatedAt": "2026-02-17T00:19:02.206Z",
   "sources": [
     {
       "sourceId": "autonomous_topics",
@@ -12,8 +12,8 @@
       "status": "fresh",
       "attempts": 20,
       "latencyMs": 0,
-      "lastAttemptAt": "2026-02-17T03:17:08.862Z",
-      "lastSuccessAt": "2026-02-17T03:17:08.861Z",
+      "lastAttemptAt": "2026-02-17T00:19:02.204Z",
+      "lastSuccessAt": "2026-02-17T00:19:02.204Z",
       "lastError": null
     },
     {
@@ -26,24 +26,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 235,
-      "lastAttemptAt": "2026-02-17T03:17:05.711Z",
-      "lastSuccessAt": "2026-02-17T03:17:05.710Z",
-      "lastError": null
-    },
-    {
-      "sourceId": "cfia_pet_recalls",
-      "name": "CFIA pet-related recalls (Canada)",
-      "type": "regulatory",
-      "tier": 1,
-      "audience": "both",
-      "requiredForCoverage": false,
-      "mode": "live",
-      "status": "fresh",
-      "attempts": 1,
-      "latencyMs": 434,
-      "lastAttemptAt": "2026-02-17T03:17:05.916Z",
-      "lastSuccessAt": "2026-02-17T03:17:05.915Z",
+      "latencyMs": 107,
+      "lastAttemptAt": "2026-02-17T00:19:01.339Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.338Z",
       "lastError": null
     },
     {
@@ -57,8 +42,8 @@
       "status": "fresh",
       "attempts": 1,
       "latencyMs": 0,
-      "lastAttemptAt": "2026-02-17T03:17:08.459Z",
-      "lastSuccessAt": "2026-02-17T03:17:08.459Z",
+      "lastAttemptAt": "2026-02-17T00:19:01.886Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.886Z",
       "lastError": null
     },
     {
@@ -71,54 +56,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 528,
-      "lastAttemptAt": "2026-02-17T03:17:06.006Z",
-      "lastSuccessAt": "2026-02-17T03:17:06.005Z",
-      "lastError": null
-    },
-    {
-      "sourceId": "fda_pet_recalls",
-      "name": "FDA Animal & Veterinary pet recalls",
-      "type": "regulatory",
-      "tier": 1,
-      "audience": "both",
-      "requiredForCoverage": false,
-      "mode": "live",
-      "status": "fresh",
-      "attempts": 1,
-      "latencyMs": 1879,
-      "lastAttemptAt": "2026-02-17T03:17:07.358Z",
-      "lastSuccessAt": "2026-02-17T03:17:07.357Z",
-      "lastError": null
-    },
-    {
-      "sourceId": "fsa_pet_recalls",
-      "name": "FSA pet-related alerts (United Kingdom)",
-      "type": "regulatory",
-      "tier": 2,
-      "audience": "both",
-      "requiredForCoverage": false,
-      "mode": "live",
-      "status": "fresh",
-      "attempts": 1,
-      "latencyMs": 1926,
-      "lastAttemptAt": "2026-02-17T03:17:07.410Z",
-      "lastSuccessAt": "2026-02-17T03:17:07.410Z",
-      "lastError": null
-    },
-    {
-      "sourceId": "fsanz_pet_recalls",
-      "name": "FSANZ pet-related recalls (Australia/NZ)",
-      "type": "regulatory",
-      "tier": 2,
-      "audience": "both",
-      "requiredForCoverage": false,
-      "mode": "live",
-      "status": "fresh",
-      "attempts": 1,
-      "latencyMs": 2974,
-      "lastAttemptAt": "2026-02-17T03:17:08.459Z",
-      "lastSuccessAt": "2026-02-17T03:17:08.458Z",
+      "latencyMs": 610,
+      "lastAttemptAt": "2026-02-17T00:19:01.843Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.843Z",
       "lastError": null
     },
     {
@@ -131,9 +71,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 1509,
-      "lastAttemptAt": "2026-02-17T03:17:06.999Z",
-      "lastSuccessAt": "2026-02-17T03:17:06.998Z",
+      "latencyMs": 226,
+      "lastAttemptAt": "2026-02-17T00:19:01.459Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.459Z",
       "lastError": null
     },
     {
@@ -146,9 +86,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 1391,
-      "lastAttemptAt": "2026-02-17T03:17:06.883Z",
-      "lastSuccessAt": "2026-02-17T03:17:06.883Z",
+      "latencyMs": 207,
+      "lastAttemptAt": "2026-02-17T00:19:01.441Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.441Z",
       "lastError": null
     },
     {
@@ -161,9 +101,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 1394,
-      "lastAttemptAt": "2026-02-17T03:17:06.887Z",
-      "lastSuccessAt": "2026-02-17T03:17:06.886Z",
+      "latencyMs": 240,
+      "lastAttemptAt": "2026-02-17T00:19:01.475Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.475Z",
       "lastError": null
     },
     {
@@ -176,9 +116,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 1290,
-      "lastAttemptAt": "2026-02-17T03:17:06.785Z",
-      "lastSuccessAt": "2026-02-17T03:17:06.784Z",
+      "latencyMs": 253,
+      "lastAttemptAt": "2026-02-17T00:19:01.489Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.489Z",
       "lastError": null
     },
     {
@@ -191,9 +131,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 1379,
-      "lastAttemptAt": "2026-02-17T03:17:06.875Z",
-      "lastSuccessAt": "2026-02-17T03:17:06.874Z",
+      "latencyMs": 256,
+      "lastAttemptAt": "2026-02-17T00:19:01.492Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.492Z",
       "lastError": null
     },
     {
@@ -206,9 +146,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 1524,
-      "lastAttemptAt": "2026-02-17T03:17:06.913Z",
-      "lastSuccessAt": "2026-02-17T03:17:06.912Z",
+      "latencyMs": 387,
+      "lastAttemptAt": "2026-02-17T00:19:01.605Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.605Z",
       "lastError": null
     },
     {
@@ -221,24 +161,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 1387,
-      "lastAttemptAt": "2026-02-17T03:17:06.881Z",
-      "lastSuccessAt": "2026-02-17T03:17:06.880Z",
-      "lastError": null
-    },
-    {
-      "sourceId": "rasff_pet_feed_alerts",
-      "name": "EU RASFF pet feed alerts",
-      "type": "regulatory",
-      "tier": 1,
-      "audience": "both",
-      "requiredForCoverage": false,
-      "mode": "live",
-      "status": "fresh",
-      "attempts": 1,
-      "latencyMs": 2102,
-      "lastAttemptAt": "2026-02-17T03:17:07.588Z",
-      "lastSuccessAt": "2026-02-17T03:17:07.587Z",
+      "latencyMs": 273,
+      "lastAttemptAt": "2026-02-17T00:19:01.508Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.508Z",
       "lastError": null
     },
     {
@@ -251,9 +176,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 1976,
-      "lastAttemptAt": "2026-02-17T03:17:07.472Z",
-      "lastSuccessAt": "2026-02-17T03:17:07.471Z",
+      "latencyMs": 649,
+      "lastAttemptAt": "2026-02-17T00:19:01.886Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.886Z",
       "lastError": null
     }
   ]

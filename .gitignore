@@ -24,7 +24,6 @@ memory/source-health.json
 memory/*.db
 memory/*.db-wal
 memory/*.db-shm
-memory/waitlist-backup.jsonl
 
 # Keep source maps out of version control
 *.map

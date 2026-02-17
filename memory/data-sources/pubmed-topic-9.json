@@ -1,6 +1,12 @@
 {
   "topic": "Unintended Consequences of Standard Care",
   "query": "(\"adverse effect\" OR iatrogenic OR \"unintended consequence\" OR \"long term outcome\")",
-  "count": 0,
-  "idlist": []
+  "count": 131183,
+  "idlist": [
+    "41697875",
+    "41697760",
+    "41696655",
+    "41696542",
+    "41696217"
+  ]
 }

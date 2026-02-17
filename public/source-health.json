@@ -1,15 +1,15 @@
 {
   "summary": {
-    "generatedAt": "2026-02-17T03:17:08.883Z",
+    "generatedAt": "2026-02-16T18:16:23.145Z",
     "overallStatus": "sufficient",
     "coveragePercent": 100,
-    "totalSources": 17,
+    "totalSources": 12,
     "requiredSources": 4,
     "staleSources": 0,
     "errorSources": 0,
     "noDataSources": 0,
-    "newestUpdate": "2026-02-17T03:17:08.861Z",
-    "oldestUpdate": "2026-02-17T03:17:05.710Z"
+    "newestUpdate": "2026-02-16T18:16:23.140Z",
+    "oldestUpdate": "2026-02-16T18:16:22.282Z"
   },
   "details": [
     {
@@ -21,8 +21,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:06.912Z",
-      "ageMs": 163016,
+      "lastUpdate": "2026-02-16T18:16:22.394Z",
+      "ageMs": 1040,
       "lastError": null
     },
     {
@@ -34,8 +34,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:06.998Z",
-      "ageMs": 162930,
+      "lastUpdate": "2026-02-16T18:16:22.464Z",
+      "ageMs": 970,
       "lastError": null
     },
     {
@@ -47,8 +47,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:06.883Z",
-      "ageMs": 163045,
+      "lastUpdate": "2026-02-16T18:16:22.366Z",
+      "ageMs": 1068,
       "lastError": null
     },
     {
@@ -60,8 +60,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:06.886Z",
-      "ageMs": 163042,
+      "lastUpdate": "2026-02-16T18:16:22.282Z",
+      "ageMs": 1152,
       "lastError": null
     },
     {
@@ -73,8 +73,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:06.880Z",
-      "ageMs": 163048,
+      "lastUpdate": "2026-02-16T18:16:22.285Z",
+      "ageMs": 1149,
       "lastError": null
     },
     {
@@ -86,8 +86,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:06.784Z",
-      "ageMs": 163145,
+      "lastUpdate": "2026-02-16T18:16:22.283Z",
+      "ageMs": 1151,
       "lastError": null
     },
     {
@@ -99,8 +99,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:06.874Z",
-      "ageMs": 163055,
+      "lastUpdate": "2026-02-16T18:16:22.284Z",
+      "ageMs": 1150,
       "lastError": null
     },
     {
@@ -112,8 +112,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:08.861Z",
-      "ageMs": 161068,
+      "lastUpdate": "2026-02-16T18:16:23.140Z",
+      "ageMs": 294,
       "lastError": null
     },
     {
@@ -125,8 +125,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:05.710Z",
-      "ageMs": 164219,
+      "lastUpdate": "2026-02-16T18:16:22.315Z",
+      "ageMs": 1119,
       "lastError": null
     },
     {
@@ -138,73 +138,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:06.005Z",
-      "ageMs": 163924,
-      "lastError": null
-    },
-    {
-      "sourceId": "fda_pet_recalls",
-      "name": "FDA Animal & Veterinary pet recalls",
-      "type": "regulatory",
-      "tier": 1,
-      "audience": "both",
-      "requiredForCoverage": false,
-      "status": "fresh",
-      "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:07.357Z",
-      "ageMs": 162572,
-      "lastError": null
-    },
-    {
-      "sourceId": "cfia_pet_recalls",
-      "name": "CFIA pet-related recalls (Canada)",
-      "type": "regulatory",
-      "tier": 1,
-      "audience": "both",
-      "requiredForCoverage": false,
-      "status": "fresh",
-      "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:05.915Z",
-      "ageMs": 164014,
-      "lastError": null
-    },
-    {
-      "sourceId": "fsa_pet_recalls",
-      "name": "FSA pet-related alerts (United Kingdom)",
-      "type": "regulatory",
-      "tier": 2,
-      "audience": "both",
-      "requiredForCoverage": false,
-      "status": "fresh",
-      "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:07.410Z",
-      "ageMs": 162519,
-      "lastError": null
-    },
-    {
-      "sourceId": "fsanz_pet_recalls",
-      "name": "FSANZ pet-related recalls (Australia/NZ)",
-      "type": "regulatory",
-      "tier": 2,
-      "audience": "both",
-      "requiredForCoverage": false,
-      "status": "fresh",
-      "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:08.458Z",
-      "ageMs": 161471,
-      "lastError": null
-    },
-    {
-      "sourceId": "rasff_pet_feed_alerts",
-      "name": "EU RASFF pet feed alerts",
-      "type": "regulatory",
-      "tier": 1,
-      "audience": "both",
-      "requiredForCoverage": false,
-      "status": "fresh",
-      "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:07.587Z",
-      "ageMs": 162342,
+      "lastUpdate": "2026-02-16T18:16:22.612Z",
+      "ageMs": 822,
       "lastError": null
     },
     {
@@ -216,8 +151,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:08.459Z",
-      "ageMs": 161470,
+      "lastUpdate": "2026-02-16T18:16:22.916Z",
+      "ageMs": 518,
       "lastError": null
     },
     {
@@ -229,8 +164,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-17T03:17:07.471Z",
-      "ageMs": 162458,
+      "lastUpdate": "2026-02-16T18:16:22.916Z",
+      "ageMs": 518,
       "lastError": null
     }
   ],

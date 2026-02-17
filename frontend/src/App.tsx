@@ -25,7 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { submitWaitlist } from "./waitlist";
+import { submitWaitlist, isSupabaseConfigured } from "./waitlist";
 
 const DATA_ORDER = [
   "surveillance",
@@ -45,7 +45,6 @@ const LABELS: Record<string, string> = {
   case_data: "Case reports",
   clinical: "Clinical",
   pet_owner: "Pet brief",
-  recall: "Recall",
   imaging: "Imaging",
   vet_practice: "Vet practice",
 };
@@ -543,71 +542,49 @@ function AnimalMindLogo({ className }: { className?: string }) {
 
 const base = typeof document !== "undefined" ? "" : "";
 
-function timeoutSignal(timeoutMs: number): { signal: AbortSignal; cancel: () => void } {
-  const controller = new AbortController();
-  const id = window.setTimeout(() => controller.abort(), Math.max(0, timeoutMs));
-  return {
-    signal: controller.signal,
-    cancel: () => window.clearTimeout(id),
-  };
-}
-
-async function fetchJsonWithTimeout<T>(url: string, init: RequestInit, timeoutMs: number): Promise<T | null> {
-  if (typeof window === "undefined") return null;
-  const { signal, cancel } = timeoutSignal(timeoutMs);
-  try {
-    const res = await fetch(url, { ...init, signal });
-    if (!res.ok) return null;
-    return (await res.json()) as T;
-  } catch {
-    return null;
-  } finally {
-    cancel();
-  }
-}
-
 /** Try /api/dashboard first (live from DB when running locally); else use static JSON. */
 async function fetchDashboard(): Promise<{
   summary: DataSummary | null;
   ingested: IngestedRow[] | null;
 }> {
-  const apiPayload = await fetchJsonWithTimeout<any>(`${base}/api/dashboard`, { cache: "no-store" }, 3500);
-  if (apiPayload) {
-    const apiSourceHealthSummary =
-      apiPayload.sourceHealthSummary ??
-      apiPayload.summary?.sourceHealthSummary ??
-      deriveHealthFromLastUpdated(apiPayload.summary?.lastUpdated);
-    const summaryFromApi: DataSummary | null = apiPayload.summary
-      ? {
-          ...apiPayload.summary,
-          sourceHealthSummary: apiSourceHealthSummary,
-          sourceHealthDetails: Array.isArray(apiPayload.sourceHealthDetails)
-            ? apiPayload.sourceHealthDetails
-            : Array.isArray(apiPayload.summary?.sourceHealthDetails)
-              ? apiPayload.summary.sourceHealthDetails
-              : [],
-          intelligenceGaps: Array.isArray(apiPayload.intelligenceGaps)
-            ? apiPayload.intelligenceGaps
-            : Array.isArray(apiPayload.summary?.intelligenceGaps)
-              ? apiPayload.summary.intelligenceGaps
-              : [],
-        }
-      : null;
-    return {
-      summary: summaryFromApi,
-      ingested: Array.isArray(apiPayload.ingested) ? apiPayload.ingested : null,
-    };
+  try {
+    const r = await fetch(`${base}/api/dashboard`, { cache: "no-store" });
+    if (r.ok) {
+      const data = await r.json();
+      const apiSourceHealthSummary =
+        data.sourceHealthSummary ?? data.summary?.sourceHealthSummary ?? deriveHealthFromLastUpdated(data.summary?.lastUpdated);
+      const summaryFromApi: DataSummary | null = data.summary
+        ? {
+            ...data.summary,
+            sourceHealthSummary: apiSourceHealthSummary,
+            sourceHealthDetails: Array.isArray(data.sourceHealthDetails)
+              ? data.sourceHealthDetails
+              : Array.isArray(data.summary?.sourceHealthDetails)
+                ? data.summary.sourceHealthDetails
+                : [],
+            intelligenceGaps: Array.isArray(data.intelligenceGaps)
+              ? data.intelligenceGaps
+              : Array.isArray(data.summary?.intelligenceGaps)
+                ? data.summary.intelligenceGaps
+                : [],
+          }
+        : null;
+      return {
+        summary: summaryFromApi,
+        ingested: Array.isArray(data.ingested) ? data.ingested : null,
+      };
+    }
+  } catch {
+    // e.g. GitHub Pages: no API
   }
-
-  const [summaryPayload, ingestedPayload, sourceHealthPayload] = await Promise.all([
-    fetchJsonWithTimeout<any>(`${base}/data-summary.json`, { cache: "no-store" }, 5000),
-    fetchJsonWithTimeout<any>(`${base}/data/ingested.json`, { cache: "no-store" }, 7000),
-    fetchJsonWithTimeout<any>(`${base}/source-health.json`, { cache: "no-store" }, 5000),
+  const [summaryRes, ingestedRes, sourceHealthRes] = await Promise.all([
+    fetch(`${base}/data-summary.json`, { cache: "no-store" }),
+    fetch(`${base}/data/ingested.json`, { cache: "no-store" }),
+    fetch(`${base}/source-health.json`, { cache: "no-store" }).catch(() => null),
   ]);
-
-  const summary: DataSummary | null =
-    summaryPayload && typeof summaryPayload === "object" ? (summaryPayload as DataSummary) : null;
-  if (summary && sourceHealthPayload && typeof sourceHealthPayload === "object") {
+  const summary = summaryRes.ok ? await summaryRes.json() : null;
+  const sourceHealthPayload = sourceHealthRes && sourceHealthRes.ok ? await sourceHealthRes.json() : null;
+  if (summary && sourceHealthPayload) {
     summary.sourceHealthSummary = summary.sourceHealthSummary ?? sourceHealthPayload.summary ?? null;
     summary.sourceHealthDetails = summary.sourceHealthDetails ?? sourceHealthPayload.details ?? [];
     summary.intelligenceGaps = summary.intelligenceGaps ?? sourceHealthPayload.intelligenceGaps ?? [];
@@ -615,23 +592,30 @@ async function fetchDashboard(): Promise<{
   if (summary && !summary.sourceHealthSummary) {
     summary.sourceHealthSummary = deriveHealthFromLastUpdated(summary.lastUpdated);
   }
-  const ingested = Array.isArray(ingestedPayload) ? (ingestedPayload as IngestedRow[]) : null;
+  const ingestedPayload = ingestedRes.ok ? await ingestedRes.json() : null;
+  const ingested = Array.isArray(ingestedPayload) ? ingestedPayload : null;
   return { summary, ingested };
 }
 
 /** Fetch the complete pet-relevant research list (uncapped), with static fallback for docs/public builds. */
 async function fetchAllPetResearch(): Promise<IngestedRow[] | null> {
-  const apiPayload = await fetchJsonWithTimeout<any>(`${base}/api/pet-research`, { cache: "no-store" }, 6000);
-  if (apiPayload && Array.isArray(apiPayload.ingested)) return apiPayload.ingested as IngestedRow[];
-  const staticPayload = await fetchJsonWithTimeout<any>(`${base}/data/pet-research.json`, { cache: "no-store" }, 6000);
-  return Array.isArray(staticPayload) ? (staticPayload as IngestedRow[]) : null;
-}
-
-async function fetchPetRecalls(): Promise<IngestedRow[] | null> {
-  const apiPayload = await fetchJsonWithTimeout<any>(`${base}/api/pet-recalls`, { cache: "no-store" }, 4500);
-  if (apiPayload && Array.isArray(apiPayload.ingested)) return apiPayload.ingested as IngestedRow[];
-  const staticPayload = await fetchJsonWithTimeout<any>(`${base}/data/pet-recalls.json`, { cache: "no-store" }, 4500);
-  return Array.isArray(staticPayload) ? (staticPayload as IngestedRow[]) : null;
+  try {
+    const r = await fetch(`${base}/api/pet-research`, { cache: "no-store" });
+    if (r.ok) {
+      const payload = await r.json();
+      return Array.isArray(payload.ingested) ? payload.ingested : null;
+    }
+  } catch {
+    // e.g. static hosting: no API server
+  }
+  try {
+    const r = await fetch(`${base}/data/pet-research.json`, { cache: "no-store" });
+    if (!r.ok) return null;
+    const payload = await r.json();
+    return Array.isArray(payload) ? payload : null;
+  } catch {
+    return null;
+  }
 }
 
 function rowTimestampMs(value: string | null | undefined): number {
@@ -648,32 +632,6 @@ function formatIngestedDate(value: string | null | undefined): string {
     month: "short",
     day: "numeric",
   });
-}
-
-const PET_SAFETY_SIGNAL_KEYWORDS =
-  /\b(recall|withdrawn?|advisory|alert|contaminat(?:ed|ion)|listeria|salmonella|toxic|toxicity|poison(?:ing)?|unsafe)\b/i;
-const PET_SAFETY_CONTEXT_KEYWORDS =
-  /\b(pet|pets|dog|dogs|cat|cats|canine|feline|puppy|puppies|kitten|kittens|companion)\b/i;
-const DOG_SIGNAL_KEYWORDS = /\b(dog|dogs|canine|puppy|puppies)\b/i;
-const CAT_SIGNAL_KEYWORDS = /\b(cat|cats|feline|kitten|kittens)\b/i;
-
-function rowSignalText(row: IngestedRow): string {
-  return `${row.title || ""} ${row.condition_or_topic || ""}`
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&[a-z]+;/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function buildPetSafetySignals(rows: IngestedRow[] | null, limit = 16): IngestedRow[] {
-  if (!rows || rows.length === 0) return [];
-  const candidates = rows.filter((row) => {
-    const text = rowSignalText(row);
-    if (!text) return false;
-    if (!PET_SAFETY_SIGNAL_KEYWORDS.test(text)) return false;
-    return PET_SAFETY_CONTEXT_KEYWORDS.test(text) || row.data_type === "pet_owner";
-  });
-  return uniqueRows(sortPetRowsNewestFirst(candidates), limit);
 }
 
 function petRowSortScore(row: IngestedRow): number {
@@ -1095,8 +1053,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [petRecallRows, setPetRecallRows] = useState<IngestedRow[] | null>(null);
-  const [petRecallLoading, setPetRecallLoading] = useState(false);
   const [pubmedAbstracts, setPubmedAbstracts] = useState<Record<string, string>>(() => readPubMedAbstractCache());
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -1142,20 +1098,15 @@ export default function App() {
 
   const loadData = useCallback(() => {
     setRefreshing(true);
-    setPetRecallLoading(true);
-    Promise.all([fetchDashboard(), fetchPetRecalls()])
-      .then(([dash, recalls]) => {
-        setSummary(dash.summary);
-        setMemory(dash.ingested);
-        setPetRecallRows(recalls);
+    fetchDashboard()
+      .then(({ summary: s, ingested: i }) => {
+        setSummary(s);
+        setMemory(i);
         setShowAllPetResearch(false);
         setAllPetResearchRows(null);
         setAllPetResearchError("");
       })
-      .finally(() => {
-        setPetRecallLoading(false);
-        setRefreshing(false);
-      });
+      .finally(() => setRefreshing(false));
   }, []);
 
   const toggleAllPetResearch = useCallback(async () => {
@@ -1180,21 +1131,16 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setPetRecallLoading(true);
-    Promise.all([fetchDashboard(), fetchPetRecalls()])
-      .then(([dash, recalls]) => {
+    fetchDashboard()
+      .then(({ summary: s, ingested: i }) => {
         if (!cancelled) {
-          setSummary(dash.summary);
-          setMemory(dash.ingested);
-          setPetRecallRows(recalls);
+          setSummary(s);
+          setMemory(i);
         }
       })
       .catch(() => {})
       .finally(() => {
-        if (!cancelled) {
-          setPetRecallLoading(false);
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
@@ -1205,8 +1151,10 @@ export default function App() {
   useEffect(() => {
     if (memory !== null) return;
     setMemoryLoading(true);
-    fetchJsonWithTimeout<any>(`${base}/data/ingested.json`, { cache: "no-store" }, 7000)
+    fetch(`${base}/data/ingested.json`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
       .then((data) => setMemory(Array.isArray(data) ? data : null))
+      .catch(() => setMemory(null))
       .finally(() => setMemoryLoading(false));
   }, [memory]);
 
@@ -1258,22 +1206,6 @@ export default function App() {
     };
   }, [missingPetPubMedIdsKey]);
   const petBriefCount = summary?.counts?.pet_owner ?? petBriefItems.length;
-  const recallRows = useMemo(() => {
-    const fromDedicated = Array.isArray(petRecallRows) ? petRecallRows : [];
-    if (fromDedicated.length > 0) return uniqueRows(sortPetRowsNewestFirst(fromDedicated), 72);
-    return uniqueRows(sortPetRowsNewestFirst((memory || []).filter((row) => row.data_type === "recall")), 48);
-  }, [memory, petRecallRows]);
-  // Pet Safety Dashboard should only show official recall/alert items (no keyword-based fallbacks).
-  const activeRecallCount = (Array.isArray(petRecallRows) ? petRecallRows.length : null) ?? summary?.counts?.recall ?? recallRows.length;
-  const dogRecallCount = useMemo(
-    () => recallRows.reduce((total, row) => total + Number(DOG_SIGNAL_KEYWORDS.test(rowSignalText(row))), 0),
-    [recallRows]
-  );
-  const catRecallCount = useMemo(
-    () => recallRows.reduce((total, row) => total + Number(CAT_SIGNAL_KEYWORDS.test(rowSignalText(row))), 0),
-    [recallRows]
-  );
-  const latestPetSafetyReports = recallRows.slice(0, 6);
   const dailyBriefArticles = useMemo(() => buildDailyBriefArticles(memory), [memory]);
   const proBriefArticles = useMemo(
     () => dailyBriefArticles.filter((article) => article.audience !== "pet"),
@@ -1472,84 +1404,14 @@ export default function App() {
                 <span className="text-base font-semibold">AnimalMind</span>
               </button>
               <div className="flex items-center gap-4">
-                <a href="#pet-safety-dashboard" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Safety dashboard</a>
                 <a href="#pet-brief" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Today's brief</a>
-                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Get updates</a>
+                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Get Free Weekly Animal Health Insights</a>
                 <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
               </div>
             </nav>
           </header>
 
           <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
-            <section id="pet-safety-dashboard" className="mb-8 rounded-lg border border-border bg-card shadow-sm">
-              <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
-                <p className="section-label mb-2">AnimalMind Pet Safety Dashboard</p>
-                <h2 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight">
-                  AnimalMind Pet Safety Dashboard
-                </h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Live monitoring of pet-only animal-health recalls from official regulators.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-3 sm:px-6">
-                <div className="rounded-md border border-border bg-muted/20 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Active Recalls</p>
-                  <p className="mt-1 text-2xl font-semibold text-foreground">{activeRecallCount}</p>
-                </div>
-                <div className="rounded-md border border-border bg-muted/20 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Dog-Related</p>
-                  <p className="mt-1 text-2xl font-semibold text-foreground">{dogRecallCount}</p>
-                </div>
-                <div className="rounded-md border border-border bg-muted/20 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Cat-Related</p>
-                  <p className="mt-1 text-2xl font-semibold text-foreground">{catRecallCount}</p>
-                </div>
-              </div>
-              <div className="border-t border-border px-4 pb-5 pt-3 sm:px-6">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-foreground">Recent safety reports</p>
-                  {lastUpdated && <span className="text-xs text-muted-foreground">As of {lastUpdated}</span>}
-                </div>
-                {loading || memoryLoading || (petRecallLoading && recallRows.length === 0) ? (
-                  <p className="text-sm text-muted-foreground">Loading safety reports…</p>
-                ) : latestPetSafetyReports.length > 0 ? (
-                  <ul className="space-y-2">
-                    {latestPetSafetyReports.map((row, idx) => {
-                      const href = safeHref(row.url);
-                      const dateLabel = formatIngestedDate(row.published_at ?? row.fetched_at);
-                      const title = (row.title || row.condition_or_topic || "Pet recall alert").trim();
-                      return (
-                        <li key={`pet-safety-report-${idx}`} className="rounded-md border border-border bg-background px-3 py-2">
-                          {href !== "#" ? (
-                            <a
-                              href={href}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex w-full items-center justify-between gap-2 text-sm font-medium text-foreground hover:text-foreground/90"
-                            >
-                              <span className="truncate">{title}</span>
-                              <ExternalLink className="size-3.5 shrink-0" aria-hidden />
-                            </a>
-                          ) : (
-                            <span className="inline-flex w-full items-center text-sm text-muted-foreground">
-                              {title}
-                            </span>
-                          )}
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            Pet recall alert
-                            {dateLabel ? ` · ${dateLabel}` : ""}
-                          </p>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No official pet recall alerts are in the current ingest snapshot yet.
-                  </p>
-                )}
-              </div>
-            </section>
             {sourceHealthSummary && (
               <section className={cn("mb-6 rounded-md border px-4 py-3", statusToneClass)}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1608,66 +1470,49 @@ export default function App() {
                     AnimalMind Pet
                   </Badge>
                   <h2 id="pet-cta-heading" className="text-lg sm:text-xl font-semibold text-foreground leading-tight mb-2">
-                    Sign up for advanced Animal Health updates
+                    {BRAND_HEADLINE}
                   </h2>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    We’ll email you when we publish new research and briefs. No spam.
+                    AnimalMind Pet is the owner edition: plain-language guidance from the same autonomous engine as Pro.
                   </p>
                   {waitlistStatus === "success" ? (
                     <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when Pet launches.</p>
                   ) : (
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <form
+                      className="flex flex-col sm:flex-row gap-2"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const email = waitlistEmail.trim();
+                        if (!email) return;
+                        setWaitlistStatus("loading");
+                        setWaitlistError("");
+                        const result = await submitWaitlist(email);
+                        if (result.ok) {
+                          setWaitlistStatus("success");
+                          setWaitlistEmail("");
+                        } else if (result.error === "MAILTO") {
+                          window.location.href = `mailto:pro@animalmind.co?subject=AnimalMind%20Pet%20updates&body=${encodeURIComponent(`Please add me for Pet owner updates.\nEmail: ${email}`)}`;
+                          setWaitlistStatus("success");
+                          setWaitlistEmail("");
+                        } else {
+                          setWaitlistStatus("error");
+                          setWaitlistError(result.error || "Something went wrong.");
+                        }
+                      }}
+                    >
                       <input
                         type="email"
                         placeholder="Your email"
                         value={waitlistEmail}
                         onChange={(e) => setWaitlistEmail(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const email = waitlistEmail.trim();
-                            if (email) {
-                              setWaitlistStatus("loading");
-                              setWaitlistError("");
-                              submitWaitlist(email).then((result) => {
-                                if (result.ok) {
-                                  setWaitlistStatus("success");
-                                  setWaitlistEmail("");
-                                } else {
-                                  setWaitlistStatus("error");
-                                  setWaitlistError(result.error || "Something went wrong.");
-                                }
-                              });
-                            }
-                          }
-                        }}
                         disabled={waitlistStatus === "loading"}
                         className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
                         aria-label="Email"
                       />
-                      <Button
-                        type="button"
-                        disabled={waitlistStatus === "loading"}
-                        className="rounded-md shrink-0 min-h-[44px]"
-                        aria-label="Sign up for updates"
-                        onClick={async () => {
-                          const email = waitlistEmail.trim();
-                          if (!email) return;
-                          setWaitlistStatus("loading");
-                          setWaitlistError("");
-                          const result = await submitWaitlist(email);
-                          if (result.ok) {
-                            setWaitlistStatus("success");
-                            setWaitlistEmail("");
-                          } else {
-                            setWaitlistStatus("error");
-                            setWaitlistError(result.error || "Something went wrong.");
-                          }
-                        }}
-                      >
-                        {waitlistStatus === "loading" ? "…" : "Sign up"}
+                      <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
+                        {waitlistStatus === "loading" ? "…" : "Get Free Weekly Animal Health Insights"}
                       </Button>
-                    </div>
+                    </form>
                   )}
                   {waitlistStatus === "error" && waitlistError && (
                     <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
@@ -1990,64 +1835,48 @@ export default function App() {
             {/* Updates */}
             <section id="pet-updates" aria-labelledby="pet-updates-heading" className="py-12 border-t border-border">
               <h2 id="pet-updates-heading" className="section-label mb-2">Updates</h2>
-              <p className="text-lg font-semibold text-foreground mb-1">Sign up for advanced Animal Health updates</p>
+              <p className="text-lg font-semibold text-foreground mb-1">Get Free Weekly Animal Health Insights</p>
               <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                We’ll email you when we publish new research and briefs. No spam.
+                We’ll email you when AnimalMind Pet launches and when we add new guidance. No spam.
               </p>
               {waitlistStatus === "success" ? (
                 <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when we have updates.</p>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-2 max-w-md">
+                <form
+                  className="flex flex-col sm:flex-row gap-2 max-w-md"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const email = waitlistEmail.trim();
+                    if (!email) return;
+                    setWaitlistStatus("loading");
+                    setWaitlistError("");
+                    const result = await submitWaitlist(email);
+                    if (result.ok) {
+                      setWaitlistStatus("success");
+                      setWaitlistEmail("");
+                    } else if (result.error === "MAILTO") {
+                      window.location.href = `mailto:pro@animalmind.co?subject=AnimalMind%20Pet%20updates&body=${encodeURIComponent(`Please add me for Pet updates.\nEmail: ${email}`)}`;
+                      setWaitlistStatus("success");
+                      setWaitlistEmail("");
+                    } else {
+                      setWaitlistStatus("error");
+                      setWaitlistError(result.error || "Something went wrong.");
+                    }
+                  }}
+                >
                   <input
                     type="email"
                     placeholder="you@example.com"
                     value={waitlistEmail}
                     onChange={(e) => setWaitlistEmail(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        const email = waitlistEmail.trim();
-                        if (email) {
-                          setWaitlistStatus("loading");
-                          setWaitlistError("");
-                          submitWaitlist(email).then((result) => {
-                            if (result.ok) {
-                              setWaitlistStatus("success");
-                              setWaitlistEmail("");
-                            } else {
-                              setWaitlistStatus("error");
-                              setWaitlistError(result.error || "Something went wrong.");
-                            }
-                          });
-                        }
-                      }
-                    }}
                     disabled={waitlistStatus === "loading"}
                     className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
                     aria-label="Email for updates"
                   />
-                  <Button
-                    type="button"
-                    disabled={waitlistStatus === "loading"}
-                    className="rounded-md shrink-0"
-                    onClick={async () => {
-                      const email = waitlistEmail.trim();
-                      if (!email) return;
-                      setWaitlistStatus("loading");
-                      setWaitlistError("");
-                      const result = await submitWaitlist(email);
-                      if (result.ok) {
-                        setWaitlistStatus("success");
-                        setWaitlistEmail("");
-                      } else {
-                        setWaitlistStatus("error");
-                        setWaitlistError(result.error || "Something went wrong.");
-                      }
-                    }}
-                  >
-                    {waitlistStatus === "loading" ? "…" : "Sign up"}
+                  <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
+                    {waitlistStatus === "loading" ? "…" : "Get Free Weekly Animal Health Insights"}
                   </Button>
-                </div>
+                </form>
               )}
               {waitlistStatus === "error" && waitlistError && (
                 <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
@@ -2524,70 +2353,57 @@ export default function App() {
           </section>
         </section>
 
-        {/* Waitlist — collect signups for advanced Animal Health updates only */}
+        {/* Updates / Waitlist — Supabase or mailto */}
         <section id="waitlist" aria-labelledby="waitlist-heading" className="py-12 border-t border-border">
           <h2 id="waitlist-heading" className="section-label mb-2">Updates</h2>
-          <p className="text-lg font-semibold text-foreground mb-1">Sign up for advanced Animal Health updates</p>
+          <p className="text-lg font-semibold text-foreground mb-1">Get Free Weekly Animal Health Insights</p>
           <p className="text-sm text-muted-foreground mb-4 max-w-md">
-            We’ll email you when we publish new research and briefs. No spam.
+            Get notified when we add new digests, daily briefs, or major updates. No spam.
           </p>
           {waitlistStatus === "success" ? (
-            <p className="text-sm text-foreground font-medium">You’re on the list. We’ll email you when we have updates.</p>
+            <p className="text-sm text-foreground font-medium">You’re on the list! We’ll notify you when we have updates.</p>
           ) : (
-            <div className="flex flex-col sm:flex-row gap-2 max-w-md">
+            <form
+              className="flex flex-col sm:flex-row gap-2 max-w-md"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const email = waitlistEmail.trim();
+                if (!email) return;
+                setWaitlistStatus("loading");
+                setWaitlistError("");
+                const result = await submitWaitlist(email);
+                if (result.ok) {
+                  setWaitlistStatus("success");
+                  setWaitlistEmail("");
+                } else if (result.error === "MAILTO") {
+                  window.location.href = `mailto:pro@animalmind.co?subject=Newsletter%20sign-up&body=${encodeURIComponent(`Please add me to the newsletter.\nEmail: ${email}`)}`;
+                  setWaitlistStatus("success");
+                  setWaitlistEmail("");
+                } else {
+                  setWaitlistStatus("error");
+                  setWaitlistError(result.error || "Something went wrong.");
+                }
+              }}
+            >
               <input
                 type="email"
-                placeholder="Your email"
+                placeholder="you@example.com"
                 value={waitlistEmail}
                 onChange={(e) => setWaitlistEmail(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const email = waitlistEmail.trim();
-                    if (email) {
-                      setWaitlistStatus("loading");
-                      setWaitlistError("");
-                      submitWaitlist(email).then((result) => {
-                        if (result.ok) {
-                          setWaitlistStatus("success");
-                          setWaitlistEmail("");
-                        } else {
-                          setWaitlistStatus("error");
-                          setWaitlistError(result.error || "Something went wrong.");
-                        }
-                      });
-                    }
-                  }
-                }}
                 disabled={waitlistStatus === "loading"}
                 className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
                 aria-label="Email for updates"
               />
-              <Button
-                type="button"
-                disabled={waitlistStatus === "loading"}
-                className="rounded-md shrink-0"
-                onClick={async () => {
-                  const email = waitlistEmail.trim();
-                  if (!email) return;
-                  setWaitlistStatus("loading");
-                  setWaitlistError("");
-                  const result = await submitWaitlist(email);
-                  if (result.ok) {
-                    setWaitlistStatus("success");
-                    setWaitlistEmail("");
-                  } else {
-                    setWaitlistStatus("error");
-                    setWaitlistError(result.error || "Something went wrong.");
-                  }
-                }}
-              >
-                {waitlistStatus === "loading" ? "…" : "Sign up"}
+              <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
+                {waitlistStatus === "loading" ? "…" : "Get Free Weekly Animal Health Insights"}
               </Button>
-            </div>
+            </form>
           )}
           {waitlistStatus === "error" && waitlistError && (
             <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+          )}
+          {!isSupabaseConfigured() && waitlistStatus === "idle" && (
+            <p className="mt-2 text-xs text-muted-foreground">Or email pro@animalmind.co with subject “AnimalMind Pro updates”.</p>
           )}
         </section>
 
