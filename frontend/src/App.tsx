@@ -634,6 +634,32 @@ function formatIngestedDate(value: string | null | undefined): string {
   });
 }
 
+const PET_SAFETY_SIGNAL_KEYWORDS =
+  /\b(recall|withdrawn?|advisory|alert|contaminat(?:ed|ion)|listeria|salmonella|toxic|toxicity|poison(?:ing)?|unsafe)\b/i;
+const PET_SAFETY_CONTEXT_KEYWORDS =
+  /\b(pet|pets|dog|dogs|cat|cats|canine|feline|puppy|puppies|kitten|kittens|companion)\b/i;
+const DOG_SIGNAL_KEYWORDS = /\b(dog|dogs|canine|puppy|puppies)\b/i;
+const CAT_SIGNAL_KEYWORDS = /\b(cat|cats|feline|kitten|kittens)\b/i;
+
+function rowSignalText(row: IngestedRow): string {
+  return `${row.title || ""} ${row.condition_or_topic || ""}`
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildPetSafetySignals(rows: IngestedRow[] | null, limit = 16): IngestedRow[] {
+  if (!rows || rows.length === 0) return [];
+  const candidates = rows.filter((row) => {
+    const text = rowSignalText(row);
+    if (!text) return false;
+    if (!PET_SAFETY_SIGNAL_KEYWORDS.test(text)) return false;
+    return PET_SAFETY_CONTEXT_KEYWORDS.test(text) || row.data_type === "pet_owner";
+  });
+  return uniqueRows(sortPetRowsNewestFirst(candidates), limit);
+}
+
 function petRowSortScore(row: IngestedRow): number {
   if (extractPubMedIdFromUrl(row.url)) return 3; // Research-linked rows should lead pet-owner cards.
   if (row.data_type === "pet_owner") return 2;
@@ -1206,6 +1232,17 @@ export default function App() {
     };
   }, [missingPetPubMedIdsKey]);
   const petBriefCount = summary?.counts?.pet_owner ?? petBriefItems.length;
+  const petSafetySignals = useMemo(() => buildPetSafetySignals(memory, 18), [memory]);
+  const activeRecallCount = petSafetySignals.length;
+  const dogRecallCount = useMemo(
+    () => petSafetySignals.reduce((total, row) => total + Number(DOG_SIGNAL_KEYWORDS.test(rowSignalText(row))), 0),
+    [petSafetySignals]
+  );
+  const catRecallCount = useMemo(
+    () => petSafetySignals.reduce((total, row) => total + Number(CAT_SIGNAL_KEYWORDS.test(rowSignalText(row))), 0),
+    [petSafetySignals]
+  );
+  const latestPetSafetyReports = petSafetySignals.slice(0, 6);
   const dailyBriefArticles = useMemo(() => buildDailyBriefArticles(memory), [memory]);
   const proBriefArticles = useMemo(
     () => dailyBriefArticles.filter((article) => article.audience !== "pet"),
@@ -1404,6 +1441,7 @@ export default function App() {
                 <span className="text-base font-semibold">AnimalMind</span>
               </button>
               <div className="flex items-center gap-4">
+                <a href="#pet-safety-dashboard" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Safety dashboard</a>
                 <a href="#pet-brief" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Today's brief</a>
                 <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Notify me</a>
                 <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
@@ -1451,6 +1489,75 @@ export default function App() {
                 </details>
               </section>
             )}
+            <section id="pet-safety-dashboard" className="mb-8 rounded-lg border border-border bg-card shadow-sm">
+              <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
+                <p className="section-label mb-2">AnimalMind Pet Safety Dashboard</p>
+                <h2 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight">
+                  AnimalMind Pet Safety Dashboard
+                </h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Live monitoring of federal pet food & drug recalls.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-3 sm:px-6">
+                <div className="rounded-md border border-border bg-muted/20 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Active Recalls</p>
+                  <p className="mt-1 text-2xl font-semibold text-foreground">{activeRecallCount}</p>
+                </div>
+                <div className="rounded-md border border-border bg-muted/20 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Dog-Related</p>
+                  <p className="mt-1 text-2xl font-semibold text-foreground">{dogRecallCount}</p>
+                </div>
+                <div className="rounded-md border border-border bg-muted/20 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Cat-Related</p>
+                  <p className="mt-1 text-2xl font-semibold text-foreground">{catRecallCount}</p>
+                </div>
+              </div>
+              <div className="border-t border-border px-4 pb-5 pt-3 sm:px-6">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-foreground">Recent safety reports</p>
+                  {lastUpdated && <span className="text-xs text-muted-foreground">As of {lastUpdated}</span>}
+                </div>
+                {loading || memoryLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading safety reports…</p>
+                ) : latestPetSafetyReports.length > 0 ? (
+                  <ul className="space-y-2">
+                    {latestPetSafetyReports.map((row, idx) => {
+                      const href = safeHref(row.url);
+                      const dateLabel = formatIngestedDate(row.published_at ?? row.fetched_at);
+                      const title = (row.title || row.condition_or_topic || "Pet safety update").trim();
+                      return (
+                        <li key={`pet-safety-report-${idx}`} className="rounded-md border border-border bg-background px-3 py-2">
+                          {href !== "#" ? (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex w-full items-center justify-between gap-2 text-sm font-medium text-foreground hover:text-foreground/90"
+                            >
+                              <span className="truncate">{title}</span>
+                              <ExternalLink className="size-3.5 shrink-0" aria-hidden />
+                            </a>
+                          ) : (
+                            <span className="inline-flex w-full items-center text-sm text-muted-foreground">
+                              {title}
+                            </span>
+                          )}
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {LABELS[row.data_type] ?? row.data_type.replace(/_/g, " ")}
+                            {dateLabel ? ` · ${dateLabel}` : ""}
+                          </p>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No active pet food or drug recall signals are in the current ingest snapshot yet.
+                  </p>
+                )}
+              </div>
+            </section>
             {/* Hero CTA — image + headline + waitlist */}
             <section
               id="pet-cta"
