@@ -1,12 +1,6 @@
 {
   "topic": "Comparative Physiology at Extremes",
   "query": "(\"extreme physiology\" OR \"hypoxia tolerance\" OR \"thermal tolerance\")",
-  "count": 4060,
-  "idlist": [
-    "41693106",
-    "41691785",
-    "41681476",
-    "41670122",
-    "41665867"
-  ]
+  "count": 0,
+  "idlist": []
 }

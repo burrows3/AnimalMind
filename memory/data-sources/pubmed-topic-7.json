@@ -1,12 +1,6 @@
 {
   "topic": "Emergent Effects of Complex Care Pathways",
   "query": "(\"care pathway\" OR \"multimodal\" OR \"combination therapy\" OR \"treatment sequence\")",
-  "count": 188766,
-  "idlist": [
-    "41698243",
-    "41698172",
-    "41698062",
-    "41698023",
-    "41697944"
-  ]
+  "count": 0,
+  "idlist": []
 }

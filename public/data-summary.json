@@ -1,17 +1,17 @@
 {
-  "lastUpdated": "2026-02-16T18:16:23.225Z",
+  "lastUpdated": "2026-02-17T00:35:05.472Z",
   "counts": {
     "surveillance": 21,
-    "literature": 138,
+    "literature": 207,
     "cancer": 17,
     "case_data": 18,
-    "clinical": 36,
+    "clinical": 47,
     "pet_owner": 18,
     "imaging": 3,
     "vet_practice": 6
   },
   "sourceHealthSummary": {
-    "generatedAt": "2026-02-16T18:16:23.145Z",
+    "generatedAt": "2026-02-17T00:35:05.421Z",
     "overallStatus": "sufficient",
     "coveragePercent": 100,
     "totalSources": 12,
@@ -19,8 +19,8 @@
     "staleSources": 0,
     "errorSources": 0,
     "noDataSources": 0,
-    "newestUpdate": "2026-02-16T18:16:23.140Z",
-    "oldestUpdate": "2026-02-16T18:16:22.282Z"
+    "newestUpdate": "2026-02-17T00:35:05.416Z",
+    "oldestUpdate": "2026-02-17T00:35:04.749Z"
   },
   "sourceHealthDetails": [
     {
@@ -32,8 +32,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:22.394Z",
-      "ageMs": 1040,
+      "lastUpdate": "2026-02-17T00:35:04.897Z",
+      "ageMs": 784,
       "lastError": null
     },
     {
@@ -45,8 +45,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:22.464Z",
-      "ageMs": 970,
+      "lastUpdate": "2026-02-17T00:35:04.900Z",
+      "ageMs": 781,
       "lastError": null
     },
     {
@@ -58,8 +58,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:22.366Z",
-      "ageMs": 1068,
+      "lastUpdate": "2026-02-17T00:35:04.880Z",
+      "ageMs": 801,
       "lastError": null
     },
     {
@@ -71,8 +71,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:22.282Z",
-      "ageMs": 1152,
+      "lastUpdate": "2026-02-17T00:35:04.798Z",
+      "ageMs": 883,
       "lastError": null
     },
     {
@@ -84,8 +84,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:22.285Z",
-      "ageMs": 1149,
+      "lastUpdate": "2026-02-17T00:35:04.826Z",
+      "ageMs": 855,
       "lastError": null
     },
     {
@@ -97,8 +97,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:22.283Z",
-      "ageMs": 1151,
+      "lastUpdate": "2026-02-17T00:35:04.799Z",
+      "ageMs": 882,
       "lastError": null
     },
     {
@@ -110,8 +110,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:22.284Z",
-      "ageMs": 1150,
+      "lastUpdate": "2026-02-17T00:35:04.827Z",
+      "ageMs": 854,
       "lastError": null
     },
     {
@@ -123,8 +123,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:23.140Z",
-      "ageMs": 294,
+      "lastUpdate": "2026-02-17T00:35:05.416Z",
+      "ageMs": 265,
       "lastError": null
     },
     {
@@ -136,8 +136,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:22.315Z",
-      "ageMs": 1119,
+      "lastUpdate": "2026-02-17T00:35:04.749Z",
+      "ageMs": 932,
       "lastError": null
     },
     {
@@ -149,8 +149,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:22.612Z",
-      "ageMs": 822,
+      "lastUpdate": "2026-02-17T00:35:05.263Z",
+      "ageMs": 418,
       "lastError": null
     },
     {
@@ -162,8 +162,8 @@
       "requiredForCoverage": true,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:22.916Z",
-      "ageMs": 518,
+      "lastUpdate": "2026-02-17T00:35:05.263Z",
+      "ageMs": 418,
       "lastError": null
     },
     {
@@ -175,8 +175,8 @@
       "requiredForCoverage": false,
       "status": "fresh",
       "mode": "live",
-      "lastUpdate": "2026-02-16T18:16:22.916Z",
-      "ageMs": 518,
+      "lastUpdate": "2026-02-17T00:35:05.216Z",
+      "ageMs": 465,
       "lastError": null
     }
   ],

@@ -1,6 +1,6 @@
 # Autonomous insights
 
-**Last updated:** 2026-02-16T18:16:23.225Z
+**Last updated:** 2026-02-17T00:35:05.472Z
 
 The system read the latest ingested data and summarized what matters for animal health.
 
@@ -11,26 +11,26 @@ The system read the latest ingested data and summarized what matters for animal 
 | Type | Count |
 |------|-------|
 | Surveillance (CDC) | 21 |
-| Literature (PubMed) | 138 |
+| Literature (PubMed) | 207 |
 | Cancer (animal / veterinary) | 17 |
 | Case data (veterinary case reports) | 18 |
-| Clinical (practice, small animal, equine) | 36 |
+| Clinical (practice, small animal, equine) | 47 |
 | Pet owner brief items | 18 |
 | Imaging & radiographs | 3 |
 | Vet practice (guidelines, resources) | 6 |
 
 ## Active surveillance (conditions tracked)
 
-- A Strain of Multidrug-Resistant &lt;em&gt;Salmonella&lt;/em&gt; Newport
-- Animal disease alerts
-- Chikungunya
-- Clade II Monkeypox
-- Diphtheria
-- East African Sleeping Sickness
-- Extensively Drug-Resistant Typhoid Fever
-- Global Dengue
 - Global Measles
+- East African Sleeping Sickness
+- Chikungunya
+- Extensively Drug-Resistant Typhoid Fever
 - Global Polio
+- Rabies
+- Rocky Mountain Spotted Fever
+- Diphtheria
+- Yellow Fever
+- A Strain of Multidrug-Resistant &lt;em&gt;Salmonella&lt;/em&gt; Newport
 
 ---
 

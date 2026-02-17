@@ -1,12 +1,6 @@
 {
   "topic": "Unexpected Correlations and Anomalies",
   "query": "(\"unexpected correlation\" OR anomaly OR outlier OR paradoxical)",
-  "count": 884394,
-  "idlist": [
-    "41698241",
-    "41698196",
-    "41698193",
-    "41698169",
-    "41698164"
-  ]
+  "count": 0,
+  "idlist": []
 }

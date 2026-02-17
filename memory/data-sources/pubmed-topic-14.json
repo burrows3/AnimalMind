@@ -1,12 +1,6 @@
 {
   "topic": "Environmental Exposure and Sentinel Signals",
   "query": "(\"sentinel\" OR \"environmental exposure\" OR bioindicator OR toxicity)",
-  "count": 1361497,
-  "idlist": [
-    "41698281",
-    "41698222",
-    "41698219",
-    "41698157",
-    "41698028"
-  ]
+  "count": 0,
+  "idlist": []
 }
