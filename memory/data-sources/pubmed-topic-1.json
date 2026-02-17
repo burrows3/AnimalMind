@@ -1,6 +1,12 @@
 {
   "topic": "Decoding Animal Pain and Distress",
   "query": "(\"pain assessment\" OR \"pain behavior\" OR \"pain score\" OR distress OR nociception)",
-  "count": 0,
-  "idlist": []
+  "count": 290517,
+  "idlist": [
+    "41698286",
+    "41698056",
+    "41698020",
+    "41698018",
+    "41697997"
+  ]
 }

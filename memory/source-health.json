@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-15T23:21:56.796Z",
+  "generatedAt": "2026-02-17T03:17:08.883Z",
   "sources": [
     {
       "sourceId": "autonomous_topics",
@@ -12,8 +12,8 @@
       "status": "fresh",
       "attempts": 20,
       "latencyMs": 0,
-      "lastAttemptAt": "2026-02-15T23:21:56.776Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.774Z",
+      "lastAttemptAt": "2026-02-17T03:17:08.862Z",
+      "lastSuccessAt": "2026-02-17T03:17:08.861Z",
       "lastError": null
     },
     {
@@ -26,9 +26,24 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 174,
-      "lastAttemptAt": "2026-02-15T23:21:55.937Z",
-      "lastSuccessAt": "2026-02-15T23:21:55.936Z",
+      "latencyMs": 235,
+      "lastAttemptAt": "2026-02-17T03:17:05.711Z",
+      "lastSuccessAt": "2026-02-17T03:17:05.710Z",
+      "lastError": null
+    },
+    {
+      "sourceId": "cfia_pet_recalls",
+      "name": "CFIA pet-related recalls (Canada)",
+      "type": "regulatory",
+      "tier": 1,
+      "audience": "both",
+      "requiredForCoverage": false,
+      "mode": "live",
+      "status": "fresh",
+      "attempts": 1,
+      "latencyMs": 434,
+      "lastAttemptAt": "2026-02-17T03:17:05.916Z",
+      "lastSuccessAt": "2026-02-17T03:17:05.915Z",
       "lastError": null
     },
     {
@@ -42,8 +57,8 @@
       "status": "fresh",
       "attempts": 1,
       "latencyMs": 0,
-      "lastAttemptAt": "2026-02-15T23:21:56.576Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.576Z",
+      "lastAttemptAt": "2026-02-17T03:17:08.459Z",
+      "lastSuccessAt": "2026-02-17T03:17:08.459Z",
       "lastError": null
     },
     {
@@ -56,9 +71,54 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 588,
-      "lastAttemptAt": "2026-02-15T23:21:56.353Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.351Z",
+      "latencyMs": 528,
+      "lastAttemptAt": "2026-02-17T03:17:06.006Z",
+      "lastSuccessAt": "2026-02-17T03:17:06.005Z",
+      "lastError": null
+    },
+    {
+      "sourceId": "fda_pet_recalls",
+      "name": "FDA Animal & Veterinary pet recalls",
+      "type": "regulatory",
+      "tier": 1,
+      "audience": "both",
+      "requiredForCoverage": false,
+      "mode": "live",
+      "status": "fresh",
+      "attempts": 1,
+      "latencyMs": 1879,
+      "lastAttemptAt": "2026-02-17T03:17:07.358Z",
+      "lastSuccessAt": "2026-02-17T03:17:07.357Z",
+      "lastError": null
+    },
+    {
+      "sourceId": "fsa_pet_recalls",
+      "name": "FSA pet-related alerts (United Kingdom)",
+      "type": "regulatory",
+      "tier": 2,
+      "audience": "both",
+      "requiredForCoverage": false,
+      "mode": "live",
+      "status": "fresh",
+      "attempts": 1,
+      "latencyMs": 1926,
+      "lastAttemptAt": "2026-02-17T03:17:07.410Z",
+      "lastSuccessAt": "2026-02-17T03:17:07.410Z",
+      "lastError": null
+    },
+    {
+      "sourceId": "fsanz_pet_recalls",
+      "name": "FSANZ pet-related recalls (Australia/NZ)",
+      "type": "regulatory",
+      "tier": 2,
+      "audience": "both",
+      "requiredForCoverage": false,
+      "mode": "live",
+      "status": "fresh",
+      "attempts": 1,
+      "latencyMs": 2974,
+      "lastAttemptAt": "2026-02-17T03:17:08.459Z",
+      "lastSuccessAt": "2026-02-17T03:17:08.458Z",
       "lastError": null
     },
     {
@@ -71,9 +131,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 190,
-      "lastAttemptAt": "2026-02-15T23:21:55.956Z",
-      "lastSuccessAt": "2026-02-15T23:21:55.955Z",
+      "latencyMs": 1509,
+      "lastAttemptAt": "2026-02-17T03:17:06.999Z",
+      "lastSuccessAt": "2026-02-17T03:17:06.998Z",
       "lastError": null
     },
     {
@@ -86,9 +146,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 270,
-      "lastAttemptAt": "2026-02-15T23:21:56.038Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.037Z",
+      "latencyMs": 1391,
+      "lastAttemptAt": "2026-02-17T03:17:06.883Z",
+      "lastSuccessAt": "2026-02-17T03:17:06.883Z",
       "lastError": null
     },
     {
@@ -101,9 +161,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 173,
-      "lastAttemptAt": "2026-02-15T23:21:55.942Z",
-      "lastSuccessAt": "2026-02-15T23:21:55.941Z",
+      "latencyMs": 1394,
+      "lastAttemptAt": "2026-02-17T03:17:06.887Z",
+      "lastSuccessAt": "2026-02-17T03:17:06.886Z",
       "lastError": null
     },
     {
@@ -116,24 +176,24 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 271,
-      "lastAttemptAt": "2026-02-15T23:21:56.044Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.044Z",
+      "latencyMs": 1290,
+      "lastAttemptAt": "2026-02-17T03:17:06.785Z",
+      "lastSuccessAt": "2026-02-17T03:17:06.784Z",
       "lastError": null
     },
     {
       "sourceId": "pubmed_pet_owner",
-      "name": "pubmed_pet_owner",
-      "type": "other",
-      "tier": 4,
-      "audience": "both",
+      "name": "PubMed pet owner guidance",
+      "type": "research",
+      "tier": 1,
+      "audience": "pet",
       "requiredForCoverage": false,
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 173,
-      "lastAttemptAt": "2026-02-15T23:21:55.948Z",
-      "lastSuccessAt": "2026-02-15T23:21:55.947Z",
+      "latencyMs": 1379,
+      "lastAttemptAt": "2026-02-17T03:17:06.875Z",
+      "lastSuccessAt": "2026-02-17T03:17:06.874Z",
       "lastError": null
     },
     {
@@ -146,9 +206,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 361,
-      "lastAttemptAt": "2026-02-15T23:21:56.068Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.067Z",
+      "latencyMs": 1524,
+      "lastAttemptAt": "2026-02-17T03:17:06.913Z",
+      "lastSuccessAt": "2026-02-17T03:17:06.912Z",
       "lastError": null
     },
     {
@@ -161,9 +221,24 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 170,
-      "lastAttemptAt": "2026-02-15T23:21:55.940Z",
-      "lastSuccessAt": "2026-02-15T23:21:55.939Z",
+      "latencyMs": 1387,
+      "lastAttemptAt": "2026-02-17T03:17:06.881Z",
+      "lastSuccessAt": "2026-02-17T03:17:06.880Z",
+      "lastError": null
+    },
+    {
+      "sourceId": "rasff_pet_feed_alerts",
+      "name": "EU RASFF pet feed alerts",
+      "type": "regulatory",
+      "tier": 1,
+      "audience": "both",
+      "requiredForCoverage": false,
+      "mode": "live",
+      "status": "fresh",
+      "attempts": 1,
+      "latencyMs": 2102,
+      "lastAttemptAt": "2026-02-17T03:17:07.588Z",
+      "lastSuccessAt": "2026-02-17T03:17:07.587Z",
       "lastError": null
     },
     {
@@ -176,9 +251,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 796,
-      "lastAttemptAt": "2026-02-15T23:21:56.573Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.573Z",
+      "latencyMs": 1976,
+      "lastAttemptAt": "2026-02-17T03:17:07.472Z",
+      "lastSuccessAt": "2026-02-17T03:17:07.471Z",
       "lastError": null
     }
   ]

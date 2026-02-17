@@ -1,6 +1,12 @@
 {
   "topic": "Early Detection of Disease Across Species",
   "query": "(\"early detection\" OR screening OR biomarker OR preclinical)",
-  "count": 0,
-  "idlist": []
+  "count": 7852210,
+  "idlist": [
+    "41698276",
+    "41698265",
+    "41698243",
+    "41698238",
+    "41698222"
+  ]
 }

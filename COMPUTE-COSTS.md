@@ -8,7 +8,7 @@ Rough estimates for running Animal Research Network (ingest + DB + optional fron
 
 | Component | Usage | Notes |
 |-----------|--------|------|
-| **Scheduled ingest** | ~5–15 s every 12 hours | PubMed, CDC, cancer, case reports, TCIA, curated JSON. Light CPU/network. |
+| **Scheduled ingest** | ~5–15 s every 6 hours | PubMed, CDC, cancer, case reports, TCIA, curated JSON. Light CPU/network. |
 | **SQLite DB** | On disk, MB scale | No separate DB service. |
 | **Frontend (Express)** | Low traffic | Optional; only if you serve the dashboard 24/7. |
 
@@ -31,7 +31,7 @@ So total compute need is **small**: a single small VM or your PC is enough.
 
 ## Scenario 2: Cloud VM, 24 hours/day
 
-Single small Linux VM runs: cron (ingest every 12 hours) + Node (optional frontend) + SQLite.
+Single small Linux VM runs: cron (ingest every 6 hours) + Node (optional frontend) + SQLite.
 
 | Provider | Example plan | Monthly (approx) | Per day |
 |----------|----------------|-------------------|---------|

@@ -3,7 +3,7 @@
     "failures": 0,
     "cooldownUntil": 0,
     "lastError": null,
-    "lastSuccessAt": "2026-02-15T23:21:56.573Z"
+    "lastSuccessAt": "2026-02-17T00:19:01.886Z"
   },
   "autonomous_topic_11": {
     "failures": 0,
@@ -22,5 +22,23 @@
     "cooldownUntil": 0,
     "lastError": null,
     "lastSuccessAt": "2026-02-15T23:05:02.524Z"
+  },
+  "autonomous_topic_14": {
+    "failures": 0,
+    "cooldownUntil": 0,
+    "lastError": null,
+    "lastSuccessAt": "2026-02-17T00:19:02.204Z"
+  },
+  "fsanz_pet_recalls": {
+    "failures": 0,
+    "cooldownUntil": 0,
+    "lastError": null,
+    "lastSuccessAt": "2026-02-17T03:17:08.458Z"
+  },
+  "autonomous_topic_3": {
+    "failures": 0,
+    "cooldownUntil": 0,
+    "lastError": null,
+    "lastSuccessAt": "2026-02-17T03:17:08.861Z"
   }
 }

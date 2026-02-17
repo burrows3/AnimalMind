@@ -1,0 +1,9 @@
+{
+  "fetchedAt": "2026-02-17T03:17:07.583Z",
+  "source": "EU RASFF feed/pet alerts",
+  "urls": [
+    "https://webgate.ec.europa.eu/rasff-window/screen/search",
+    "https://food.ec.europa.eu/safety/rasff_en"
+  ],
+  "recalls": []
+}

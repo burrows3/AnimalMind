@@ -1,8 +1,8 @@
 # Surveillance reviewer
 
 **Agent:** Surveillance reviewer (autonomous)
-**Last run:** 2026-02-15T00:38:37.771Z
-**Data as of:** 2026-02-15T00:38:37.631Z
+**Last run:** 2026-02-17T00:35:05.565Z
+**Data as of:** 2026-02-17T00:35:05.472Z
 
 ---
 
@@ -48,9 +48,6 @@ Conditions currently in CDC travel notices (and similar surveillance):
 
 - **Rabies** — Level 1 - Rabies in India
   - [Source](https://wwwnc.cdc.gov/travel/notices/level1/rabies-india)
-
-- **Rift Valley Fever** — Level 1 - Rift Valley Fever in Mauritania and Senegal
-  - [Source](https://wwwnc.cdc.gov/travel/notices/level1/rift-valley-fever-mauritania-senegal)
 
 - **Rocky Mountain Spotted Fever** — Level 1 - Rocky Mountain Spotted Fever in Mexico
   - [Source](https://wwwnc.cdc.gov/travel/notices/level1/rmsf-mexico)

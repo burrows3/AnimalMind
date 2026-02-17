@@ -1,0 +1,11 @@
+{
+  "fetchedAt": "2026-02-17T03:17:07.356Z",
+  "source": "FDA Animal & Veterinary recalls",
+  "urls": [
+    "https://www.fda.gov/animal-veterinary/safety-health/recalls-withdrawals",
+    "https://www.fda.gov/about-fda/contact-fda/stay-informed/rss-feeds/recalls-market-withdrawals-safety-alerts",
+    "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/rss.xml",
+    "https://api.fda.gov/food/enforcement.json"
+  ],
+  "recalls": []
+}

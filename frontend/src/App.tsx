@@ -25,7 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { submitWaitlist, isSupabaseConfigured } from "./waitlist";
+import { submitWaitlist } from "./waitlist";
 
 const DATA_ORDER = [
   "surveillance",
@@ -45,6 +45,7 @@ const LABELS: Record<string, string> = {
   case_data: "Case reports",
   clinical: "Clinical",
   pet_owner: "Pet brief",
+  recall: "Recall",
   imaging: "Imaging",
   vet_practice: "Vet practice",
 };
@@ -76,18 +77,23 @@ const PET_OWNER_FALLBACK_TYPES = new Set(["clinical", "case_data", "vet_practice
 const RESEARCH_TYPES = new Set(["literature", "clinical", "cancer", "case_data"]);
 const PRO_BRIEF_TYPES = new Set(["surveillance", "literature", "clinical", "cancer", "case_data", "imaging", "vet_practice"]);
 const BRAND_TAGLINE = "ANIMAL HEALTH NEWS";
-const BRAND_HEADLINE = "INTELLIGENCE FOR ANIMAL HEALTH";
-const BRAND_SUBHEAD = "Run by autonomous agents. Reviewed by humans.";
-const BRAND_ONE_LINER = "Two editions: Clinical and Pet.";
+const BRAND_HEADLINE = "ANIMAL HEALTH NEWS";
+const BRAND_SUBHEAD = "Run by autonomous AI agents. Research and trends validated by humans.";
+const BRAND_ONE_LINER = "Two editions: Pro and Pet. Research-backed updates every 6 hours.";
 const PRO_MARKETING_HEADLINE = "AnimalMind Pro is the modern intelligence layer for veterinary medicine.";
 const PRO_MARKETING_VALUE =
-  "It monitors veterinary research and public health sources in real time, then delivers concise AI summaries of outbreak alerts, drug updates, regulatory changes, and clinical insights so teams can act quickly.";
+  "It monitors veterinary research and public health sources on a 6-hour cadence, then delivers concise AI summaries of outbreak alerts, drug updates, regulatory changes, and clinical insights so teams can act quickly.";
 const PRO_MARKETING_BENEFITS = [
   "Track new research, surveillance signals, and regulatory changes in one place.",
   "Get prioritized outbreak alerts by region, species, and clinical relevance.",
   "Stay current on drug approvals, safety signals, label changes, and withdrawals.",
   "Focus on high-signal updates designed to reduce noise for busy clinicians.",
   "Replace hours of manual review with brief updates you can scan in minutes.",
+];
+const PRO_MISSION_POINTS = [
+  "Shared digest view keeps teams aligned on what changed and why it matters.",
+  "Source-linked cards make triage and verification fast during clinical workflows.",
+  "A predictable 6-hour cadence improves freshness without introducing alert fatigue.",
 ];
 const PRO_MARKETING_CREDIBILITY =
   "Built for veterinarians, researchers, and animal health professionals, with source-linked updates from trusted public data.";
@@ -258,26 +264,6 @@ function petTopicImageSet(topicKey: PetTopicKey, useIndex: number, usedPrimary: 
   };
 }
 
-function applyTopicImageFallback(img: HTMLImageElement, backupSrc: string, fallbackSrc: string): void {
-  const stage = img.getAttribute("data-image-fallback-stage");
-  if (stage === "backup") {
-    img.setAttribute("data-image-fallback-stage", "fallback");
-    img.src = fallbackSrc || PET_ARTICLE_IMAGE_FALLBACK;
-    return;
-  }
-  if (stage === "fallback") {
-    img.setAttribute("data-image-fallback-stage", "final");
-    img.src = PET_ARTICLE_IMAGE_FALLBACK;
-    return;
-  }
-  if (stage === "final") {
-    img.onerror = null;
-    return;
-  }
-  img.setAttribute("data-image-fallback-stage", "backup");
-  img.src = backupSrc || fallbackSrc || PET_ARTICLE_IMAGE_FALLBACK;
-}
-
 type DataSummary = {
   lastUpdated?: string | null;
   counts?: Record<string, number>;
@@ -328,6 +314,8 @@ type IngestedRow = {
   title?: string;
   url?: string;
   abstract?: string;
+  published_at?: string | null;
+  fetched_at?: string | null;
 };
 
 type BriefAudience = "pro" | "pet" | "all";
@@ -555,49 +543,71 @@ function AnimalMindLogo({ className }: { className?: string }) {
 
 const base = typeof document !== "undefined" ? "" : "";
 
+function timeoutSignal(timeoutMs: number): { signal: AbortSignal; cancel: () => void } {
+  const controller = new AbortController();
+  const id = window.setTimeout(() => controller.abort(), Math.max(0, timeoutMs));
+  return {
+    signal: controller.signal,
+    cancel: () => window.clearTimeout(id),
+  };
+}
+
+async function fetchJsonWithTimeout<T>(url: string, init: RequestInit, timeoutMs: number): Promise<T | null> {
+  if (typeof window === "undefined") return null;
+  const { signal, cancel } = timeoutSignal(timeoutMs);
+  try {
+    const res = await fetch(url, { ...init, signal });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  } finally {
+    cancel();
+  }
+}
+
 /** Try /api/dashboard first (live from DB when running locally); else use static JSON. */
 async function fetchDashboard(): Promise<{
   summary: DataSummary | null;
   ingested: IngestedRow[] | null;
 }> {
-  try {
-    const r = await fetch(`${base}/api/dashboard`, { cache: "no-store" });
-    if (r.ok) {
-      const data = await r.json();
-      const apiSourceHealthSummary =
-        data.sourceHealthSummary ?? data.summary?.sourceHealthSummary ?? deriveHealthFromLastUpdated(data.summary?.lastUpdated);
-      const summaryFromApi: DataSummary | null = data.summary
-        ? {
-            ...data.summary,
-            sourceHealthSummary: apiSourceHealthSummary,
-            sourceHealthDetails: Array.isArray(data.sourceHealthDetails)
-              ? data.sourceHealthDetails
-              : Array.isArray(data.summary?.sourceHealthDetails)
-                ? data.summary.sourceHealthDetails
-                : [],
-            intelligenceGaps: Array.isArray(data.intelligenceGaps)
-              ? data.intelligenceGaps
-              : Array.isArray(data.summary?.intelligenceGaps)
-                ? data.summary.intelligenceGaps
-                : [],
-          }
-        : null;
-      return {
-        summary: summaryFromApi,
-        ingested: Array.isArray(data.ingested) ? data.ingested : null,
-      };
-    }
-  } catch {
-    // e.g. GitHub Pages: no API
+  const apiPayload = await fetchJsonWithTimeout<any>(`${base}/api/dashboard`, { cache: "no-store" }, 3500);
+  if (apiPayload) {
+    const apiSourceHealthSummary =
+      apiPayload.sourceHealthSummary ??
+      apiPayload.summary?.sourceHealthSummary ??
+      deriveHealthFromLastUpdated(apiPayload.summary?.lastUpdated);
+    const summaryFromApi: DataSummary | null = apiPayload.summary
+      ? {
+          ...apiPayload.summary,
+          sourceHealthSummary: apiSourceHealthSummary,
+          sourceHealthDetails: Array.isArray(apiPayload.sourceHealthDetails)
+            ? apiPayload.sourceHealthDetails
+            : Array.isArray(apiPayload.summary?.sourceHealthDetails)
+              ? apiPayload.summary.sourceHealthDetails
+              : [],
+          intelligenceGaps: Array.isArray(apiPayload.intelligenceGaps)
+            ? apiPayload.intelligenceGaps
+            : Array.isArray(apiPayload.summary?.intelligenceGaps)
+              ? apiPayload.summary.intelligenceGaps
+              : [],
+        }
+      : null;
+    return {
+      summary: summaryFromApi,
+      ingested: Array.isArray(apiPayload.ingested) ? apiPayload.ingested : null,
+    };
   }
-  const [summaryRes, ingestedRes, sourceHealthRes] = await Promise.all([
-    fetch(`${base}/data-summary.json`, { cache: "no-store" }),
-    fetch(`${base}/data/ingested.json`, { cache: "no-store" }),
-    fetch(`${base}/source-health.json`, { cache: "no-store" }).catch(() => null),
+
+  const [summaryPayload, ingestedPayload, sourceHealthPayload] = await Promise.all([
+    fetchJsonWithTimeout<any>(`${base}/data-summary.json`, { cache: "no-store" }, 5000),
+    fetchJsonWithTimeout<any>(`${base}/data/ingested.json`, { cache: "no-store" }, 7000),
+    fetchJsonWithTimeout<any>(`${base}/source-health.json`, { cache: "no-store" }, 5000),
   ]);
-  const summary = summaryRes.ok ? await summaryRes.json() : null;
-  const sourceHealthPayload = sourceHealthRes && sourceHealthRes.ok ? await sourceHealthRes.json() : null;
-  if (summary && sourceHealthPayload) {
+
+  const summary: DataSummary | null =
+    summaryPayload && typeof summaryPayload === "object" ? (summaryPayload as DataSummary) : null;
+  if (summary && sourceHealthPayload && typeof sourceHealthPayload === "object") {
     summary.sourceHealthSummary = summary.sourceHealthSummary ?? sourceHealthPayload.summary ?? null;
     summary.sourceHealthDetails = summary.sourceHealthDetails ?? sourceHealthPayload.details ?? [];
     summary.intelligenceGaps = summary.intelligenceGaps ?? sourceHealthPayload.intelligenceGaps ?? [];
@@ -605,9 +615,91 @@ async function fetchDashboard(): Promise<{
   if (summary && !summary.sourceHealthSummary) {
     summary.sourceHealthSummary = deriveHealthFromLastUpdated(summary.lastUpdated);
   }
-  const ingestedPayload = ingestedRes.ok ? await ingestedRes.json() : null;
-  const ingested = Array.isArray(ingestedPayload) ? ingestedPayload : null;
+  const ingested = Array.isArray(ingestedPayload) ? (ingestedPayload as IngestedRow[]) : null;
   return { summary, ingested };
+}
+
+/** Fetch the complete pet-relevant research list (uncapped), with static fallback for docs/public builds. */
+async function fetchAllPetResearch(): Promise<IngestedRow[] | null> {
+  const apiPayload = await fetchJsonWithTimeout<any>(`${base}/api/pet-research`, { cache: "no-store" }, 6000);
+  if (apiPayload && Array.isArray(apiPayload.ingested)) return apiPayload.ingested as IngestedRow[];
+  const staticPayload = await fetchJsonWithTimeout<any>(`${base}/data/pet-research.json`, { cache: "no-store" }, 6000);
+  return Array.isArray(staticPayload) ? (staticPayload as IngestedRow[]) : null;
+}
+
+async function fetchPetRecalls(): Promise<IngestedRow[] | null> {
+  const apiPayload = await fetchJsonWithTimeout<any>(`${base}/api/pet-recalls`, { cache: "no-store" }, 4500);
+  if (apiPayload && Array.isArray(apiPayload.ingested)) return apiPayload.ingested as IngestedRow[];
+  const staticPayload = await fetchJsonWithTimeout<any>(`${base}/data/pet-recalls.json`, { cache: "no-store" }, 4500);
+  return Array.isArray(staticPayload) ? (staticPayload as IngestedRow[]) : null;
+}
+
+function rowTimestampMs(value: string | null | undefined): number {
+  if (!value) return 0;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatIngestedDate(value: string | null | undefined): string {
+  const ms = rowTimestampMs(value);
+  if (!ms) return "";
+  return new Date(ms).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+const PET_SAFETY_SIGNAL_KEYWORDS =
+  /\b(recall|withdrawn?|advisory|alert|contaminat(?:ed|ion)|listeria|salmonella|toxic|toxicity|poison(?:ing)?|unsafe)\b/i;
+const PET_SAFETY_CONTEXT_KEYWORDS =
+  /\b(pet|pets|dog|dogs|cat|cats|canine|feline|puppy|puppies|kitten|kittens|companion)\b/i;
+const DOG_SIGNAL_KEYWORDS = /\b(dog|dogs|canine|puppy|puppies)\b/i;
+const CAT_SIGNAL_KEYWORDS = /\b(cat|cats|feline|kitten|kittens)\b/i;
+
+function rowSignalText(row: IngestedRow): string {
+  return `${row.title || ""} ${row.condition_or_topic || ""}`
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildPetSafetySignals(rows: IngestedRow[] | null, limit = 16): IngestedRow[] {
+  if (!rows || rows.length === 0) return [];
+  const candidates = rows.filter((row) => {
+    const text = rowSignalText(row);
+    if (!text) return false;
+    if (!PET_SAFETY_SIGNAL_KEYWORDS.test(text)) return false;
+    return PET_SAFETY_CONTEXT_KEYWORDS.test(text) || row.data_type === "pet_owner";
+  });
+  return uniqueRows(sortPetRowsNewestFirst(candidates), limit);
+}
+
+function petRowSortScore(row: IngestedRow): number {
+  if (extractPubMedIdFromUrl(row.url)) return 3; // Research-linked rows should lead pet-owner cards.
+  if (row.data_type === "pet_owner") return 2;
+  if (PET_OWNER_FALLBACK_TYPES.has(row.data_type)) return 1;
+  return 0;
+}
+
+function sortPetRowsNewestFirst(rows: IngestedRow[]): IngestedRow[] {
+  return [...rows].sort((a, b) => {
+    const scoreDelta = petRowSortScore(b) - petRowSortScore(a);
+    if (scoreDelta !== 0) return scoreDelta;
+
+    const aDate = rowTimestampMs(a.published_at ?? a.fetched_at);
+    const bDate = rowTimestampMs(b.published_at ?? b.fetched_at);
+    if (aDate !== bDate) return bDate - aDate;
+
+    const typeDelta = (a.data_type || "").localeCompare(b.data_type || "");
+    if (typeDelta !== 0) return typeDelta;
+
+    const titleDelta = (a.title || "").localeCompare(b.title || "");
+    if (titleDelta !== 0) return titleDelta;
+
+    return (a.url || "").localeCompare(b.url || "");
+  });
 }
 
 function toPetBriefItems(rows: IngestedRow[] | null, limit = 14): IngestedRow[] {
@@ -618,7 +710,7 @@ function toPetBriefItems(rows: IngestedRow[] | null, limit = 14): IngestedRow[] 
     const text = `${r.title || ""} ${r.condition_or_topic || ""}`;
     return PET_OWNER_KEYWORDS.test(text);
   });
-  const combined = [...explicit, ...fallback];
+  const combined = sortPetRowsNewestFirst([...explicit, ...fallback]);
   const seen = new Set<string>();
   const unique: IngestedRow[] = [];
   for (const item of combined) {
@@ -776,12 +868,12 @@ function petArticleSummary(row: IngestedRow, evidenceText = ""): string {
   const hasTitle = (row.title || "").trim().length > 0;
   const evidence = firstSentences(evidenceText, 1, 170);
   if (evidence) {
-    return `What this research reports on ${topic}: ${evidence}`;
+    return `From this source on ${topic}: ${evidence}`;
   }
   if (hasTitle) {
-    return `This source on ${topic} is relevant for pet owners. Here's what it may mean for you and your pet—read the source for full details.`;
+    return `This source is about ${topic}. Read the linked report for full details.`;
   }
-  return `New update on ${topic}. Here's what it may mean for you and your pet. Read the source for full details; this is not medical advice.`;
+  return `New source update on ${topic}. This summary is educational and not medical advice.`;
 }
 
 function articleTopicText(row: IngestedRow): string {
@@ -856,35 +948,34 @@ function ensureThreeParagraphs(paragraphs: string[], topic: string): string[] {
   return cleaned.slice(0, 3);
 }
 
-/** Exactly three research-focused paragraphs per article card. */
+/** Keep pet-owner copy short, clear, and grounded in source text. */
+function ensurePetOwnerParagraphs(paragraphs: string[], topic: string): string[] {
+  const cleaned = paragraphs
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0)
+    .slice(0, 3);
+  while (cleaned.length < 2) {
+    cleaned.push(`This update is about ${topic}. Please review the linked source for exact details.`);
+  }
+  if (cleaned.length === 2) {
+    cleaned.push("If your pet seems unwell, contact your veterinarian.");
+  }
+  return cleaned;
+}
+
+/** Three pet-owner paragraphs per source card, written in plain language. */
 function petArticleParagraphs(row: IngestedRow, evidenceText = ""): string[] {
   const topic = articleTopicText(row);
-  const text = `${row.title || ""} ${row.condition_or_topic || ""}`.toLowerCase();
   const sourceLabel = LABELS[row.data_type] ?? row.data_type.replace(/_/g, " ");
-  const citedTitle = shortHeadline(row.title || "", 110);
-  const headlineContext = citedTitle
-    ? `A new report titled “${citedTitle}” is one of today’s strongest signals in this topic.`
-    : "A newly ingested report is one of today’s strongest signals in this topic.";
-
-  const intro = `Research desk: ${topic} is active in today’s ${sourceLabel} feed. ${headlineContext} This article summarizes what researchers are flagging and why the update is relevant to everyday pet care decisions.`;
+  const citedTitle = shortHeadline(row.title || `Update on ${topic}`, 110);
+  const intro = `This article summarizes one source: “${citedTitle}.” It is from ${sourceLabel} and focuses on ${topic}.`;
   const evidenceSummary = firstSentences(evidenceText, 2, 360);
-  let interpretation = evidenceSummary
-    ? `What the study reports: ${evidenceSummary}`
-    : `From a research perspective, this signal should be treated as a trend indicator rather than a diagnosis. The practical read is to monitor appetite, comfort, activity, and behavior over time, then compare changes against the source details and your veterinarian’s guidance.`;
-  if (!evidenceSummary) {
-    if (/\b(surveillance|travel|outbreak|zoonotic|rabies|dengue|chikungunya)\b/.test(text) || row.data_type === "surveillance") {
-      interpretation = `This story intersects with surveillance research, where geography and timing can change risk quickly. The key reporting angle is location-specific exposure: check whether your region, travel plans, or species category appears directly in the source evidence.`;
-    } else if (/\b(poison|toxin|toxic|emergenc)\b/.test(text)) {
-      interpretation = `This signal points toward toxin or emergency relevance. Across published veterinary evidence, outcomes are strongly tied to early recognition and rapid escalation, so speed and preparation matter more than waiting to “see if it passes.”`;
-    } else if (/\b(vaccin|prevent|prophylaxis)\b/.test(text)) {
-      interpretation = `This update emphasizes prevention research. The recurring finding in this area is that timing, consistency, and individualized preventive planning with your veterinarian reduce avoidable complications and improve long-term protection.`;
-    } else if (/\b(cancer|oncolog|tumou|tumor|canine|feline)\b/.test(text)) {
-      interpretation = `This article intersects with oncology-related evidence, where trend detection and follow-up planning often shape both treatment options and quality-of-life outcomes. The research takeaway is to prioritize clear baselines and structured rechecks.`;
-    }
-  }
-
-  const action = `What this means for pets: use this report as context, not a substitute for care. If your pet shows symptoms related to ${topic}, contact your veterinarian promptly, and use the linked source to discuss risk factors, urgency, and next-step options.`;
-  return ensureThreeParagraphs([intro, interpretation, action], topic);
+  const interpretation = evidenceSummary
+    ? `What the source says: ${evidenceSummary}`
+    : "What the source says: The abstract text was not available in this feed. Please open the source link to review methods and results directly.";
+  const action =
+    "What this means for pet owners: Use this as background information, not a diagnosis. If your pet has concerning symptoms, contact your veterinarian and share the source link during the visit.";
+  return ensurePetOwnerParagraphs([intro, interpretation, action], topic);
 }
 
 /** One article per source; image matches topic (dog→dog photo), distinct. Backup = same topic so no blanks. */
@@ -936,42 +1027,8 @@ function friendlyPetTopic(topic: string): string {
   return topic || "Everyday pet care";
 }
 
-function petNewsResearchAngle(topicKey: PetTopicKey, sourceText: string): string {
-  if (/\b(surveillance|travel|outbreak|zoonotic|rabies|dengue|chikungunya)\b/.test(sourceText) || topicKey === "wildlife") {
-    return "Research context: this cluster is tied to surveillance-style reporting, where geography and timing can move faster than weekly care routines. Read source locations carefully before assuming risk applies to your household.";
-  }
-  if (/\b(poison|toxin|toxic|emergenc)\b/.test(sourceText)) {
-    return "Research context: toxin and emergency literature consistently shows that earlier recognition improves outcomes. The most useful lens here is rapid symptom tracking and early escalation, not delayed observation.";
-  }
-  if (/\b(vaccin|prevent|prophylaxis|tick|flea)\b/.test(sourceText)) {
-    return "Research context: prevention-focused evidence tends to reward consistency and timing. These updates are best interpreted as risk-reduction guidance to review with your veterinarian, not one-size-fits-all instructions.";
-  }
-  if (/\b(cancer|oncolog|tumou|tumor)\b/.test(sourceText)) {
-    return "Research context: oncology updates often emphasize early trend detection and structured follow-up. The practical reporting angle is whether this signal changes what to monitor between routine exams.";
-  }
-  if (topicKey === "bird" || topicKey === "turtle") {
-    return "Research context: species-specific care signals can be easy to miss because early signs are subtle. The evidence value here is in pattern tracking over time, especially appetite, activity, and behavior shifts.";
-  }
-  return "Research context: this topic appears repeatedly across today’s ingested sources, suggesting a meaningful signal rather than a one-off headline. Use the linked reports to check scope, methods, and limitations.";
-}
-
-function petNewsMeaningForPets(topicLabel: string, topicKey: PetTopicKey): string {
-  if (topicKey === "wildlife") {
-    return `What this means for pets: keep vaccines and parasite prevention current, and reduce high-risk exposure settings while this ${topicLabel.toLowerCase()} signal is active in public reporting.`;
-  }
-  if (topicKey === "dog" || topicKey === "cat") {
-    return `What this means for pets: for ${topicLabel.toLowerCase()}, watch for changes in appetite, comfort, energy, and behavior, and bring source-backed notes to your next veterinary conversation.`;
-  }
-  if (topicKey === "bird" || topicKey === "turtle") {
-    return `What this means for pets: in ${topicLabel.toLowerCase()} topics, subtle early signs matter; if your pet's baseline changes, contact your veterinarian sooner and share the source context.`;
-  }
-  return `What this means for pets: treat this ${topicLabel.toLowerCase()} coverage as decision support. Use it to ask better questions at your next vet visit, especially around risk factors and prevention timing.`;
-}
-
 function buildPetNewsParagraphs(
   topicLabel: string,
-  topicRaw: string,
-  topicKey: PetTopicKey,
   topicCount: number,
   sourceRows: IngestedRow[],
   evidenceSummary: string
@@ -983,14 +1040,13 @@ function buildPetNewsParagraphs(
   const sourceMixText = sourceMix.length > 0 ? sourceMix.join(", ") : "public sources";
   const leadTitle = shortHeadline(sourceRows[0]?.title || "", 90);
   const lead = leadTitle
-    ? `Research desk lead: ${topicCount} ${updatesLabel} this cycle center on ${topicLabel.toLowerCase()}, with evidence drawn from ${sourceMixText}. One representative report is “${leadTitle}.”`
-    : `Research desk lead: ${topicCount} ${updatesLabel} this cycle center on ${topicLabel.toLowerCase()}, with evidence drawn from ${sourceMixText}.`;
-  const sourceText = `${topicRaw} ${sourceRows.map((row) => `${row.title || ""} ${row.condition_or_topic || ""}`).join(" ")}`.toLowerCase();
+    ? `In this issue: ${topicCount} ${updatesLabel} on ${topicLabel.toLowerCase()} from ${sourceMixText}. One source article is “${leadTitle}.”`
+    : `In this issue: ${topicCount} ${updatesLabel} on ${topicLabel.toLowerCase()} from ${sourceMixText}.`;
   const researchAngle = evidenceSummary
-    ? `What current studies report: ${evidenceSummary}`
-    : petNewsResearchAngle(topicKey, sourceText);
-  const meaning = petNewsMeaningForPets(topicLabel, topicKey);
-  return ensureThreeParagraphs([lead, researchAngle, meaning], topicLabel);
+    ? `From the linked studies: ${evidenceSummary}`
+    : "From the linked studies: We could not read enough abstract detail in this feed, so please open the source links for full context.";
+  const meaning = "Owner takeaway: Use this as a quick update and a conversation starter with your vet. If symptoms feel urgent, contact your veterinarian right away.";
+  return ensurePetOwnerParagraphs([lead, researchAngle, meaning], topicLabel);
 }
 
 function buildPetNewsCards(rows: IngestedRow[] | null, abstractByPmid: Record<string, string>): PetNewsCard[] {
@@ -1018,12 +1074,12 @@ function buildPetNewsCards(rows: IngestedRow[] | null, abstractByPmid: Record<st
     const images = petTopicImageSet(topicKey, useIndex + idx, usedPrimary);
     const label = friendlyPetTopic(topic.topic);
     const evidenceSummary = sourceEvidenceSnippet(sourceRows, abstractByPmid);
-    const paragraphs = buildPetNewsParagraphs(label, topic.topic, topicKey, topic.count, sourceRows, evidenceSummary);
+    const paragraphs = buildPetNewsParagraphs(label, topic.count, sourceRows, evidenceSummary);
     return {
       id: `pet-news-${idx}-${topic.topic}`,
-      title: `${label}: new research signals pet owners should watch`,
-      summary: `${topic.count} research ${topic.count === 1 ? "signal" : "signals"} in today’s pet brief.`,
-      tip: "If symptoms worsen or your pet is not eating/drinking normally, contact your veterinarian promptly.",
+      title: `${label}: what new pet research is saying`,
+      summary: `${topic.count} source-backed ${topic.count === 1 ? "update" : "updates"} in this issue.`,
+      tip: "If symptoms get worse, your pet is not eating/drinking, or behavior changes quickly, contact your veterinarian.",
       paragraphs,
       sources: sourceRows,
       imageUrl: images.imageUrl,
@@ -1039,11 +1095,16 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [petRecallRows, setPetRecallRows] = useState<IngestedRow[] | null>(null);
+  const [petRecallLoading, setPetRecallLoading] = useState(false);
   const [pubmedAbstracts, setPubmedAbstracts] = useState<Record<string, string>>(() => readPubMedAbstractCache());
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [waitlistError, setWaitlistError] = useState("");
-  const [proCtaExpanded, setProCtaExpanded] = useState(false);
+  const [showAllPetResearch, setShowAllPetResearch] = useState(false);
+  const [allPetResearchLoading, setAllPetResearchLoading] = useState(false);
+  const [allPetResearchError, setAllPetResearchError] = useState("");
+  const [allPetResearchRows, setAllPetResearchRows] = useState<IngestedRow[] | null>(null);
 
   const hashToView = (h: string) => {
     if (h === "consumer" || h === "clinical") return h;
@@ -1070,7 +1131,7 @@ export default function App() {
         ? "AnimalMind Pet"
         : view === "clinical"
           ? "AnimalMind Pro"
-          : "AnimalMind — AI Infrastructure for Animal Health";
+          : "AnimalMind — Animal Health News";
     document.title = t;
   }, [view]);
 
@@ -1081,27 +1142,59 @@ export default function App() {
 
   const loadData = useCallback(() => {
     setRefreshing(true);
-    fetchDashboard()
-      .then(({ summary: s, ingested: i }) => {
-        setSummary(s);
-        setMemory(i);
+    setPetRecallLoading(true);
+    Promise.all([fetchDashboard(), fetchPetRecalls()])
+      .then(([dash, recalls]) => {
+        setSummary(dash.summary);
+        setMemory(dash.ingested);
+        setPetRecallRows(recalls);
+        setShowAllPetResearch(false);
+        setAllPetResearchRows(null);
+        setAllPetResearchError("");
       })
-      .finally(() => setRefreshing(false));
+      .finally(() => {
+        setPetRecallLoading(false);
+        setRefreshing(false);
+      });
   }, []);
+
+  const toggleAllPetResearch = useCallback(async () => {
+    if (showAllPetResearch) {
+      setShowAllPetResearch(false);
+      return;
+    }
+    setShowAllPetResearch(true);
+    if (allPetResearchRows !== null || allPetResearchLoading) return;
+    setAllPetResearchLoading(true);
+    setAllPetResearchError("");
+    const rows = await fetchAllPetResearch();
+    if (rows === null) {
+      setAllPetResearchRows([]);
+      setAllPetResearchError("Full pet research list is not available yet.");
+    } else {
+      setAllPetResearchRows(rows);
+    }
+    setAllPetResearchLoading(false);
+  }, [showAllPetResearch, allPetResearchRows, allPetResearchLoading]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchDashboard()
-      .then(({ summary: s, ingested: i }) => {
+    setPetRecallLoading(true);
+    Promise.all([fetchDashboard(), fetchPetRecalls()])
+      .then(([dash, recalls]) => {
         if (!cancelled) {
-          setSummary(s);
-          setMemory(i);
+          setSummary(dash.summary);
+          setMemory(dash.ingested);
+          setPetRecallRows(recalls);
         }
       })
       .catch(() => {})
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setPetRecallLoading(false);
+          setLoading(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -1112,16 +1205,26 @@ export default function App() {
   useEffect(() => {
     if (memory !== null) return;
     setMemoryLoading(true);
-    fetch(`${base}/data/ingested.json`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
+    fetchJsonWithTimeout<any>(`${base}/data/ingested.json`, { cache: "no-store" }, 7000)
       .then((data) => setMemory(Array.isArray(data) ? data : null))
-      .catch(() => setMemory(null))
       .finally(() => setMemoryLoading(false));
   }, [memory]);
 
   const lastUpdated = summary?.lastUpdated
     ? new Date(summary.lastUpdated).toLocaleString()
     : null;
+  const ingestFreshnessLabel = summary?.lastUpdated
+    ? `Updated ${relativeTime(summary.lastUpdated)}`
+    : "Waiting for first ingest";
+  const countMap = summary?.counts ?? {};
+  const proSignalCount =
+    (countMap.surveillance ?? 0) +
+    (countMap.literature ?? 0) +
+    (countMap.cancer ?? 0) +
+    (countMap.case_data ?? 0) +
+    (countMap.clinical ?? 0) +
+    (countMap.imaging ?? 0) +
+    (countMap.vet_practice ?? 0);
 
   const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const petBriefItems = useMemo(() => toPetBriefItems(memory), [memory]);
@@ -1155,6 +1258,22 @@ export default function App() {
     };
   }, [missingPetPubMedIdsKey]);
   const petBriefCount = summary?.counts?.pet_owner ?? petBriefItems.length;
+  const recallRows = useMemo(() => {
+    const fromDedicated = Array.isArray(petRecallRows) ? petRecallRows : [];
+    if (fromDedicated.length > 0) return uniqueRows(sortPetRowsNewestFirst(fromDedicated), 72);
+    return uniqueRows(sortPetRowsNewestFirst((memory || []).filter((row) => row.data_type === "recall")), 48);
+  }, [memory, petRecallRows]);
+  // Pet Safety Dashboard should only show official recall/alert items (no keyword-based fallbacks).
+  const activeRecallCount = (Array.isArray(petRecallRows) ? petRecallRows.length : null) ?? summary?.counts?.recall ?? recallRows.length;
+  const dogRecallCount = useMemo(
+    () => recallRows.reduce((total, row) => total + Number(DOG_SIGNAL_KEYWORDS.test(rowSignalText(row))), 0),
+    [recallRows]
+  );
+  const catRecallCount = useMemo(
+    () => recallRows.reduce((total, row) => total + Number(CAT_SIGNAL_KEYWORDS.test(rowSignalText(row))), 0),
+    [recallRows]
+  );
+  const latestPetSafetyReports = recallRows.slice(0, 6);
   const dailyBriefArticles = useMemo(() => buildDailyBriefArticles(memory), [memory]);
   const proBriefArticles = useMemo(
     () => dailyBriefArticles.filter((article) => article.audience !== "pet"),
@@ -1169,6 +1288,11 @@ export default function App() {
     () => buildPetArticlesFromResearch(memory, pubmedAbstracts),
     [memory, pubmedAbstracts]
   );
+  const allPetResearchList = useMemo(
+    () => toPetResearchItems(allPetResearchRows, Number.MAX_SAFE_INTEGER),
+    [allPetResearchRows]
+  );
+  const allPetResearchCount = allPetResearchList.length;
   const petNewsCards = useMemo(() => buildPetNewsCards(memory, pubmedAbstracts), [memory, pubmedAbstracts]);
   const featuredPetNews = petNewsCards[0] ?? null;
   const morePetNews = petNewsCards.slice(1);
@@ -1222,9 +1346,11 @@ export default function App() {
               </p>
             </div>
           </header>
-          <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 sm:py-12">
+          <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
+            <div aria-hidden className="landing-orb landing-orb-a" />
+            <div aria-hidden className="landing-orb landing-orb-b" />
             {/* Hero: editorial image + headline */}
-            <section className="mb-10 sm:mb-14">
+            <section className="mb-10 sm:mb-14 landing-rise-in">
               <div className="rounded-none overflow-hidden border border-border bg-card shadow-sm">
                 <div className="relative aspect-[16/9] sm:aspect-[21/9] min-h-[200px]">
                   <img
@@ -1247,6 +1373,20 @@ export default function App() {
               <p className="mt-4 text-sm text-muted-foreground max-w-2xl">
                 {BRAND_ONE_LINER}
               </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
+                  {ingestFreshnessLabel}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
+                  Pro signals {proSignalCount}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
+                  Pet items {petBriefCount}
+                </span>
+              </div>
+              {lastUpdated && (
+                <p className="mt-2 text-xs text-muted-foreground">Last ingest: {lastUpdated}</p>
+              )}
             </section>
 
             {/* Two editions: distinct cards with pictures */}
@@ -1255,7 +1395,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => navigate("clinical")}
-                className="group text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
+                className="group landing-card-rise landing-card-rise-delay-1 text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
               >
                 <div className="aspect-[16/10] overflow-hidden bg-muted/30">
                   <img
@@ -1268,7 +1408,10 @@ export default function App() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Clinical & Research</p>
                   <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pro</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Real-time intelligence briefs with research, outbreak, drug, and regulatory updates.
+                    6-hour intelligence briefs with research, outbreak, drug, and regulatory updates.
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {ingestFreshnessLabel} · {proSignalCount} tracked signals
                   </p>
                   <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
                     Enter Pro
@@ -1279,7 +1422,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => navigate("consumer")}
-                className="group text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
+                className="group landing-card-rise landing-card-rise-delay-2 text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
               >
                 <div className="aspect-[16/10] overflow-hidden bg-muted/30">
                   <img
@@ -1294,6 +1437,9 @@ export default function App() {
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Plain-language pet guidance from the same autonomous engine powering Pro.
                   </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {ingestFreshnessLabel} · {petBriefCount} pet-focused items
+                  </p>
                   <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
                     Enter Pet
                     <span className="inline-block group-hover:translate-x-1 transition-transform">→</span>
@@ -1303,7 +1449,7 @@ export default function App() {
             </div>
 
             <p className="mt-10 pt-8 border-t border-border text-center text-xs text-muted-foreground max-w-xl mx-auto">
-              AI infrastructure for animal health. Evidence from public sources. Not medical advice.
+              Animal Health News run by autonomous AI agents. Research and trends validated by humans. Not medical advice.
             </p>
           </main>
           <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
@@ -1326,14 +1472,128 @@ export default function App() {
                 <span className="text-base font-semibold">AnimalMind</span>
               </button>
               <div className="flex items-center gap-4">
+                <a href="#pet-safety-dashboard" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Safety dashboard</a>
                 <a href="#pet-brief" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Today's brief</a>
-                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Notify me</a>
+                <a href="#get-updates" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Get updates</a>
                 <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
               </div>
             </nav>
           </header>
 
           <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
+            {/* Email signup — top, simple, Supabase only */}
+            <section id="get-updates" className="mb-6 rounded-lg border border-border bg-card px-4 py-3 sm:px-5 sm:py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <p className="text-sm font-medium text-foreground shrink-0">Get updates</p>
+                {waitlistStatus === "success" ? (
+                  <p className="text-sm text-muted-foreground">You’re on the list.</p>
+                ) : (
+                  <form
+                    className="flex flex-1 flex-col sm:flex-row gap-2 min-w-0"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const email = waitlistEmail.trim();
+                      if (!email) return;
+                      setWaitlistStatus("loading");
+                      setWaitlistError("");
+                      const result = await submitWaitlist(email);
+                      if (result.ok) {
+                        setWaitlistStatus("success");
+                        setWaitlistEmail("");
+                      } else {
+                        setWaitlistStatus("error");
+                        setWaitlistError(result.error || "Something went wrong.");
+                      }
+                    }}
+                  >
+                    <input
+                      type="email"
+                      placeholder="Your email"
+                      value={waitlistEmail}
+                      onChange={(e) => setWaitlistEmail(e.target.value)}
+                      disabled={waitlistStatus === "loading"}
+                      className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                      aria-label="Email for updates"
+                    />
+                    <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 sm:w-auto">
+                      {waitlistStatus === "loading" ? "…" : "Notify me"}
+                    </Button>
+                  </form>
+                )}
+              </div>
+              {waitlistStatus === "error" && waitlistError && (
+                <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+              )}
+            </section>
+            <section id="pet-safety-dashboard" className="mb-8 rounded-lg border border-border bg-card shadow-sm">
+              <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
+                <p className="section-label mb-2">AnimalMind Pet Safety Dashboard</p>
+                <h2 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight">
+                  AnimalMind Pet Safety Dashboard
+                </h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Pet- and animal-related recalls only (no human food). Links and counts update with each ingest.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-3 sm:px-6">
+                <div className="rounded-md border border-border bg-muted/20 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Active Recalls</p>
+                  <p className="mt-1 text-2xl font-semibold text-foreground">{activeRecallCount}</p>
+                </div>
+                <div className="rounded-md border border-border bg-muted/20 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Dog-Related</p>
+                  <p className="mt-1 text-2xl font-semibold text-foreground">{dogRecallCount}</p>
+                </div>
+                <div className="rounded-md border border-border bg-muted/20 px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Cat-Related</p>
+                  <p className="mt-1 text-2xl font-semibold text-foreground">{catRecallCount}</p>
+                </div>
+              </div>
+              <div className="border-t border-border px-4 pb-5 pt-3 sm:px-6">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-foreground">Recent safety reports</p>
+                  {lastUpdated && <span className="text-xs text-muted-foreground">As of {lastUpdated}</span>}
+                </div>
+                {loading || memoryLoading || (petRecallLoading && recallRows.length === 0) ? (
+                  <p className="text-sm text-muted-foreground">Loading safety reports…</p>
+                ) : latestPetSafetyReports.length > 0 ? (
+                  <ul className="space-y-2">
+                    {latestPetSafetyReports.map((row, idx) => {
+                      const href = safeHref(row.url);
+                      const dateLabel = formatIngestedDate(row.published_at ?? row.fetched_at);
+                      const title = (row.title || row.condition_or_topic || "Pet recall alert").trim();
+                      return (
+                        <li key={`pet-safety-report-${idx}`} className="rounded-md border border-border bg-background px-3 py-2">
+                          {href !== "#" ? (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex w-full items-center justify-between gap-2 text-sm font-medium text-foreground hover:text-foreground/90"
+                            >
+                              <span className="truncate">{title}</span>
+                              <ExternalLink className="size-3.5 shrink-0" aria-hidden />
+                            </a>
+                          ) : (
+                            <span className="inline-flex w-full items-center text-sm text-muted-foreground">
+                              {title}
+                            </span>
+                          )}
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Pet recall alert
+                            {dateLabel ? ` · ${dateLabel}` : ""}
+                          </p>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No official pet recall alerts are in the current ingest snapshot yet.
+                  </p>
+                )}
+              </div>
+            </section>
             {sourceHealthSummary && (
               <section className={cn("mb-6 rounded-md border px-4 py-3", statusToneClass)}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1410,10 +1670,6 @@ export default function App() {
                         setWaitlistError("");
                         const result = await submitWaitlist(email);
                         if (result.ok) {
-                          setWaitlistStatus("success");
-                          setWaitlistEmail("");
-                        } else if (result.error === "MAILTO") {
-                          window.location.href = `mailto:pro@animalmind.co?subject=AnimalMind%20Pet%20updates&body=${encodeURIComponent(`Please add me for Pet owner updates.\nEmail: ${email}`)}`;
                           setWaitlistStatus("success");
                           setWaitlistEmail("");
                         } else {
@@ -1500,24 +1756,15 @@ export default function App() {
                   ) : petNewsCards.length > 0 ? (
                     <div className="space-y-4">
                       {featuredPetNews && (
-                        <Card className="border border-border bg-muted/10 overflow-hidden shadow-sm">
-                          <div className="aspect-[16/8] overflow-hidden bg-muted/20 border-b border-border">
-                            <img
-                              src={featuredPetNews.imageUrl}
-                              alt=""
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                              onError={(e) =>
-                                applyTopicImageFallback(
-                                  e.currentTarget,
-                                  featuredPetNews.backupImageUrl,
-                                  featuredPetNews.fallbackImageUrl
-                                )
-                              }
-                            />
+                        <Card className="border border-border border-l-4 border-l-rose-200 bg-muted/10 overflow-hidden shadow-sm">
+                          <div className="border-b border-border bg-gradient-to-r from-rose-50/60 via-amber-50/40 to-sky-50/40 px-4 py-2.5">
+                            <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                              <Heart className="size-3.5 text-rose-500" aria-hidden />
+                              Pet-friendly brief
+                            </p>
                           </div>
                           <CardHeader className="p-4 pb-2">
-                            <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Featured pet news</Badge>
+                            <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Featured story</Badge>
                             <CardTitle className="text-base font-semibold">{featuredPetNews.title}</CardTitle>
                             <CardDescription className="text-sm">{featuredPetNews.summary}</CardDescription>
                           </CardHeader>
@@ -1562,25 +1809,16 @@ export default function App() {
                       )}
                       {morePetNews.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {morePetNews.map((card, moreIndex) => (
-                            <Card key={card.id} className="border border-border bg-muted/10 overflow-hidden">
-                              <div className="aspect-[16/9] overflow-hidden bg-muted/20 border-b border-border">
-                                <img
-                                  src={card.imageUrl}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                  onError={(e) =>
-                                    applyTopicImageFallback(
-                                      e.currentTarget,
-                                      card.backupImageUrl,
-                                      card.fallbackImageUrl
-                                    )
-                                  }
-                                />
+                          {morePetNews.map((card) => (
+                            <Card key={card.id} className="border border-border border-l-4 border-l-amber-200 bg-muted/10 overflow-hidden">
+                              <div className="border-b border-border bg-gradient-to-r from-amber-50/50 via-rose-50/35 to-background px-3 py-2">
+                                <p className="inline-flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+                                  <Heart className="size-3 text-rose-500" aria-hidden />
+                                  Pet-friendly update
+                                </p>
                               </div>
                               <CardHeader className="p-3 pb-2">
-                                <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Pet news</Badge>
+                                <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Quick read</Badge>
                                 <CardTitle className="text-sm font-semibold">{card.title}</CardTitle>
                                 <CardDescription className="text-xs">{card.summary}</CardDescription>
                               </CardHeader>
@@ -1633,27 +1871,80 @@ export default function App() {
                   </p>
                   {!loading && !memoryLoading && (
                     <div className="mt-6 border-t border-border pt-4">
-                      <h3 className="text-sm font-semibold text-foreground mb-3">Articles from today's research</h3>
-                      <p className="text-xs text-muted-foreground mb-4">One article per source—each card is tied to a single research item. Image matches the topic (e.g. dog for canine). Tap View source to read the full report.</p>
+                      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <h3 className="text-sm font-semibold text-foreground mb-1">Articles from today's research</h3>
+                          <p className="text-xs text-muted-foreground">
+                            One article per source—each card is tied to a single research item, written in a clearer pet-owner voice. Tap View source to read the full report.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-md min-h-[40px] shrink-0"
+                          disabled={allPetResearchLoading}
+                          onClick={toggleAllPetResearch}
+                        >
+                          {allPetResearchLoading
+                            ? "Loading full list…"
+                            : showAllPetResearch
+                              ? "Hide full research list"
+                              : allPetResearchRows
+                                ? `View all pet research (${allPetResearchCount})`
+                                : "View all pet research"}
+                        </Button>
+                      </div>
+                      {showAllPetResearch && (
+                        <div className="mb-4 rounded-md border border-border bg-muted/20 p-3">
+                          <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">All pet-relevant research</p>
+                          {allPetResearchLoading ? (
+                            <p className="text-sm text-muted-foreground">Loading the complete pet research list…</p>
+                          ) : allPetResearchError ? (
+                            <p className="text-sm text-muted-foreground">{allPetResearchError}</p>
+                          ) : allPetResearchCount > 0 ? (
+                            <ul className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                              {allPetResearchList.map((row, idx) => {
+                                const href = safeHref(row.url);
+                                const dateLabel = formatIngestedDate(row.published_at ?? row.fetched_at);
+                                const title = petArticleTitle(row);
+                                return (
+                                  <li key={`pet-research-all-${idx}`} className="rounded-md border border-border bg-background px-3 py-2">
+                                    {href !== "#" ? (
+                                      <a
+                                        href={href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex w-full items-center justify-between gap-2 text-xs font-medium text-foreground hover:text-foreground/90"
+                                      >
+                                        <span className="truncate">{title}</span>
+                                        <ExternalLink className="size-3.5 shrink-0" aria-hidden />
+                                      </a>
+                                    ) : (
+                                      <span className="inline-flex w-full items-center text-xs text-muted-foreground">{title}</span>
+                                    )}
+                                    <p className="mt-1 text-[11px] text-muted-foreground">
+                                      {LABELS[row.data_type] ?? row.data_type.replace(/_/g, " ")}
+                                      {dateLabel ? ` · ${dateLabel}` : ""}
+                                    </p>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No pet-relevant research items are available yet.</p>
+                          )}
+                        </div>
+                      )}
                       {petArticlesFromResearch.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {petArticlesFromResearch.map((article) => (
-                          <Card key={`pet-article-${article.id}`} className="border border-border bg-muted/10 overflow-hidden">
-                            <div className="aspect-[16/10] overflow-hidden bg-muted/20 border-b border-border">
-                              <img
-                                src={article.imageUrl}
-                                alt=""
-                                className="w-full h-full object-cover"
-                                referrerPolicy="no-referrer"
-                                loading="lazy"
-                                onError={(e) =>
-                                  applyTopicImageFallback(
-                                    e.currentTarget,
-                                    article.backupImageUrl,
-                                    article.fallbackImageUrl
-                                  )
-                                }
-                              />
+                          <Card key={`pet-article-${article.id}`} className="border border-border border-l-4 border-l-sky-200 bg-muted/10 overflow-hidden">
+                            <div className="border-b border-border bg-gradient-to-r from-sky-50/55 via-rose-50/35 to-background px-3 py-2">
+                              <p className="inline-flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+                                <Heart className="size-3 text-rose-500" aria-hidden />
+                                Pet-friendly research take
+                              </p>
                             </div>
                             <CardHeader className="p-3 pb-2">
                               <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Article</Badge>
@@ -1741,10 +2032,6 @@ export default function App() {
                     if (result.ok) {
                       setWaitlistStatus("success");
                       setWaitlistEmail("");
-                    } else if (result.error === "MAILTO") {
-                      window.location.href = `mailto:pro@animalmind.co?subject=AnimalMind%20Pet%20updates&body=${encodeURIComponent(`Please add me for Pet updates.\nEmail: ${email}`)}`;
-                      setWaitlistStatus("success");
-                      setWaitlistEmail("");
                     } else {
                       setWaitlistStatus("error");
                       setWaitlistError(result.error || "Something went wrong.");
@@ -1779,7 +2066,7 @@ export default function App() {
 
           <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
             <p className="font-semibold text-foreground">AnimalMind Pet</p>
-            <p className="mt-1">Run by autonomous agents. Reviewed by humans.</p>
+            <p className="mt-1">Run by autonomous AI agents. Validated by humans.</p>
             <p className="mt-2 text-xs">Not a replacement for veterinary care. When in doubt, see your vet.</p>
           </footer>
         </>
@@ -1893,56 +2180,15 @@ export default function App() {
               <div className="shrink-0 w-full sm:w-auto">
                 {waitlistStatus === "success" ? (
                   <p className="text-sm text-foreground font-medium py-2">You’re on the list. We’ll notify you when the daily brief launches.</p>
-                ) : proCtaExpanded ? (
-                  <form
-                    className="flex flex-col sm:flex-row gap-2"
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      const email = waitlistEmail.trim();
-                      if (!email) return;
-                      setWaitlistStatus("loading");
-                      setWaitlistError("");
-                      const result = await submitWaitlist(email);
-                      if (result.ok) {
-                        setWaitlistStatus("success");
-                        setWaitlistEmail("");
-                      } else if (result.error === "MAILTO") {
-                        window.location.href = `mailto:pro@animalmind.co?subject=Pro%20early%20access&body=${encodeURIComponent(`Please add me for early access.\nEmail: ${email}`)}`;
-                        setWaitlistStatus("success");
-                        setWaitlistEmail("");
-                      } else {
-                        setWaitlistStatus("error");
-                        setWaitlistError(result.error || "Something went wrong.");
-                      }
-                    }}
-                  >
-                    <input
-                      type="email"
-                      placeholder="Your email"
-                      value={waitlistEmail}
-                      onChange={(e) => setWaitlistEmail(e.target.value)}
-                      disabled={waitlistStatus === "loading"}
-                      className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
-                      aria-label="Email"
-                    />
-                    <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
-                      {waitlistStatus === "loading" ? "…" : "Notify me"}
-                    </Button>
-                  </form>
                 ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full sm:w-auto rounded-md font-medium border-border bg-background min-h-[44px]"
-                    onClick={() => setProCtaExpanded(true)}
+                  <a
+                    href="#waitlist"
+                    className="inline-flex w-full sm:w-auto items-center justify-center rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/40 hover:border-foreground/30 min-h-[44px]"
                   >
-                    Early access to the brief
-                  </Button>
+                    Join the updates list
+                  </a>
                 )}
               </div>
-              {waitlistStatus === "error" && waitlistError && (
-                <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
-              )}
             </div>
           </div>
           <p className="px-4 sm:px-6 py-3 border-t border-border/80 text-xs text-muted-foreground">
@@ -1981,11 +2227,11 @@ export default function App() {
             </div>
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
-                {PRO_MARKETING_VALUE}
+                AnimalMind Pro helps teams move from scattered monitoring to a consistent, source-linked operating rhythm.
               </p>
               <ul className="list-disc pl-5 space-y-1.5">
-                {PRO_MARKETING_BENEFITS.map((benefit) => (
-                  <li key={`mission-${benefit}`}>{benefit}</li>
+                {PRO_MISSION_POINTS.map((point) => (
+                  <li key={`mission-${point}`}>{point}</li>
                 ))}
               </ul>
               <p>{PRO_MARKETING_CREDIBILITY}</p>
@@ -2281,7 +2527,7 @@ export default function App() {
           </section>
         </section>
 
-        {/* Updates / Waitlist — Supabase or mailto */}
+        {/* Updates / Waitlist — Supabase only */}
         <section id="waitlist" aria-labelledby="waitlist-heading" className="py-12 border-t border-border">
           <h2 id="waitlist-heading" className="section-label mb-2">Updates</h2>
           <p className="text-lg font-semibold text-foreground mb-1">Notify me</p>
@@ -2301,10 +2547,6 @@ export default function App() {
                 setWaitlistError("");
                 const result = await submitWaitlist(email);
                 if (result.ok) {
-                  setWaitlistStatus("success");
-                  setWaitlistEmail("");
-                } else if (result.error === "MAILTO") {
-                  window.location.href = `mailto:pro@animalmind.co?subject=Newsletter%20sign-up&body=${encodeURIComponent(`Please add me to the newsletter.\nEmail: ${email}`)}`;
                   setWaitlistStatus("success");
                   setWaitlistEmail("");
                 } else {
@@ -2330,7 +2572,7 @@ export default function App() {
           {waitlistStatus === "error" && waitlistError && (
             <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
           )}
-          {!isSupabaseConfigured() && waitlistStatus === "idle" && (
+          {false && waitlistStatus === "idle" && (
             <p className="mt-2 text-xs text-muted-foreground">Or email pro@animalmind.co with subject “AnimalMind Pro updates”.</p>
           )}
         </section>

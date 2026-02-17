@@ -9,6 +9,8 @@ This document describes how we protect the project from hackers and bad actors, 
 - **Do not share anything sensitive on GitHub.** Never commit `.env`, API keys, tokens, passwords, or PII. This repo is intended to be private. Keep secrets in local `.env` and private notes only.
 - **Frontend is read-only.** The dashboard and landing page display data from public sources (PubMed, CDC, curated). No credentials, API keys, or PII are exposed in the UI. External links use `rel="noopener noreferrer"` and only `http://` / `https://` URLs are allowed.
 - **API does not leak internals.** The `/api/ingested` endpoint returns only DB data; errors return a generic message (no stack traces or paths to the client).
+- **Protected internal endpoints.** Non-UI data endpoints can be protected with `INTERNAL_API_KEY` (header: `x-internal-api-key`) so they are not publicly accessible by default.
+- **No source maps in production build.** Frontend production builds are minified without source maps to reduce reverse-engineering signal.
 
 ---
 
@@ -57,7 +59,7 @@ We will respond and work with you on a fix and disclosure.
 - **Never commit** `.env`, API keys, passwords, or tokens to the repo. They are in `.gitignore` (`.env`, `.env.local`, `.env.*.local`).
 - **Use only** `.env.example` as a template; put real values in `.env` locally and keep `.env` out of version control.
 - **Moltbook / app keys:** Store in environment variables (e.g. `MOLTBOOK_APP_KEY`). Never hardcode in source.
-- **GitHub push:** The scheduled ingest (every 12 hours) pushes to GitHub using your system Git credentials (HTTPS or SSH). Use a **personal access token (PAT)** or SSH key with minimal scope; enable **2FA** on your GitHub account.
+- **GitHub push:** The scheduled ingest (every 6 hours) pushes to GitHub using your system Git credentials (HTTPS or SSH). Use a **personal access token (PAT)** or SSH key with minimal scope; enable **2FA** on your GitHub account.
 
 ### 2. Dependencies
 

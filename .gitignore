@@ -13,10 +13,18 @@ Thumbs.db
 *.log
 .idea/
 .vscode/
+.cursor/
+agent-transcripts/
 
 # Ingested data: DB and JSON are committed and pushed after each ingest
 memory/ingest.log
 memory/ingest-report.html
+memory/ingest-circuit-breakers.json
+memory/source-health.json
 memory/*.db
 memory/*.db-wal
 memory/*.db-shm
+memory/waitlist-backup.jsonl
+
+# Keep source maps out of version control
+*.map
