@@ -1458,45 +1458,6 @@ export default function App() {
           </header>
 
           <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
-            {sourceHealthSummary && (
-              <section className={cn("mb-6 rounded-md border px-4 py-3", statusToneClass)}>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold">
-                    Data status: {healthOverallLabel(sourceHealthSummary.overallStatus)}
-                  </p>
-                  <span className="text-xs">
-                    Coverage {sourceHealthSummary.coveragePercent ?? 0}%
-                  </span>
-                </div>
-                <p className="mt-1 text-xs">
-                  Last reliable source update {relativeTime(sourceHealthSummary.newestUpdate || summary?.lastUpdated)}.
-                </p>
-                <details className="mt-2 text-xs">
-                  <summary className="cursor-pointer select-none font-medium">View source status</summary>
-                  {topHealthDetails.length > 0 ? (
-                    <ul className="mt-2 space-y-1.5 text-muted-foreground">
-                      {topHealthDetails.map((item) => (
-                        <li key={`pet-health-${item.sourceId}`} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{item.name}</span>
-                          <span className="shrink-0">
-                            {sourceStatusLabel(item.status)} · {relativeTime(item.lastUpdate)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="mt-2 text-muted-foreground">Detailed source health appears after the next ingest cycle.</p>
-                  )}
-                  {intelligenceGaps.length > 0 && (
-                    <ul className="mt-2 space-y-1 text-muted-foreground">
-                      {intelligenceGaps.slice(0, 2).map((gap, idx) => (
-                        <li key={`pet-gap-${idx}`}>{gap.message}</li>
-                      ))}
-                    </ul>
-                  )}
-                </details>
-              </section>
-            )}
             <section id="pet-safety-dashboard" className="mb-8 rounded-lg border border-border bg-card shadow-sm">
               <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
                 <p className="section-label mb-2">AnimalMind Pet Safety Dashboard</p>
@@ -1566,6 +1527,45 @@ export default function App() {
                 )}
               </div>
             </section>
+            {sourceHealthSummary && (
+              <section className={cn("mb-6 rounded-md border px-4 py-3", statusToneClass)}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">
+                    Data status: {healthOverallLabel(sourceHealthSummary.overallStatus)}
+                  </p>
+                  <span className="text-xs">
+                    Coverage {sourceHealthSummary.coveragePercent ?? 0}%
+                  </span>
+                </div>
+                <p className="mt-1 text-xs">
+                  Last reliable source update {relativeTime(sourceHealthSummary.newestUpdate || summary?.lastUpdated)}.
+                </p>
+                <details className="mt-2 text-xs">
+                  <summary className="cursor-pointer select-none font-medium">View source status</summary>
+                  {topHealthDetails.length > 0 ? (
+                    <ul className="mt-2 space-y-1.5 text-muted-foreground">
+                      {topHealthDetails.map((item) => (
+                        <li key={`pet-health-${item.sourceId}`} className="flex items-center justify-between gap-2">
+                          <span className="truncate">{item.name}</span>
+                          <span className="shrink-0">
+                            {sourceStatusLabel(item.status)} · {relativeTime(item.lastUpdate)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-muted-foreground">Detailed source health appears after the next ingest cycle.</p>
+                  )}
+                  {intelligenceGaps.length > 0 && (
+                    <ul className="mt-2 space-y-1 text-muted-foreground">
+                      {intelligenceGaps.slice(0, 2).map((gap, idx) => (
+                        <li key={`pet-gap-${idx}`}>{gap.message}</li>
+                      ))}
+                    </ul>
+                  )}
+                </details>
+              </section>
+            )}
             {/* Hero CTA — image + headline + waitlist */}
             <section
               id="pet-cta"
