@@ -543,49 +543,71 @@ function AnimalMindLogo({ className }: { className?: string }) {
 
 const base = typeof document !== "undefined" ? "" : "";
 
+function timeoutSignal(timeoutMs: number): { signal: AbortSignal; cancel: () => void } {
+  const controller = new AbortController();
+  const id = window.setTimeout(() => controller.abort(), Math.max(0, timeoutMs));
+  return {
+    signal: controller.signal,
+    cancel: () => window.clearTimeout(id),
+  };
+}
+
+async function fetchJsonWithTimeout<T>(url: string, init: RequestInit, timeoutMs: number): Promise<T | null> {
+  if (typeof window === "undefined") return null;
+  const { signal, cancel } = timeoutSignal(timeoutMs);
+  try {
+    const res = await fetch(url, { ...init, signal });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  } finally {
+    cancel();
+  }
+}
+
 /** Try /api/dashboard first (live from DB when running locally); else use static JSON. */
 async function fetchDashboard(): Promise<{
   summary: DataSummary | null;
   ingested: IngestedRow[] | null;
 }> {
-  try {
-    const r = await fetch(`${base}/api/dashboard`, { cache: "no-store" });
-    if (r.ok) {
-      const data = await r.json();
-      const apiSourceHealthSummary =
-        data.sourceHealthSummary ?? data.summary?.sourceHealthSummary ?? deriveHealthFromLastUpdated(data.summary?.lastUpdated);
-      const summaryFromApi: DataSummary | null = data.summary
-        ? {
-            ...data.summary,
-            sourceHealthSummary: apiSourceHealthSummary,
-            sourceHealthDetails: Array.isArray(data.sourceHealthDetails)
-              ? data.sourceHealthDetails
-              : Array.isArray(data.summary?.sourceHealthDetails)
-                ? data.summary.sourceHealthDetails
-                : [],
-            intelligenceGaps: Array.isArray(data.intelligenceGaps)
-              ? data.intelligenceGaps
-              : Array.isArray(data.summary?.intelligenceGaps)
-                ? data.summary.intelligenceGaps
-                : [],
-          }
-        : null;
-      return {
-        summary: summaryFromApi,
-        ingested: Array.isArray(data.ingested) ? data.ingested : null,
-      };
-    }
-  } catch {
-    // e.g. GitHub Pages: no API
+  const apiPayload = await fetchJsonWithTimeout<any>(`${base}/api/dashboard`, { cache: "no-store" }, 3500);
+  if (apiPayload) {
+    const apiSourceHealthSummary =
+      apiPayload.sourceHealthSummary ??
+      apiPayload.summary?.sourceHealthSummary ??
+      deriveHealthFromLastUpdated(apiPayload.summary?.lastUpdated);
+    const summaryFromApi: DataSummary | null = apiPayload.summary
+      ? {
+          ...apiPayload.summary,
+          sourceHealthSummary: apiSourceHealthSummary,
+          sourceHealthDetails: Array.isArray(apiPayload.sourceHealthDetails)
+            ? apiPayload.sourceHealthDetails
+            : Array.isArray(apiPayload.summary?.sourceHealthDetails)
+              ? apiPayload.summary.sourceHealthDetails
+              : [],
+          intelligenceGaps: Array.isArray(apiPayload.intelligenceGaps)
+            ? apiPayload.intelligenceGaps
+            : Array.isArray(apiPayload.summary?.intelligenceGaps)
+              ? apiPayload.summary.intelligenceGaps
+              : [],
+        }
+      : null;
+    return {
+      summary: summaryFromApi,
+      ingested: Array.isArray(apiPayload.ingested) ? apiPayload.ingested : null,
+    };
   }
-  const [summaryRes, ingestedRes, sourceHealthRes] = await Promise.all([
-    fetch(`${base}/data-summary.json`, { cache: "no-store" }),
-    fetch(`${base}/data/ingested.json`, { cache: "no-store" }),
-    fetch(`${base}/source-health.json`, { cache: "no-store" }).catch(() => null),
+
+  const [summaryPayload, ingestedPayload, sourceHealthPayload] = await Promise.all([
+    fetchJsonWithTimeout<any>(`${base}/data-summary.json`, { cache: "no-store" }, 5000),
+    fetchJsonWithTimeout<any>(`${base}/data/ingested.json`, { cache: "no-store" }, 7000),
+    fetchJsonWithTimeout<any>(`${base}/source-health.json`, { cache: "no-store" }, 5000),
   ]);
-  const summary = summaryRes.ok ? await summaryRes.json() : null;
-  const sourceHealthPayload = sourceHealthRes && sourceHealthRes.ok ? await sourceHealthRes.json() : null;
-  if (summary && sourceHealthPayload) {
+
+  const summary: DataSummary | null =
+    summaryPayload && typeof summaryPayload === "object" ? (summaryPayload as DataSummary) : null;
+  if (summary && sourceHealthPayload && typeof sourceHealthPayload === "object") {
     summary.sourceHealthSummary = summary.sourceHealthSummary ?? sourceHealthPayload.summary ?? null;
     summary.sourceHealthDetails = summary.sourceHealthDetails ?? sourceHealthPayload.details ?? [];
     summary.intelligenceGaps = summary.intelligenceGaps ?? sourceHealthPayload.intelligenceGaps ?? [];
@@ -593,30 +615,16 @@ async function fetchDashboard(): Promise<{
   if (summary && !summary.sourceHealthSummary) {
     summary.sourceHealthSummary = deriveHealthFromLastUpdated(summary.lastUpdated);
   }
-  const ingestedPayload = ingestedRes.ok ? await ingestedRes.json() : null;
-  const ingested = Array.isArray(ingestedPayload) ? ingestedPayload : null;
+  const ingested = Array.isArray(ingestedPayload) ? (ingestedPayload as IngestedRow[]) : null;
   return { summary, ingested };
 }
 
 /** Fetch the complete pet-relevant research list (uncapped), with static fallback for docs/public builds. */
 async function fetchAllPetResearch(): Promise<IngestedRow[] | null> {
-  try {
-    const r = await fetch(`${base}/api/pet-research`, { cache: "no-store" });
-    if (r.ok) {
-      const payload = await r.json();
-      return Array.isArray(payload.ingested) ? payload.ingested : null;
-    }
-  } catch {
-    // e.g. static hosting: no API server
-  }
-  try {
-    const r = await fetch(`${base}/data/pet-research.json`, { cache: "no-store" });
-    if (!r.ok) return null;
-    const payload = await r.json();
-    return Array.isArray(payload) ? payload : null;
-  } catch {
-    return null;
-  }
+  const apiPayload = await fetchJsonWithTimeout<any>(`${base}/api/pet-research`, { cache: "no-store" }, 6000);
+  if (apiPayload && Array.isArray(apiPayload.ingested)) return apiPayload.ingested as IngestedRow[];
+  const staticPayload = await fetchJsonWithTimeout<any>(`${base}/data/pet-research.json`, { cache: "no-store" }, 6000);
+  return Array.isArray(staticPayload) ? (staticPayload as IngestedRow[]) : null;
 }
 
 function rowTimestampMs(value: string | null | undefined): number {
@@ -1178,10 +1186,8 @@ export default function App() {
   useEffect(() => {
     if (memory !== null) return;
     setMemoryLoading(true);
-    fetch(`${base}/data/ingested.json`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
+    fetchJsonWithTimeout<any>(`${base}/data/ingested.json`, { cache: "no-store" }, 7000)
       .then((data) => setMemory(Array.isArray(data) ? data : null))
-      .catch(() => setMemory(null))
       .finally(() => setMemoryLoading(false));
   }, [memory]);
 
