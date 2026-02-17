@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-15T23:21:56.796Z",
+  "generatedAt": "2026-02-17T00:19:02.206Z",
   "sources": [
     {
       "sourceId": "autonomous_topics",
@@ -12,8 +12,8 @@
       "status": "fresh",
       "attempts": 20,
       "latencyMs": 0,
-      "lastAttemptAt": "2026-02-15T23:21:56.776Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.774Z",
+      "lastAttemptAt": "2026-02-17T00:19:02.204Z",
+      "lastSuccessAt": "2026-02-17T00:19:02.204Z",
       "lastError": null
     },
     {
@@ -26,9 +26,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 174,
-      "lastAttemptAt": "2026-02-15T23:21:55.937Z",
-      "lastSuccessAt": "2026-02-15T23:21:55.936Z",
+      "latencyMs": 107,
+      "lastAttemptAt": "2026-02-17T00:19:01.339Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.338Z",
       "lastError": null
     },
     {
@@ -42,8 +42,8 @@
       "status": "fresh",
       "attempts": 1,
       "latencyMs": 0,
-      "lastAttemptAt": "2026-02-15T23:21:56.576Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.576Z",
+      "lastAttemptAt": "2026-02-17T00:19:01.886Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.886Z",
       "lastError": null
     },
     {
@@ -56,9 +56,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 588,
-      "lastAttemptAt": "2026-02-15T23:21:56.353Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.351Z",
+      "latencyMs": 610,
+      "lastAttemptAt": "2026-02-17T00:19:01.843Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.843Z",
       "lastError": null
     },
     {
@@ -71,9 +71,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 190,
-      "lastAttemptAt": "2026-02-15T23:21:55.956Z",
-      "lastSuccessAt": "2026-02-15T23:21:55.955Z",
+      "latencyMs": 226,
+      "lastAttemptAt": "2026-02-17T00:19:01.459Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.459Z",
       "lastError": null
     },
     {
@@ -86,9 +86,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 270,
-      "lastAttemptAt": "2026-02-15T23:21:56.038Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.037Z",
+      "latencyMs": 207,
+      "lastAttemptAt": "2026-02-17T00:19:01.441Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.441Z",
       "lastError": null
     },
     {
@@ -101,9 +101,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 173,
-      "lastAttemptAt": "2026-02-15T23:21:55.942Z",
-      "lastSuccessAt": "2026-02-15T23:21:55.941Z",
+      "latencyMs": 240,
+      "lastAttemptAt": "2026-02-17T00:19:01.475Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.475Z",
       "lastError": null
     },
     {
@@ -116,24 +116,24 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 271,
-      "lastAttemptAt": "2026-02-15T23:21:56.044Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.044Z",
+      "latencyMs": 253,
+      "lastAttemptAt": "2026-02-17T00:19:01.489Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.489Z",
       "lastError": null
     },
     {
       "sourceId": "pubmed_pet_owner",
-      "name": "pubmed_pet_owner",
-      "type": "other",
-      "tier": 4,
-      "audience": "both",
+      "name": "PubMed pet owner guidance",
+      "type": "research",
+      "tier": 1,
+      "audience": "pet",
       "requiredForCoverage": false,
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 173,
-      "lastAttemptAt": "2026-02-15T23:21:55.948Z",
-      "lastSuccessAt": "2026-02-15T23:21:55.947Z",
+      "latencyMs": 256,
+      "lastAttemptAt": "2026-02-17T00:19:01.492Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.492Z",
       "lastError": null
     },
     {
@@ -146,9 +146,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 361,
-      "lastAttemptAt": "2026-02-15T23:21:56.068Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.067Z",
+      "latencyMs": 387,
+      "lastAttemptAt": "2026-02-17T00:19:01.605Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.605Z",
       "lastError": null
     },
     {
@@ -161,9 +161,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 170,
-      "lastAttemptAt": "2026-02-15T23:21:55.940Z",
-      "lastSuccessAt": "2026-02-15T23:21:55.939Z",
+      "latencyMs": 273,
+      "lastAttemptAt": "2026-02-17T00:19:01.508Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.508Z",
       "lastError": null
     },
     {
@@ -176,9 +176,9 @@
       "mode": "live",
       "status": "fresh",
       "attempts": 1,
-      "latencyMs": 796,
-      "lastAttemptAt": "2026-02-15T23:21:56.573Z",
-      "lastSuccessAt": "2026-02-15T23:21:56.573Z",
+      "latencyMs": 649,
+      "lastAttemptAt": "2026-02-17T00:19:01.886Z",
+      "lastSuccessAt": "2026-02-17T00:19:01.886Z",
       "lastError": null
     }
   ]
