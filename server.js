@@ -7,7 +7,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { getIngestedGrouped, getIngestedMeta, getIngestedSorted } = require('./lib/db');
+const { getIngestedGrouped, getIngestedMeta, getIngestedSorted, getIngestedByTypeSorted } = require('./lib/db');
 const { summarizeSourceHealth } = require('./lib/dataFreshness');
 
 const app = express();
@@ -205,6 +205,24 @@ app.get('/api/pet-research', rateLimit, (req, res) => {
     }));
     res.json({ count: rows.length, ingested: rows });
   } catch (e) {
+    res.status(500).json({ error: 'Service temporarily unavailable.' });
+  }
+});
+
+// API: pet recall feed (limited). Used by the Pet Safety Dashboard so recall alerts don't get starved by other data types.
+app.get('/api/pet-recalls', rateLimit, (req, res) => {
+  try {
+    const rows = getIngestedByTypeSorted('recall', { limit: 120 }).map((r) => ({
+      data_type: r.data_type,
+      condition_or_topic: r.condition_or_topic || '',
+      title: r.title || '',
+      url: r.url || '',
+      published_at: r.published_at || null,
+      fetched_at: r.fetched_at || null,
+      source: r.source || '',
+    }));
+    res.json({ count: rows.length, ingested: rows });
+  } catch {
     res.status(500).json({ error: 'Service temporarily unavailable.' });
   }
 });

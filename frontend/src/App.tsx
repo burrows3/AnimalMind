@@ -627,6 +627,13 @@ async function fetchAllPetResearch(): Promise<IngestedRow[] | null> {
   return Array.isArray(staticPayload) ? (staticPayload as IngestedRow[]) : null;
 }
 
+async function fetchPetRecalls(): Promise<IngestedRow[] | null> {
+  const apiPayload = await fetchJsonWithTimeout<any>(`${base}/api/pet-recalls`, { cache: "no-store" }, 4500);
+  if (apiPayload && Array.isArray(apiPayload.ingested)) return apiPayload.ingested as IngestedRow[];
+  const staticPayload = await fetchJsonWithTimeout<any>(`${base}/data/pet-recalls.json`, { cache: "no-store" }, 4500);
+  return Array.isArray(staticPayload) ? (staticPayload as IngestedRow[]) : null;
+}
+
 function rowTimestampMs(value: string | null | undefined): number {
   if (!value) return 0;
   const parsed = Date.parse(value);
@@ -1088,6 +1095,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [petRecallRows, setPetRecallRows] = useState<IngestedRow[] | null>(null);
+  const [petRecallLoading, setPetRecallLoading] = useState(false);
   const [pubmedAbstracts, setPubmedAbstracts] = useState<Record<string, string>>(() => readPubMedAbstractCache());
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -1133,15 +1142,20 @@ export default function App() {
 
   const loadData = useCallback(() => {
     setRefreshing(true);
-    fetchDashboard()
-      .then(({ summary: s, ingested: i }) => {
-        setSummary(s);
-        setMemory(i);
+    setPetRecallLoading(true);
+    Promise.all([fetchDashboard(), fetchPetRecalls()])
+      .then(([dash, recalls]) => {
+        setSummary(dash.summary);
+        setMemory(dash.ingested);
+        setPetRecallRows(recalls);
         setShowAllPetResearch(false);
         setAllPetResearchRows(null);
         setAllPetResearchError("");
       })
-      .finally(() => setRefreshing(false));
+      .finally(() => {
+        setPetRecallLoading(false);
+        setRefreshing(false);
+      });
   }, []);
 
   const toggleAllPetResearch = useCallback(async () => {
@@ -1166,16 +1180,21 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchDashboard()
-      .then(({ summary: s, ingested: i }) => {
+    setPetRecallLoading(true);
+    Promise.all([fetchDashboard(), fetchPetRecalls()])
+      .then(([dash, recalls]) => {
         if (!cancelled) {
-          setSummary(s);
-          setMemory(i);
+          setSummary(dash.summary);
+          setMemory(dash.ingested);
+          setPetRecallRows(recalls);
         }
       })
       .catch(() => {})
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setPetRecallLoading(false);
+          setLoading(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -1239,15 +1258,19 @@ export default function App() {
     };
   }, [missingPetPubMedIdsKey]);
   const petBriefCount = summary?.counts?.pet_owner ?? petBriefItems.length;
-  const recallRows = useMemo(
-    () => uniqueRows(sortPetRowsNewestFirst((memory || []).filter((row) => row.data_type === "recall")), 48),
-    [memory]
-  );
+  const recallRows = useMemo(() => {
+    const fromDedicated = Array.isArray(petRecallRows) ? petRecallRows : [];
+    if (fromDedicated.length > 0) return uniqueRows(sortPetRowsNewestFirst(fromDedicated), 72);
+    return uniqueRows(sortPetRowsNewestFirst((memory || []).filter((row) => row.data_type === "recall")), 48);
+  }, [memory, petRecallRows]);
   const petSafetySignals = useMemo(
     () => (recallRows.length > 0 ? recallRows : buildPetSafetySignals(memory, 18)),
     [memory, recallRows]
   );
-  const activeRecallCount = summary?.counts?.recall ?? (recallRows.length > 0 ? recallRows.length : petSafetySignals.length);
+  const activeRecallCount =
+    (Array.isArray(petRecallRows) ? petRecallRows.length : null) ??
+    summary?.counts?.recall ??
+    (recallRows.length > 0 ? recallRows.length : petSafetySignals.length);
   const dogRecallCount = useMemo(
     () => petSafetySignals.reduce((total, row) => total + Number(DOG_SIGNAL_KEYWORDS.test(rowSignalText(row))), 0),
     [petSafetySignals]
@@ -1493,7 +1516,7 @@ export default function App() {
                   <p className="text-sm font-semibold text-foreground">Recent safety reports</p>
                   {lastUpdated && <span className="text-xs text-muted-foreground">As of {lastUpdated}</span>}
                 </div>
-                {loading || memoryLoading ? (
+                {loading || memoryLoading || (petRecallLoading && recallRows.length === 0) ? (
                   <p className="text-sm text-muted-foreground">Loading safety reports…</p>
                 ) : latestPetSafetyReports.length > 0 ? (
                   <ul className="space-y-2">

@@ -18,6 +18,7 @@ const DOCS_SUMMARY = path.join(REPO_ROOT, 'docs', 'data-summary.json');
 const DOCS_DATA_DIR = path.join(REPO_ROOT, 'docs', 'data');
 const DOCS_INGESTED_JSON = path.join(DOCS_DATA_DIR, 'ingested.json');
 const DOCS_PET_RESEARCH_JSON = path.join(DOCS_DATA_DIR, 'pet-research.json');
+const DOCS_PET_RECALLS_JSON = path.join(DOCS_DATA_DIR, 'pet-recalls.json');
 const DOCS_SOURCE_HEALTH_JSON = path.join(REPO_ROOT, 'docs', 'source-health.json');
 const DOCS_REASONING_JSON = path.join(REPO_ROOT, 'docs', 'agent-reasoning.json');
 const DOCS_TOPIC_SUMMARY = path.join(REPO_ROOT, 'docs', 'topic-summary.json');
@@ -26,6 +27,7 @@ const PUBLIC_SOURCE_HEALTH_JSON = path.join(REPO_ROOT, 'public', 'source-health.
 const PUBLIC_DATA_DIR = path.join(REPO_ROOT, 'public', 'data');
 const PUBLIC_INGESTED_JSON = path.join(PUBLIC_DATA_DIR, 'ingested.json');
 const PUBLIC_PET_RESEARCH_JSON = path.join(PUBLIC_DATA_DIR, 'pet-research.json');
+const PUBLIC_PET_RECALLS_JSON = path.join(PUBLIC_DATA_DIR, 'pet-recalls.json');
 const PUBLIC_REASONING_JSON = path.join(REPO_ROOT, 'public', 'agent-reasoning.json');
 const PUBLIC_TOPIC_SUMMARY = path.join(REPO_ROOT, 'public', 'topic-summary.json');
 const INGESTED_EXPORT_LIMIT = 200;
@@ -194,6 +196,7 @@ async function main() {
     const allRows = getIngestedSorted();
     const rows = selectDashboardRows(allRows);
     const petResearchRows = selectPetResearchRows(allRows);
+    const petRecallRows = (allRows || []).filter((r) => r && r.data_type === 'recall').slice(0, 160);
     const missingPubMedIds = new Set();
     for (const row of [...rows, ...petResearchRows]) {
       if (row.title) continue;
@@ -219,12 +222,15 @@ async function main() {
     };
     const mappedRows = rows.map(mapRowForExport);
     const mappedPetResearchRows = petResearchRows.map(mapRowForExport);
+    const mappedPetRecallRows = petRecallRows.map(mapRowForExport);
     if (!fs.existsSync(DOCS_DATA_DIR)) fs.mkdirSync(DOCS_DATA_DIR, { recursive: true });
     if (!fs.existsSync(PUBLIC_DATA_DIR)) fs.mkdirSync(PUBLIC_DATA_DIR, { recursive: true });
     fs.writeFileSync(DOCS_INGESTED_JSON, JSON.stringify(mappedRows), 'utf8');
     fs.writeFileSync(PUBLIC_INGESTED_JSON, JSON.stringify(mappedRows), 'utf8');
     fs.writeFileSync(DOCS_PET_RESEARCH_JSON, JSON.stringify(mappedPetResearchRows), 'utf8');
     fs.writeFileSync(PUBLIC_PET_RESEARCH_JSON, JSON.stringify(mappedPetResearchRows), 'utf8');
+    fs.writeFileSync(DOCS_PET_RECALLS_JSON, JSON.stringify(mappedPetRecallRows), 'utf8');
+    fs.writeFileSync(PUBLIC_PET_RECALLS_JSON, JSON.stringify(mappedPetRecallRows), 'utf8');
     const reasoning = getAgentReasoning();
     fs.writeFileSync(DOCS_REASONING_JSON, JSON.stringify(reasoning, null, 2), 'utf8');
     fs.writeFileSync(PUBLIC_REASONING_JSON, JSON.stringify(reasoning, null, 2), 'utf8');
@@ -252,12 +258,14 @@ async function main() {
   if (fs.existsSync(DOCS_SOURCE_HEALTH_JSON)) run('git add docs/source-health.json');
   if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
   if (fs.existsSync(DOCS_PET_RESEARCH_JSON)) run('git add docs/data/pet-research.json');
+  if (fs.existsSync(DOCS_PET_RECALLS_JSON)) run('git add docs/data/pet-recalls.json');
   if (fs.existsSync(DOCS_REASONING_JSON)) run('git add docs/agent-reasoning.json');
   if (fs.existsSync(DOCS_TOPIC_SUMMARY)) run('git add docs/topic-summary.json');
   if (fs.existsSync(PUBLIC_SUMMARY)) run('git add public/data-summary.json');
   if (fs.existsSync(PUBLIC_SOURCE_HEALTH_JSON)) run('git add public/source-health.json');
   if (fs.existsSync(PUBLIC_INGESTED_JSON)) run('git add public/data/ingested.json');
   if (fs.existsSync(PUBLIC_PET_RESEARCH_JSON)) run('git add public/data/pet-research.json');
+  if (fs.existsSync(PUBLIC_PET_RECALLS_JSON)) run('git add public/data/pet-recalls.json');
   if (fs.existsSync(PUBLIC_REASONING_JSON)) run('git add public/agent-reasoning.json');
   if (fs.existsSync(PUBLIC_TOPIC_SUMMARY)) run('git add public/topic-summary.json');
   if (fs.existsSync(path.join(REPO_ROOT, 'docs', 'index.html'))) run('git add docs/index.html');
