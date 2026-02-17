@@ -174,6 +174,7 @@ async function main() {
         case_data: meta.counts.case_data || 0,
         clinical: meta.counts.clinical || 0,
         pet_owner: meta.counts.pet_owner || 0,
+        recall: meta.counts.recall || 0,
         imaging: meta.counts.imaging || 0,
         vet_practice: meta.counts.vet_practice || 0,
       },

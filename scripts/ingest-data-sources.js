@@ -6,9 +6,10 @@
  * Data sources:
  * 1. PubMed – literature (one health), cancer, case_data, clinical (vet practice, small animal, equine), pet_owner
  * 2. CDC Travel Notices (RSS) – surveillance
- * 3. Curated datasets (JSON) – cancer, imaging, vet_practice (guidelines, AVMA, AAHA, etc.)
- * 4. TCIA (Cancer Imaging Archive) – imaging collections (canine/veterinary when available)
- * 5. Autonomous-agent topics – PubMed queries for frontier topics (animal communication, sentience, welfare, etc.)
+ * 3. FDA enforcement API – active pet food and animal drug recalls
+ * 4. Curated datasets (JSON) – cancer, imaging, vet_practice (guidelines, AVMA, AAHA, etc.)
+ * 5. TCIA (Cancer Imaging Archive) – imaging collections (canine/veterinary when available)
+ * 6. Autonomous-agent topics – PubMed queries for frontier topics (animal communication, sentience, welfare, etc.)
  */
 
 /** Autonomous-agent topics: Clinical-Adjacent + Research & Discovery. Each run finds literature (PubMed) for these. */
@@ -51,6 +52,19 @@ function defaultRssResult(source, url) {
     source,
     url,
     items: [],
+  };
+}
+
+function defaultFdaRecallResult() {
+  return {
+    fetchedAt: new Date().toISOString(),
+    source: 'FDA enforcement API',
+    recalls: [],
+    totals: {
+      foodScanned: 0,
+      drugScanned: 0,
+      petRelevant: 0,
+    },
   };
 }
 
@@ -287,6 +301,152 @@ async function fetchEcdcAvianFlu() {
   };
 }
 
+// --- 2c. FDA active recalls (pet food + animal drug) ---
+const FDA_API_BASE = 'https://api.fda.gov';
+const FDA_ENFORCEMENT_LIMIT = 100;
+const FDA_ENFORCEMENT_MAX_PAGES = 5;
+const FDA_ONGOING_QUERY = encodeURIComponent('status:"Ongoing"');
+const FDA_PET_RELEVANT_PATTERN =
+  /\b(dog|dogs|cat|cats|canine|feline|puppy|puppies|kitten|kittens|veterinary|animal feed|animal drug|pet food|pet foods|pet treat|pet treats|companion animal)\b/i;
+const FDA_DOG_PATTERN = /\b(dog|dogs|canine|puppy|puppies)\b/i;
+const FDA_CAT_PATTERN = /\b(cat|cats|feline|kitten|kittens)\b/i;
+
+function fetchJsonWithStatus(url) {
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, (res) => {
+        let body = '';
+        res.on('data', (chunk) => (body += chunk));
+        res.on('end', () => {
+          if (!body) {
+            resolve({ statusCode: res.statusCode || 0, payload: null });
+            return;
+          }
+          try {
+            resolve({
+              statusCode: res.statusCode || 0,
+              payload: JSON.parse(body),
+            });
+          } catch (err) {
+            reject(new Error(`Invalid JSON response from ${url}: ${err.message}`));
+          }
+        });
+      })
+      .on('error', reject);
+  });
+}
+
+function fdaRecallText(row) {
+  return `${row?.product_description || ''} ${row?.reason_for_recall || ''} ${row?.recalling_firm || ''}`
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function toIsoDateFromYyyyMmDd(value) {
+  if (!value || !/^\d{8}$/.test(String(value))) return null;
+  const raw = String(value);
+  const yyyy = raw.slice(0, 4);
+  const mm = raw.slice(4, 6);
+  const dd = raw.slice(6, 8);
+  return `${yyyy}-${mm}-${dd}T00:00:00.000Z`;
+}
+
+function hashText(text) {
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function buildFdaRecallCondition(text, dataset) {
+  const hasDog = FDA_DOG_PATTERN.test(text);
+  const hasCat = FDA_CAT_PATTERN.test(text);
+  if (hasDog && hasCat) return 'Dog and cat recall';
+  if (hasDog) return 'Dog-related recall';
+  if (hasCat) return 'Cat-related recall';
+  if (dataset === 'drug') return 'Animal drug recall';
+  return 'Pet product recall';
+}
+
+function normalizeFdaRecall(record, dataset) {
+  const text = fdaRecallText(record);
+  const recallNumber = (record?.recall_number || '').trim();
+  const eventId = (record?.event_id || '').trim();
+  const externalSeed = recallNumber || eventId || `${record?.product_description || ''}|${record?.report_date || ''}`;
+  const externalId = `${dataset}-${externalSeed || hashText(text || dataset)}`;
+  const product = (record?.product_description || '').replace(/\s+/g, ' ').trim();
+  const reason = (record?.reason_for_recall || '').replace(/\s+/g, ' ').trim();
+  const titleCore = product || (dataset === 'drug' ? 'Animal drug product' : 'Pet food product');
+  const title = reason
+    ? `${titleCore} — ${reason}`
+    : titleCore;
+  const eventLink = eventId
+    ? `https://www.accessdata.fda.gov/scripts/ires/?Event=${encodeURIComponent(eventId)}`
+    : 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts';
+  return {
+    data_type: 'recall',
+    source: 'fda_pet_recalls',
+    condition_or_topic: buildFdaRecallCondition(text, dataset),
+    title: title.slice(0, 800),
+    url: eventLink,
+    external_id: externalId,
+    published_at: toIsoDateFromYyyyMmDd(record?.report_date) || toIsoDateFromYyyyMmDd(record?.recall_initiation_date) || null,
+  };
+}
+
+async function fetchFdaEnforcementRows(dataset) {
+  const rows = [];
+  let total = null;
+  for (let page = 0; page < FDA_ENFORCEMENT_MAX_PAGES; page += 1) {
+    const skip = page * FDA_ENFORCEMENT_LIMIT;
+    const url = `${FDA_API_BASE}/${dataset}/enforcement.json?search=${FDA_ONGOING_QUERY}&limit=${FDA_ENFORCEMENT_LIMIT}&skip=${skip}`;
+    const { statusCode, payload } = await fetchJsonWithStatus(url);
+    if (statusCode === 404 && payload?.error?.code === 'NOT_FOUND') {
+      break;
+    }
+    if (statusCode < 200 || statusCode >= 300) {
+      throw new Error(`FDA ${dataset} enforcement request failed with status ${statusCode}.`);
+    }
+    const pageRows = Array.isArray(payload?.results) ? payload.results : [];
+    rows.push(...pageRows);
+    total = Number(payload?.meta?.results?.total) || total;
+    if (pageRows.length < FDA_ENFORCEMENT_LIMIT) break;
+    if (total !== null && rows.length >= total) break;
+  }
+  return rows;
+}
+
+async function fetchFdaPetRecalls() {
+  const [foodRows, drugRows] = await Promise.all([
+    fetchFdaEnforcementRows('food'),
+    fetchFdaEnforcementRows('drug'),
+  ]);
+  const normalized = [
+    ...foodRows
+      .filter((row) => FDA_PET_RELEVANT_PATTERN.test(fdaRecallText(row)))
+      .map((row) => normalizeFdaRecall(row, 'food')),
+    ...drugRows
+      .filter((row) => FDA_PET_RELEVANT_PATTERN.test(fdaRecallText(row)))
+      .map((row) => normalizeFdaRecall(row, 'drug')),
+  ];
+  const dedupedByExternalId = new Map();
+  for (const row of normalized) {
+    if (!row.external_id) continue;
+    dedupedByExternalId.set(row.external_id, row);
+  }
+  return {
+    fetchedAt: new Date().toISOString(),
+    source: 'FDA enforcement API',
+    recalls: Array.from(dedupedByExternalId.values()),
+    totals: {
+      foodScanned: foodRows.length,
+      drugScanned: drugRows.length,
+      petRelevant: dedupedByExternalId.size,
+    },
+  };
+}
+
 // --- 3. Curated datasets (cancer, imaging) ---
 function loadCuratedDatasets() {
   const p = path.join(MEMORY_DIR, 'curated-datasets.json');
@@ -368,6 +528,7 @@ function ingestIntoDb(
   pubmed,
   cdc,
   ecdc,
+  fdaPetRecalls,
   pubmedCancer,
   pubmedCaseReports,
   pubmedClinical,
@@ -440,6 +601,21 @@ function ingestIntoDb(
       url: link,
       external_id: link,
       published_at: item.pubDate || null,
+      fetched_at: fetchedAt,
+    });
+  }
+
+  // Regulatory: FDA active pet recalls (food + animal drugs)
+  deleteIngestedBySource('fda_pet_recalls');
+  for (const row of (fdaPetRecalls && fdaPetRecalls.recalls) || []) {
+    upsertIngested({
+      data_type: 'recall',
+      source: 'fda_pet_recalls',
+      condition_or_topic: row.condition_or_topic || 'Pet product recall',
+      title: row.title || 'FDA pet recall',
+      url: row.url || 'https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts',
+      external_id: row.external_id,
+      published_at: row.published_at || null,
       fetched_at: fetchedAt,
     });
   }
@@ -570,7 +746,7 @@ async function main() {
       return data;
     };
 
-    const [pubmed, cdc, ecdc, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, pubmedPetOwner, tcia] = await Promise.all([
+    const [pubmed, cdc, ecdc, fdaPetRecalls, pubmedCancer, pubmedCaseReports, pubmedClinical, pubmedSmallAnimal, pubmedEquine, pubmedPetOwner, tcia] = await Promise.all([
       runResilientSource({
         sourceId: 'pubmed_recent',
         snapshotFile: 'pubmed-recent.json',
@@ -590,6 +766,13 @@ async function main() {
         snapshotFile: 'ecdc-avian-flu.json',
         fetcher: () => fetchEcdcAvianFlu(),
         fallbackData: defaultRssResult('ECDC Avian influenza RSS', ECDC_AVIAN_FLU_RSS),
+        requiredForCoverage: false,
+      }),
+      runResilientSource({
+        sourceId: 'fda_pet_recalls',
+        snapshotFile: 'fda-pet-recalls.json',
+        fetcher: () => fetchFdaPetRecalls(),
+        fallbackData: defaultFdaRecallResult(),
         requiredForCoverage: false,
       }),
       runResilientSource({
@@ -730,6 +913,7 @@ async function main() {
     writeJson('pubmed-small-animal.json', pubmedSmallAnimal);
     writeJson('pubmed-equine.json', pubmedEquine);
     writeJson('ecdc-avian-flu.json', ecdc);
+    writeJson('fda-pet-recalls.json', fdaPetRecalls);
     writeJson('tcia-imaging.json', tcia);
     writeSourceHealthSnapshot(SOURCE_HEALTH_PATH, sourceHealthEntries);
     console.log('Wrote', SOURCE_HEALTH_PATH);
@@ -750,6 +934,7 @@ async function main() {
       pubmed,
       cdc,
       ecdc,
+      fdaPetRecalls,
       pubmedCancer,
       pubmedCaseReports,
       pubmedClinical,
@@ -762,7 +947,7 @@ async function main() {
       pubmedTitles
     );
     console.log(
-      'Ingested into database (literature including autonomous-agent topics, surveillance, cancer, case_data, clinical, pet_owner, imaging, vet_practice).'
+      'Ingested into database (literature including autonomous-agent topics, surveillance, recall, cancer, case_data, clinical, pet_owner, imaging, vet_practice).'
     );
     console.log('Done.');
   } catch (err) {

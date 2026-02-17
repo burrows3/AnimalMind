@@ -45,6 +45,7 @@ const LABELS: Record<string, string> = {
   case_data: "Case reports",
   clinical: "Clinical",
   pet_owner: "Pet brief",
+  recall: "Recall",
   imaging: "Imaging",
   vet_practice: "Vet practice",
 };
@@ -1232,8 +1233,15 @@ export default function App() {
     };
   }, [missingPetPubMedIdsKey]);
   const petBriefCount = summary?.counts?.pet_owner ?? petBriefItems.length;
-  const petSafetySignals = useMemo(() => buildPetSafetySignals(memory, 18), [memory]);
-  const activeRecallCount = petSafetySignals.length;
+  const recallRows = useMemo(
+    () => uniqueRows(sortPetRowsNewestFirst((memory || []).filter((row) => row.data_type === "recall")), 48),
+    [memory]
+  );
+  const petSafetySignals = useMemo(
+    () => (recallRows.length > 0 ? recallRows : buildPetSafetySignals(memory, 18)),
+    [memory, recallRows]
+  );
+  const activeRecallCount = summary?.counts?.recall ?? (recallRows.length > 0 ? recallRows.length : petSafetySignals.length);
   const dogRecallCount = useMemo(
     () => petSafetySignals.reduce((total, row) => total + Number(DOG_SIGNAL_KEYWORDS.test(rowSignalText(row))), 0),
     [petSafetySignals]

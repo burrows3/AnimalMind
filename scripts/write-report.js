@@ -43,6 +43,7 @@ const dataTypeLabels = {
   cancer: 'Cancer (animal / veterinary oncology)',
   case_data: 'Case data (veterinary case reports)',
   clinical: 'Clinical (practice, small animal, equine)',
+  recall: 'FDA active pet recalls',
   imaging: 'Imaging & radiographs',
   vet_practice: 'Vet practice (guidelines, resources)',
 };
