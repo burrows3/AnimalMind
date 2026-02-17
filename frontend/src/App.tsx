@@ -1474,57 +1474,13 @@ export default function App() {
               <div className="flex items-center gap-4">
                 <a href="#pet-safety-dashboard" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Safety dashboard</a>
                 <a href="#pet-brief" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Today's brief</a>
-                <a href="#get-updates" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Get updates</a>
+                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Get updates</a>
                 <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
               </div>
             </nav>
           </header>
 
           <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-6 sm:py-8 sm:px-6 relative z-1 overflow-x-hidden">
-            {/* Email signup — top, simple, Supabase only */}
-            <section id="get-updates" className="mb-6 rounded-lg border border-border bg-card px-4 py-3 sm:px-5 sm:py-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <p className="text-sm font-medium text-foreground shrink-0">Get updates</p>
-                {waitlistStatus === "success" ? (
-                  <p className="text-sm text-muted-foreground">You’re on the list.</p>
-                ) : (
-                  <form
-                    className="flex flex-1 flex-col sm:flex-row gap-2 min-w-0"
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      const email = waitlistEmail.trim();
-                      if (!email) return;
-                      setWaitlistStatus("loading");
-                      setWaitlistError("");
-                      const result = await submitWaitlist(email);
-                      if (result.ok) {
-                        setWaitlistStatus("success");
-                        setWaitlistEmail("");
-                      } else {
-                        setWaitlistStatus("error");
-                        setWaitlistError(result.error || "Something went wrong.");
-                      }
-                    }}
-                  >
-                    <input
-                      type="email"
-                      placeholder="Your email"
-                      value={waitlistEmail}
-                      onChange={(e) => setWaitlistEmail(e.target.value)}
-                      disabled={waitlistStatus === "loading"}
-                      className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                      aria-label="Email for updates"
-                    />
-                    <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 sm:w-auto">
-                      {waitlistStatus === "loading" ? "…" : "Notify me"}
-                    </Button>
-                  </form>
-                )}
-              </div>
-              {waitlistStatus === "error" && waitlistError && (
-                <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
-              )}
-            </section>
             <section id="pet-safety-dashboard" className="mb-8 rounded-lg border border-border bg-card shadow-sm">
               <div className="border-b border-border px-4 py-4 sm:px-6 sm:py-5">
                 <p className="section-label mb-2">AnimalMind Pet Safety Dashboard</p>
@@ -1532,7 +1488,7 @@ export default function App() {
                   AnimalMind Pet Safety Dashboard
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Pet- and animal-related recalls only (no human food). Links and counts update with each ingest.
+                  Live monitoring of pet-only animal-health recalls from official regulators.
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-3 px-4 py-4 sm:grid-cols-3 sm:px-6">
@@ -1652,45 +1608,66 @@ export default function App() {
                     AnimalMind Pet
                   </Badge>
                   <h2 id="pet-cta-heading" className="text-lg sm:text-xl font-semibold text-foreground leading-tight mb-2">
-                    {BRAND_HEADLINE}
+                    Sign up for advanced Animal Health updates
                   </h2>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    AnimalMind Pet is the owner edition: plain-language guidance from the same autonomous engine as Pro.
+                    We’ll email you when we publish new research and briefs. No spam.
                   </p>
                   {waitlistStatus === "success" ? (
                     <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when Pet launches.</p>
                   ) : (
-                    <form
-                      className="flex flex-col sm:flex-row gap-2"
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        const email = waitlistEmail.trim();
-                        if (!email) return;
-                        setWaitlistStatus("loading");
-                        setWaitlistError("");
-                        const result = await submitWaitlist(email);
-                        if (result.ok) {
-                          setWaitlistStatus("success");
-                          setWaitlistEmail("");
-                        } else {
-                          setWaitlistStatus("error");
-                          setWaitlistError(result.error || "Something went wrong.");
-                        }
-                      }}
-                    >
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <input
                         type="email"
                         placeholder="Your email"
                         value={waitlistEmail}
                         onChange={(e) => setWaitlistEmail(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const email = waitlistEmail.trim();
+                            if (email) {
+                              setWaitlistStatus("loading");
+                              setWaitlistError("");
+                              submitWaitlist(email).then((result) => {
+                                if (result.ok) {
+                                  setWaitlistStatus("success");
+                                  setWaitlistEmail("");
+                                } else {
+                                  setWaitlistStatus("error");
+                                  setWaitlistError(result.error || "Something went wrong.");
+                                }
+                              });
+                            }
+                          }
+                        }}
                         disabled={waitlistStatus === "loading"}
                         className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
                         aria-label="Email"
                       />
-                      <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
-                        {waitlistStatus === "loading" ? "…" : "Notify me"}
+                      <Button
+                        type="button"
+                        disabled={waitlistStatus === "loading"}
+                        className="rounded-md shrink-0 min-h-[44px]"
+                        aria-label="Sign up for updates"
+                        onClick={async () => {
+                          const email = waitlistEmail.trim();
+                          if (!email) return;
+                          setWaitlistStatus("loading");
+                          setWaitlistError("");
+                          const result = await submitWaitlist(email);
+                          if (result.ok) {
+                            setWaitlistStatus("success");
+                            setWaitlistEmail("");
+                          } else {
+                            setWaitlistStatus("error");
+                            setWaitlistError(result.error || "Something went wrong.");
+                          }
+                        }}
+                      >
+                        {waitlistStatus === "loading" ? "…" : "Sign up"}
                       </Button>
-                    </form>
+                    </div>
                   )}
                   {waitlistStatus === "error" && waitlistError && (
                     <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
@@ -2013,44 +1990,64 @@ export default function App() {
             {/* Updates */}
             <section id="pet-updates" aria-labelledby="pet-updates-heading" className="py-12 border-t border-border">
               <h2 id="pet-updates-heading" className="section-label mb-2">Updates</h2>
-              <p className="text-lg font-semibold text-foreground mb-1">Get notified</p>
+              <p className="text-lg font-semibold text-foreground mb-1">Sign up for advanced Animal Health updates</p>
               <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                We’ll email you when AnimalMind Pet launches and when we add new guidance. No spam.
+                We’ll email you when we publish new research and briefs. No spam.
               </p>
               {waitlistStatus === "success" ? (
                 <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when we have updates.</p>
               ) : (
-                <form
-                  className="flex flex-col sm:flex-row gap-2 max-w-md"
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    const email = waitlistEmail.trim();
-                    if (!email) return;
-                    setWaitlistStatus("loading");
-                    setWaitlistError("");
-                    const result = await submitWaitlist(email);
-                    if (result.ok) {
-                      setWaitlistStatus("success");
-                      setWaitlistEmail("");
-                    } else {
-                      setWaitlistStatus("error");
-                      setWaitlistError(result.error || "Something went wrong.");
-                    }
-                  }}
-                >
+                <div className="flex flex-col sm:flex-row gap-2 max-w-md">
                   <input
                     type="email"
                     placeholder="you@example.com"
                     value={waitlistEmail}
                     onChange={(e) => setWaitlistEmail(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const email = waitlistEmail.trim();
+                        if (email) {
+                          setWaitlistStatus("loading");
+                          setWaitlistError("");
+                          submitWaitlist(email).then((result) => {
+                            if (result.ok) {
+                              setWaitlistStatus("success");
+                              setWaitlistEmail("");
+                            } else {
+                              setWaitlistStatus("error");
+                              setWaitlistError(result.error || "Something went wrong.");
+                            }
+                          });
+                        }
+                      }
+                    }}
                     disabled={waitlistStatus === "loading"}
                     className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
                     aria-label="Email for updates"
                   />
-                  <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
-                    {waitlistStatus === "loading" ? "…" : "Notify me"}
+                  <Button
+                    type="button"
+                    disabled={waitlistStatus === "loading"}
+                    className="rounded-md shrink-0"
+                    onClick={async () => {
+                      const email = waitlistEmail.trim();
+                      if (!email) return;
+                      setWaitlistStatus("loading");
+                      setWaitlistError("");
+                      const result = await submitWaitlist(email);
+                      if (result.ok) {
+                        setWaitlistStatus("success");
+                        setWaitlistEmail("");
+                      } else {
+                        setWaitlistStatus("error");
+                        setWaitlistError(result.error || "Something went wrong.");
+                      }
+                    }}
+                  >
+                    {waitlistStatus === "loading" ? "…" : "Sign up"}
                   </Button>
-                </form>
+                </div>
               )}
               {waitlistStatus === "error" && waitlistError && (
                 <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
@@ -2527,53 +2524,70 @@ export default function App() {
           </section>
         </section>
 
-        {/* Updates / Waitlist — Supabase only */}
+        {/* Waitlist — collect signups for advanced Animal Health updates only */}
         <section id="waitlist" aria-labelledby="waitlist-heading" className="py-12 border-t border-border">
           <h2 id="waitlist-heading" className="section-label mb-2">Updates</h2>
-          <p className="text-lg font-semibold text-foreground mb-1">Notify me</p>
+          <p className="text-lg font-semibold text-foreground mb-1">Sign up for advanced Animal Health updates</p>
           <p className="text-sm text-muted-foreground mb-4 max-w-md">
-            Get notified when we add new digests, daily briefs, or major updates. No spam.
+            We’ll email you when we publish new research and briefs. No spam.
           </p>
           {waitlistStatus === "success" ? (
-            <p className="text-sm text-foreground font-medium">You’re on the list! We’ll notify you when we have updates.</p>
+            <p className="text-sm text-foreground font-medium">You’re on the list. We’ll email you when we have updates.</p>
           ) : (
-            <form
-              className="flex flex-col sm:flex-row gap-2 max-w-md"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const email = waitlistEmail.trim();
-                if (!email) return;
-                setWaitlistStatus("loading");
-                setWaitlistError("");
-                const result = await submitWaitlist(email);
-                if (result.ok) {
-                  setWaitlistStatus("success");
-                  setWaitlistEmail("");
-                } else {
-                  setWaitlistStatus("error");
-                  setWaitlistError(result.error || "Something went wrong.");
-                }
-              }}
-            >
+            <div className="flex flex-col sm:flex-row gap-2 max-w-md">
               <input
                 type="email"
-                placeholder="you@example.com"
+                placeholder="Your email"
                 value={waitlistEmail}
                 onChange={(e) => setWaitlistEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const email = waitlistEmail.trim();
+                    if (email) {
+                      setWaitlistStatus("loading");
+                      setWaitlistError("");
+                      submitWaitlist(email).then((result) => {
+                        if (result.ok) {
+                          setWaitlistStatus("success");
+                          setWaitlistEmail("");
+                        } else {
+                          setWaitlistStatus("error");
+                          setWaitlistError(result.error || "Something went wrong.");
+                        }
+                      });
+                    }
+                  }
+                }}
                 disabled={waitlistStatus === "loading"}
                 className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
                 aria-label="Email for updates"
               />
-              <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
-                {waitlistStatus === "loading" ? "…" : "Notify me"}
+              <Button
+                type="button"
+                disabled={waitlistStatus === "loading"}
+                className="rounded-md shrink-0"
+                onClick={async () => {
+                  const email = waitlistEmail.trim();
+                  if (!email) return;
+                  setWaitlistStatus("loading");
+                  setWaitlistError("");
+                  const result = await submitWaitlist(email);
+                  if (result.ok) {
+                    setWaitlistStatus("success");
+                    setWaitlistEmail("");
+                  } else {
+                    setWaitlistStatus("error");
+                    setWaitlistError(result.error || "Something went wrong.");
+                  }
+                }}
+              >
+                {waitlistStatus === "loading" ? "…" : "Sign up"}
               </Button>
-            </form>
+            </div>
           )}
           {waitlistStatus === "error" && waitlistError && (
             <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
-          )}
-          {false && waitlistStatus === "idle" && (
-            <p className="mt-2 text-xs text-muted-foreground">Or email pro@animalmind.co with subject “AnimalMind Pro updates”.</p>
           )}
         </section>
 

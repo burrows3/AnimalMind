@@ -4,23 +4,19 @@
  * Run: npm run start → http://localhost:3000
  */
 
-const express = require('express');
+require('dotenv').config();
 const path = require('path');
+// Use frontend .env for Supabase when root .env doesn't set them (e.g. local dev)
+require('dotenv').config({ path: path.join(__dirname, 'frontend', '.env') });
+
+const express = require('express');
 const fs = require('fs');
-const https = require('https');
 const { getIngestedGrouped, getIngestedMeta, getIngestedSorted, getIngestedByTypeSorted } = require('./lib/db');
 const { summarizeSourceHealth } = require('./lib/dataFreshness');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const INTERNAL_API_KEY = (process.env.INTERNAL_API_KEY || '').trim();
-
-// Optional: load .env in server (e.g. SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY for waitlist)
-try {
-  require('dotenv').config();
-} catch {
-  // dotenv not installed
-}
 
 app.disable('x-powered-by');
 
@@ -102,12 +98,81 @@ app.use((req, res, next) => {
   }
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self' mailto:"
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
   );
   next();
 });
 
 app.use(express.json());
+
+// Email signup for updates → Supabase only
+const WAITLIST_BACKUP = path.join(__dirname, 'memory', 'waitlist-backup.jsonl');
+const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim().replace(/\/$/, '');
+const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim();
+const WAITLIST_TABLE = (process.env.SUPABASE_WAITLIST_TABLE || process.env.VITE_SUPABASE_WAITLIST_TABLE || 'waitlist').trim();
+
+function appendWaitlistBackup(email) {
+  try {
+    const dir = path.dirname(WAITLIST_BACKUP);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.appendFileSync(WAITLIST_BACKUP, JSON.stringify({ email, created_at: new Date().toISOString() }) + '\n', 'utf8');
+  } catch (e) {
+    console.warn('Waitlist backup:', e.message);
+  }
+}
+
+function postToSupabase(email) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return Promise.resolve(null);
+  const https = require('https');
+  const body = JSON.stringify({ email });
+  const u = new URL(`${SUPABASE_URL}/rest/v1/${WAITLIST_TABLE}`);
+  return new Promise((resolve) => {
+    const req = https.request(
+      {
+        hostname: u.hostname,
+        path: u.pathname,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          Prefer: 'return=minimal',
+          'Content-Length': Buffer.byteLength(body, 'utf8'),
+        },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (ch) => (data += ch));
+        res.on('end', () => resolve({ status: res.statusCode, body: data }));
+      }
+    );
+    req.on('error', (e) => resolve({ error: e.message }));
+    req.write(body);
+    req.end();
+  });
+}
+
+app.post('/api/waitlist', rateLimit, (req, res) => {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ ok: false, error: 'Valid email required' });
+  }
+  appendWaitlistBackup(email);
+  postToSupabase(email).then((out) => {
+    if (out && out.error) {
+      console.warn('Waitlist Supabase request error:', out.error);
+      return res.status(502).json({ ok: false, error: 'Signup service temporarily unavailable.' });
+    }
+    if (out && out.status >= 400) {
+      console.warn('Waitlist Supabase rejected:', out.status, out.body);
+      const msg = out.body && /RLS|policy|permission|denied/i.test(out.body)
+        ? 'Signup not allowed. Check Supabase RLS policies for the waitlist table.'
+        : (out.body || out.status + '').slice(0, 80);
+      return res.status(502).json({ ok: false, error: msg });
+    }
+    res.json({ ok: true });
+  });
+});
 
 // API: ingested data + meta (counts, last updated) for dashboard. Read-only; no credentials.
 app.get('/api/ingested', rateLimit, requireInternalApiKey, (req, res) => {
@@ -219,23 +284,10 @@ app.get('/api/pet-research', rateLimit, (req, res) => {
   }
 });
 
-// Pet-only recall filter: exclude human-food false positives (hot dogs, catfish, etc.) so UI shows only pet/animal-related.
-const RECALL_FALSE_POSITIVES = /\bhot dogs?\b|\bcorndogs?\b|\bcatfish\b/i;
-const PET_PRODUCT_HINTS = /\b(pet\s*food|dog\s*food|cat\s*food|pet\s*treats?|dog\s*treats?|cat\s*treats?|kibble|pet\s*feed|animal\s*feed|pet\s*chews?|rawhide)\b/i;
-function isPetOnlyRecallRow(r) {
-  if (!r) return false;
-  const text = `${r.title || ''} ${r.condition_or_topic || ''}`.trim();
-  if (!text) return true;
-  if (RECALL_FALSE_POSITIVES.test(text) && !PET_PRODUCT_HINTS.test(text) && !/\bpet\b/i.test(text)) return false;
-  return true;
-}
-
 // API: pet recall feed (limited). Used by the Pet Safety Dashboard so recall alerts don't get starved by other data types.
-// Only returns pet/animal-related recalls (no human food).
 app.get('/api/pet-recalls', rateLimit, (req, res) => {
   try {
-    const raw = getIngestedByTypeSorted('recall', { limit: 120 });
-    const rows = raw.filter(isPetOnlyRecallRow).map((r) => ({
+    const rows = getIngestedByTypeSorted('recall', { limit: 120 }).map((r) => ({
       data_type: r.data_type,
       condition_or_topic: r.condition_or_topic || '',
       title: r.title || '',
@@ -248,64 +300,6 @@ app.get('/api/pet-recalls', rateLimit, (req, res) => {
   } catch {
     res.status(500).json({ error: 'Service temporarily unavailable.' });
   }
-});
-
-// Waitlist: always append to backup file; optionally forward to Supabase (so no signup is lost).
-const WAITLIST_BACKUP_PATH = path.join(__dirname, 'memory', 'waitlist-backup.jsonl');
-const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim().replace(/\/$/, '');
-const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim();
-const WAITLIST_TABLE = (process.env.SUPABASE_WAITLIST_TABLE || process.env.VITE_SUPABASE_WAITLIST_TABLE || 'waitlist').trim();
-
-function appendWaitlistBackup(email) {
-  try {
-    const dir = path.dirname(WAITLIST_BACKUP_PATH);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    const line = JSON.stringify({ email, created_at: new Date().toISOString() }) + '\n';
-    fs.appendFileSync(WAITLIST_BACKUP_PATH, line, 'utf8');
-  } catch (e) {
-    console.warn('Waitlist backup write failed:', e.message);
-  }
-}
-
-function postWaitlistToSupabase(email) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return Promise.resolve(null);
-  return new Promise((resolve) => {
-    const body = JSON.stringify({ email });
-    const u = new URL(`${SUPABASE_URL}/rest/v1/${WAITLIST_TABLE}`);
-    const opts = {
-      hostname: u.hostname,
-      path: u.pathname,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        Prefer: 'return=minimal',
-        'Content-Length': Buffer.byteLength(body, 'utf8'),
-      },
-    };
-    const req = https.request(opts, (res) => {
-      let data = '';
-      res.on('data', (ch) => (data += ch));
-      res.on('end', () => resolve({ status: res.statusCode, body: data }));
-    });
-    req.on('error', (e) => resolve({ error: e.message }));
-    req.write(body);
-    req.end();
-  });
-}
-
-app.post('/api/waitlist', rateLimit, (req, res) => {
-  const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
-  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  if (!valid) {
-    return res.status(400).json({ ok: false, error: 'Valid email required' });
-  }
-  appendWaitlistBackup(email);
-  postWaitlistToSupabase(email).then((result) => {
-    if (result && result.error) console.warn('Waitlist Supabase sync failed:', result.error);
-    res.json({ ok: true });
-  });
 });
 
 function readJsonSafe(filePath) {
