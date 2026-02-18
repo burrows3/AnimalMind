@@ -11,8 +11,6 @@ import {
   Globe,
   Heart,
   RefreshCw,
-  Shield,
-  Sparkles,
   Stethoscope,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -76,19 +74,6 @@ const PET_OWNER_FALLBACK_TYPES = new Set(["clinical", "case_data", "vet_practice
 const RESEARCH_TYPES = new Set(["literature", "clinical", "cancer", "case_data"]);
 const PRO_BRIEF_TYPES = new Set(["surveillance", "literature", "clinical", "cancer", "case_data", "imaging", "vet_practice"]);
 const BRAND_TAGLINE = "ANIMAL HEALTH NEWS";
-const BRAND_HEADLINE = "ANIMAL HEALTH NEWS";
-const BRAND_SUBHEAD = "Run by autonomous AI agents. Research and trends validated by humans.";
-const BRAND_ONE_LINER = "Two editions: Pro and Pet. Research-backed updates every 6 hours.";
-const PRO_MARKETING_HEADLINE = "AnimalMind Pro is the modern intelligence layer for veterinary medicine.";
-const PRO_MARKETING_VALUE =
-  "It monitors veterinary research and public health sources on a 6-hour cadence, then delivers concise AI summaries of outbreak alerts, drug updates, regulatory changes, and clinical insights so teams can act quickly.";
-const PRO_MARKETING_BENEFITS = [
-  "Track new research, surveillance signals, and regulatory changes in one place.",
-  "Get prioritized outbreak alerts by region, species, and clinical relevance.",
-  "Stay current on drug approvals, safety signals, label changes, and withdrawals.",
-  "Focus on high-signal updates designed to reduce noise for busy clinicians.",
-  "Replace hours of manual review with brief updates you can scan in minutes.",
-];
 const PRO_MISSION_POINTS = [
   "Shared digest view keeps teams aligned on what changed and why it matters.",
   "Source-linked cards make triage and verification fast during clinical workflows.",
@@ -96,23 +81,6 @@ const PRO_MISSION_POINTS = [
 ];
 const PRO_MARKETING_CREDIBILITY =
   "Built for veterinarians, researchers, and animal health professionals, with source-linked updates from trusted public data.";
-const CONSUMER_SECTION_HASHES = new Set([
-  "pet-cta",
-  "pet-brief",
-  "pet-mission",
-  "pet-topics",
-  "pet-updates",
-]);
-const CLINICAL_SECTION_HASHES = new Set([
-  "pro-cta",
-  "data",
-  "brief-articles",
-  "mission",
-  "topics",
-  "track",
-  "waitlist",
-  "memory-panel",
-]);
 /** Animal images are generated per topic from research data so cards stay relevant and never drift to non-animal scenes. */
 const PET_IMAGE_WIDTH = 480;
 const PET_IMAGE_HEIGHT = 300;
@@ -354,6 +322,38 @@ type PetArticle = {
   /** Final fallback when both primary and backup fail (local animal placeholder). */
   fallbackImageUrl: string;
 };
+
+type PetAlertLabel = "Recall" | "Safety Alert" | "Toxic Risk" | "Health Advisory";
+type ProAlertLabel = "Research" | "Drug Update" | "Outbreak" | "Clinical Advisory";
+
+function classifyPetAlertFromTitle(title: string): { label: PetAlertLabel; showRecallBadge: boolean } {
+  const t = (title || "").toLowerCase();
+  const showRecallBadge = /\b(recall|fda)\b/.test(t);
+  if (/\b(recall|fda|withdraw(al)?|contaminat)\b/.test(t)) {
+    return { label: "Recall", showRecallBadge };
+  }
+  if (/\b(toxic|toxicity|toxin|poison)\b/.test(t)) {
+    return { label: "Toxic Risk", showRecallBadge };
+  }
+  if (/\b(safety|alert|warning|risk)\b/.test(t)) {
+    return { label: "Safety Alert", showRecallBadge };
+  }
+  return { label: "Health Advisory", showRecallBadge };
+}
+
+function classifyProAlertFromTitle(title: string): ProAlertLabel {
+  const t = (title || "").toLowerCase();
+  if (/\b(outbreak|surveillance|cluster|zoonotic|rabies|influenza|avian|chikungunya|dengue)\b/.test(t)) {
+    return "Outbreak";
+  }
+  if (/\b(drug|medication|vaccine|approval|withdrawal|label|dose|therapy|antibiotic)\b/.test(t)) {
+    return "Drug Update";
+  }
+  if (/\b(research|study|trial|evidence|pubmed|meta-analysis|journal)\b/.test(t)) {
+    return "Research";
+  }
+  return "Clinical Advisory";
+}
 
 function safeHref(url: string | undefined): string {
   if (!url || typeof url !== "string") return "#";
@@ -1061,40 +1061,75 @@ export default function App() {
   const [allPetResearchLoading, setAllPetResearchLoading] = useState(false);
   const [allPetResearchError, setAllPetResearchError] = useState("");
   const [allPetResearchRows, setAllPetResearchRows] = useState<IngestedRow[] | null>(null);
-
-  const hashToView = (h: string) => {
-    if (h === "consumer" || h === "clinical") return h;
-    if (CONSUMER_SECTION_HASHES.has(h)) return "consumer";
-    if (CLINICAL_SECTION_HASHES.has(h)) return "clinical";
-    return "";
-  };
-  const [view, setView] = useState<"" | "consumer" | "clinical">(() =>
-    hashToView(typeof window !== "undefined" ? window.location.hash.slice(1) : "")
-  );
-
-  // Sync view from hash on mount (e.g. direct load of animalmind.co/#consumer) and when hash changes
-  useEffect(() => {
-    const syncFromHash = () => setView(hashToView(window.location.hash.slice(1)));
-    syncFromHash();
-    window.addEventListener("hashchange", syncFromHash);
-    return () => window.removeEventListener("hashchange", syncFromHash);
-  }, []);
+  const [weeklyAlertEmail, setWeeklyAlertEmail] = useState("");
+  const [weeklyAlertStatus, setWeeklyAlertStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [weeklyAlertMessage, setWeeklyAlertMessage] = useState("");
+  const [weeklyAlertError, setWeeklyAlertError] = useState("");
+  // Temporary frontend audience state; no auth and no persistence.
+  const [audienceType, setAudienceType] = useState<"" | "consumer" | "clinical">("");
 
   useEffect(() => {
     if (typeof document === "undefined") return;
     const t =
-      view === "consumer"
+      audienceType === "consumer"
         ? "AnimalMind Pet"
-        : view === "clinical"
+        : audienceType === "clinical"
           ? "AnimalMind Pro"
           : "AnimalMind — Animal Health News";
     document.title = t;
-  }, [view]);
+  }, [audienceType]);
 
   const navigate = (v: "" | "consumer" | "clinical") => {
-    window.location.hash = v;
-    setView(v);
+    setAudienceType(v);
+    setWeeklyAlertStatus("idle");
+    setWeeklyAlertMessage("");
+    setWeeklyAlertError("");
+    setWeeklyAlertEmail("");
   };
+
+  const submitWeeklyAlertEmail = useCallback(async (audience: "consumer" | "clinical") => {
+    const email = weeklyAlertEmail.trim();
+    if (!email) {
+      setWeeklyAlertStatus("error");
+      setWeeklyAlertError("Email required");
+      setWeeklyAlertMessage("");
+      return;
+    }
+
+    setWeeklyAlertStatus("loading");
+    setWeeklyAlertError("");
+    setWeeklyAlertMessage("");
+
+    const result = await submitWaitlist(email);
+    if (result.ok) {
+      setWeeklyAlertStatus("success");
+      setWeeklyAlertMessage("Subscribed. You will receive weekly alerts.");
+      setWeeklyAlertEmail("");
+      return;
+    }
+
+    if (result.error === "MAILTO") {
+      const subject = audience === "consumer" ? "AnimalMind Pet alerts" : "AnimalMind Pro brief";
+      const body = audience === "consumer"
+        ? `Please subscribe me to pet parent alerts.\nEmail: ${email}`
+        : `Please subscribe me to veterinary professional alerts.\nEmail: ${email}`;
+      window.location.href = `mailto:pro@animalmind.co?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      setWeeklyAlertStatus("success");
+      setWeeklyAlertMessage("Your email app opened to complete the subscription.");
+      setWeeklyAlertEmail("");
+      return;
+    }
+
+    if ((result.error || "").toLowerCase().includes("unavailable")) {
+      setWeeklyAlertStatus("success");
+      setWeeklyAlertMessage("Signup endpoint is not available yet. This form is a temporary frontend placeholder.");
+      setWeeklyAlertEmail("");
+      return;
+    }
+
+    setWeeklyAlertStatus("error");
+    setWeeklyAlertError(result.error || "Something went wrong.");
+  }, [weeklyAlertEmail]);
 
   const loadData = useCallback(() => {
     setRefreshing(true);
@@ -1161,18 +1196,6 @@ export default function App() {
   const lastUpdated = summary?.lastUpdated
     ? new Date(summary.lastUpdated).toLocaleString()
     : null;
-  const ingestFreshnessLabel = summary?.lastUpdated
-    ? `Updated ${relativeTime(summary.lastUpdated)}`
-    : "Waiting for first ingest";
-  const countMap = summary?.counts ?? {};
-  const proSignalCount =
-    (countMap.surveillance ?? 0) +
-    (countMap.literature ?? 0) +
-    (countMap.cancer ?? 0) +
-    (countMap.case_data ?? 0) +
-    (countMap.clinical ?? 0) +
-    (countMap.imaging ?? 0) +
-    (countMap.vet_practice ?? 0);
 
   const editionDate = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const petBriefItems = useMemo(() => toPetBriefItems(memory), [memory]);
@@ -1209,10 +1232,6 @@ export default function App() {
   const dailyBriefArticles = useMemo(() => buildDailyBriefArticles(memory), [memory]);
   const proBriefArticles = useMemo(
     () => dailyBriefArticles.filter((article) => article.audience !== "pet"),
-    [dailyBriefArticles]
-  );
-  const petBriefArticles = useMemo(
-    () => dailyBriefArticles.filter((article) => article.audience !== "pro"),
     [dailyBriefArticles]
   );
   /** One article per ingested research item, written for pet owners; each has its own image. */
@@ -1260,138 +1279,44 @@ export default function App() {
 
   return (
     <div className={cn("min-h-screen flex flex-col relative", "app-bg")}>
-      {/* ——— Landing: WSJ-style editorial, hero image, two distinct editions ——— */}
-      {view === "" && (
-        <>
-          <header className="border-b border-border bg-card">
-            <div className="mx-auto max-w-5xl px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => navigate("")}
-                className="flex items-center gap-2 text-foreground no-underline min-h-[44px]"
-              >
-                <AnimalMindLogo className="size-12 text-foreground shrink-0" />
-                <span className="text-xl font-semibold tracking-tight">AnimalMind</span>
-              </button>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
-                {BRAND_TAGLINE}
-              </p>
+      {audienceType === "" && (
+        <main className="flex-1 mx-auto flex w-full max-w-4xl items-center justify-center px-4 py-14 sm:px-6 sm:py-24">
+          <section className="w-full rounded-xl border border-border bg-card p-6 text-center shadow-sm sm:p-10">
+            <div className="mx-auto mb-4 flex items-center justify-center gap-2">
+              <AnimalMindLogo className="size-10 text-foreground" />
+              <p className="text-2xl font-semibold tracking-tight">AnimalMind</p>
             </div>
-          </header>
-          <main className="flex-1 mx-auto w-full max-w-5xl px-4 sm:px-6 py-8 sm:py-12 relative overflow-hidden">
-            <div aria-hidden className="landing-orb landing-orb-a" />
-            <div aria-hidden className="landing-orb landing-orb-b" />
-            {/* Hero: editorial image + headline */}
-            <section className="mb-10 sm:mb-14 landing-rise-in">
-              <div className="rounded-none overflow-hidden border border-border bg-card shadow-sm">
-                <div className="relative aspect-[16/9] sm:aspect-[21/9] min-h-[200px]">
-                  <img
-                    src="https://images.unsplash.com/photo-1576086213369-97a306d36557?w=1200&q=85"
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
-                    fetchPriority="high"
-                  />
-                  <div className="absolute inset-0 bg-foreground/40" />
-                  <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10">
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/90 font-semibold mb-2">
-                      {BRAND_HEADLINE}
-                    </p>
-                    <h1 className="text-2xl sm:text-4xl md:text-[2.75rem] font-semibold text-white leading-tight max-w-2xl tracking-tight">
-                      {BRAND_SUBHEAD}
-                    </h1>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-4 text-sm text-muted-foreground max-w-2xl">
-                {BRAND_ONE_LINER}
-              </p>
-              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
-                  {ingestFreshnessLabel}
-                </span>
-                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
-                  Pro signals {proSignalCount}
-                </span>
-                <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1">
-                  Pet items {petBriefCount}
-                </span>
-              </div>
-              {lastUpdated && (
-                <p className="mt-2 text-xs text-muted-foreground">Last ingest: {lastUpdated}</p>
-              )}
-            </section>
-
-            {/* Two editions: distinct cards with pictures */}
-            <p className="section-label mb-4">Our editions</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-              <button
-                type="button"
-                onClick={() => navigate("clinical")}
-                className="group landing-card-rise landing-card-rise-delay-1 text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
-              >
-                <div className="aspect-[16/10] overflow-hidden bg-muted/30">
-                  <img
-                    src="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&q=85"
-                    alt=""
-                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                  />
-                </div>
-                <div className="p-5 sm:p-6 border-t border-border">
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Clinical & Research</p>
-                  <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pro</h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    6-hour intelligence briefs with research, outbreak, drug, and regulatory updates.
-                  </p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {ingestFreshnessLabel} · {proSignalCount} tracked signals
-                  </p>
-                  <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
-                    Enter Pro
-                    <span className="inline-block group-hover:translate-x-1 transition-transform">→</span>
-                  </p>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("consumer")}
-                className="group landing-card-rise landing-card-rise-delay-2 text-left rounded-none border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-foreground/20 transition-all min-h-[44px]"
-              >
-                <div className="aspect-[16/10] overflow-hidden bg-muted/30">
-                  <img
-                    src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=85"
-                    alt=""
-                    className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                  />
-                </div>
-                <div className="p-5 sm:p-6 border-t border-border">
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">For Pet Owners</p>
-                  <h2 className="text-xl font-semibold text-foreground mb-2">AnimalMind Pet</h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Plain-language pet guidance from the same autonomous engine powering Pro.
-                  </p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {ingestFreshnessLabel} · {petBriefCount} pet-focused items
-                  </p>
-                  <p className="mt-4 text-sm font-semibold text-foreground flex items-center gap-2">
-                    Enter Pet
-                    <span className="inline-block group-hover:translate-x-1 transition-transform">→</span>
-                  </p>
-                </div>
-              </button>
-            </div>
-
-            <p className="mt-10 pt-8 border-t border-border text-center text-xs text-muted-foreground max-w-xl mx-auto">
-              Animal Health News run by autonomous AI agents. Research and trends validated by humans. Not medical advice.
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
+              Real-Time Animal Health Alerts.
+            </h1>
+            <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
+              Personalized intelligence for pet parents and veterinary professionals.
             </p>
-          </main>
-          <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
-            <p>AnimalMind · Animal Health News</p>
-          </footer>
-        </>
+            <div className="mx-auto mt-8 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
+              <Button
+                type="button"
+                size="lg"
+                onClick={() => navigate("consumer")}
+                className="h-16 text-base font-semibold"
+              >
+                🐶 I&apos;m a Pet Parent
+              </Button>
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                onClick={() => navigate("clinical")}
+                className="h-16 text-base font-semibold"
+              >
+                🩺 I&apos;m a Veterinary Professional
+              </Button>
+            </div>
+          </section>
+        </main>
       )}
 
       {/* ——— AnimalMind Pet: same format as Pro, pet-owner focus, more imagery ——— */}
-      {view === "consumer" && (
+      {audienceType === "consumer" && (
         <>
           <header className="sticky top-0 z-10 border-b border-border bg-card">
             <nav className="mx-auto max-w-4xl px-4 py-3 sm:px-6 flex justify-between items-center">
@@ -1405,7 +1330,7 @@ export default function App() {
               </button>
               <div className="flex items-center gap-4">
                 <a href="#pet-brief" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Today's brief</a>
-                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Get Free Weekly Animal Health Insights</a>
+                <a href="#pet-weekly-alerts" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Weekly alerts</a>
                 <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
               </div>
             </nav>
@@ -1451,108 +1376,90 @@ export default function App() {
                 </details>
               </section>
             )}
-            {/* Hero CTA — image + headline + waitlist */}
+            {/* Pet hero */}
             <section
               id="pet-cta"
               aria-labelledby="pet-cta-heading"
-              className="mb-8 sm:mb-10 rounded-lg border border-border bg-muted/30 overflow-hidden"
+              className="mb-6 rounded-lg border border-border bg-card p-6 text-center shadow-sm sm:p-8"
             >
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
-                <div className="lg:col-span-3 relative h-56 sm:h-64 lg:h-auto min-h-[220px]">
-                  <img
-                    src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80"
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                </div>
-                <div className="lg:col-span-2 p-4 sm:p-6 flex flex-col justify-center">
-                  <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md text-muted-foreground border-0 w-fit mb-2">
-                    AnimalMind Pet
-                  </Badge>
-                  <h2 id="pet-cta-heading" className="text-lg sm:text-xl font-semibold text-foreground leading-tight mb-2">
-                    {BRAND_HEADLINE}
-                  </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    AnimalMind Pet is the owner edition: plain-language guidance from the same autonomous engine as Pro.
-                  </p>
-                  {waitlistStatus === "success" ? (
-                    <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when Pet launches.</p>
-                  ) : (
-                    <form
-                      className="flex flex-col sm:flex-row gap-2"
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        const email = waitlistEmail.trim();
-                        if (!email) return;
-                        setWaitlistStatus("loading");
-                        setWaitlistError("");
-                        const result = await submitWaitlist(email);
-                        if (result.ok) {
-                          setWaitlistStatus("success");
-                          setWaitlistEmail("");
-                        } else if (result.error === "MAILTO") {
-                          window.location.href = `mailto:pro@animalmind.co?subject=AnimalMind%20Pet%20updates&body=${encodeURIComponent(`Please add me for Pet owner updates.\nEmail: ${email}`)}`;
-                          setWaitlistStatus("success");
-                          setWaitlistEmail("");
-                        } else {
-                          setWaitlistStatus("error");
-                          setWaitlistError(result.error || "Something went wrong.");
-                        }
-                      }}
-                    >
-                      <input
-                        type="email"
-                        placeholder="Your email"
-                        value={waitlistEmail}
-                        onChange={(e) => setWaitlistEmail(e.target.value)}
-                        disabled={waitlistStatus === "loading"}
-                        className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
-                        aria-label="Email"
-                      />
-                      <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
-                        {waitlistStatus === "loading" ? "…" : "Get Free Weekly Animal Health Insights"}
-                      </Button>
-                    </form>
-                  )}
-                  {waitlistStatus === "error" && waitlistError && (
-                    <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
-                  )}
-                </div>
-              </div>
-              <p className="p-4 pt-0 sm:px-6 text-xs text-muted-foreground border-t border-border/80 mt-0">
-                Powered by AnimalMind Pro. Not a replacement for veterinary care. When in doubt, see your vet.
+              <Badge variant="secondary" className="mb-3 text-[10px] font-semibold uppercase tracking-wider">
+                Pet Parent View
+              </Badge>
+              <h1 id="pet-cta-heading" className="text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                Never Miss a Pet Recall or Safety Alert Again.
+              </h1>
+              <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
+                We monitor food recalls, toxic risks, and safety alerts so you don&apos;t have to.
               </p>
+              <div className="mt-5">
+                <Button
+                  type="button"
+                  className="min-h-[48px] px-6 text-sm font-semibold sm:text-base"
+                  onClick={() => {
+                    document.getElementById("pet-weekly-alerts")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  Get Free Recall Alerts
+                </Button>
+              </div>
             </section>
 
-            {/* Lead */}
-            <section className="pb-8 border-b border-border">
-              <p className="section-label mb-1">For pet owners</p>
-              <h1 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
-                Friendly pet health news, every day
-              </h1>
-              <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
-                Get clear updates for real pet-owner questions: what to watch, what is likely routine, and when to call your vet.
+            <section
+              id="pet-weekly-alerts"
+              aria-labelledby="pet-weekly-alerts-heading"
+              className="mb-10 rounded-lg border border-border bg-muted/30 p-4 sm:p-5"
+            >
+              <h2 id="pet-weekly-alerts-heading" className="text-lg font-semibold text-foreground">
+                Get Weekly Alerts
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                One email field. No login required.
               </p>
-              <div className="rounded-lg overflow-hidden border border-border bg-muted/20 max-w-2xl">
-                <img
-                  src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=700&q=80"
-                  alt=""
-                  className="w-full h-48 object-cover"
-                />
-              </div>
+              {weeklyAlertStatus === "success" ? (
+                <p className="mt-3 text-sm font-medium text-foreground">{weeklyAlertMessage}</p>
+              ) : (
+                <form
+                  className="mt-3 flex flex-col gap-2 sm:flex-row"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    await submitWeeklyAlertEmail("consumer");
+                  }}
+                >
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={weeklyAlertEmail}
+                    onChange={(e) => setWeeklyAlertEmail(e.target.value)}
+                    disabled={weeklyAlertStatus === "loading"}
+                    className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
+                    aria-label="Email for weekly pet alerts"
+                  />
+                  <Button type="submit" disabled={weeklyAlertStatus === "loading"} className="rounded-md min-h-[44px]">
+                    {weeklyAlertStatus === "loading" ? "…" : "Subscribe Free"}
+                  </Button>
+                </form>
+              )}
+              {weeklyAlertStatus === "error" && weeklyAlertError && (
+                <p className="mt-2 text-sm text-destructive">{weeklyAlertError}</p>
+              )}
+              {!isSupabaseConfigured() && weeklyAlertStatus === "idle" && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Temporary frontend placeholder mode is active until an email endpoint is configured.
+                </p>
+              )}
             </section>
 
             <section id="pet-brief" aria-labelledby="pet-brief-heading" className="py-10 border-b border-border">
               <h2 id="pet-brief-heading" className="section-label mb-2 flex items-center gap-2">
                 <Heart className="size-4" aria-hidden />
-                Today's pet brief
+                Active Recalls & Safety Alerts
               </h2>
               <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
-                Same trusted engine as Pro, translated into plain language for pet parents.
+                Current public-facing alerts for pet parents, with source links for quick verification.
               </p>
               <Card className="border border-border bg-card shadow-sm">
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-base font-semibold">Pet news for today</CardTitle>
+                  <CardTitle className="text-base font-semibold">Live pet safety feed</CardTitle>
                   <CardDescription className="text-xs">
                     Quick, friendly updates with trusted links for deeper reading.
                   </CardDescription>
@@ -1586,7 +1493,21 @@ export default function App() {
                             </p>
                           </div>
                           <CardHeader className="p-4 pb-2">
-                            <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Featured story</Badge>
+                            {(() => {
+                              const alertMeta = classifyPetAlertFromTitle(featuredPetNews.title);
+                              return (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">
+                                    {alertMeta.label}
+                                  </Badge>
+                                  {alertMeta.showRecallBadge && (
+                                    <Badge variant="destructive" className="w-fit text-[10px] uppercase tracking-wide">
+                                      Recall/FDA
+                                    </Badge>
+                                  )}
+                                </div>
+                              );
+                            })()}
                             <CardTitle className="text-base font-semibold">{featuredPetNews.title}</CardTitle>
                             <CardDescription className="text-sm">{featuredPetNews.summary}</CardDescription>
                           </CardHeader>
@@ -1631,8 +1552,10 @@ export default function App() {
                       )}
                       {morePetNews.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {morePetNews.map((card) => (
-                            <Card key={card.id} className="border border-border border-l-4 border-l-amber-200 bg-muted/10 overflow-hidden">
+                          {morePetNews.map((card) => {
+                            const alertMeta = classifyPetAlertFromTitle(card.title);
+                            return (
+                              <Card key={card.id} className="border border-border border-l-4 border-l-amber-200 bg-muted/10 overflow-hidden">
                               <div className="border-b border-border bg-gradient-to-r from-amber-50/50 via-rose-50/35 to-background px-3 py-2">
                                 <p className="inline-flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
                                   <Heart className="size-3 text-rose-500" aria-hidden />
@@ -1640,7 +1563,16 @@ export default function App() {
                                 </p>
                               </div>
                               <CardHeader className="p-3 pb-2">
-                                <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Quick read</Badge>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">
+                                    {alertMeta.label}
+                                  </Badge>
+                                  {alertMeta.showRecallBadge && (
+                                    <Badge variant="destructive" className="w-fit text-[10px] uppercase tracking-wide">
+                                      Recall/FDA
+                                    </Badge>
+                                  )}
+                                </div>
                                 <CardTitle className="text-sm font-semibold">{card.title}</CardTitle>
                                 <CardDescription className="text-xs">{card.summary}</CardDescription>
                               </CardHeader>
@@ -1679,7 +1611,8 @@ export default function App() {
                                 )}
                               </CardContent>
                             </Card>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -1760,8 +1693,10 @@ export default function App() {
                       )}
                       {petArticlesFromResearch.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {petArticlesFromResearch.map((article) => (
-                          <Card key={`pet-article-${article.id}`} className="border border-border border-l-4 border-l-sky-200 bg-muted/10 overflow-hidden">
+                        {petArticlesFromResearch.map((article) => {
+                          const alertMeta = classifyPetAlertFromTitle(article.title);
+                          return (
+                            <Card key={`pet-article-${article.id}`} className="border border-border border-l-4 border-l-sky-200 bg-muted/10 overflow-hidden">
                             <div className="border-b border-border bg-gradient-to-r from-sky-50/55 via-rose-50/35 to-background px-3 py-2">
                               <p className="inline-flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
                                 <Heart className="size-3 text-rose-500" aria-hidden />
@@ -1769,7 +1704,16 @@ export default function App() {
                               </p>
                             </div>
                             <CardHeader className="p-3 pb-2">
-                              <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">Article</Badge>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Badge variant="secondary" className="w-fit text-[10px] uppercase tracking-wide">
+                                  {alertMeta.label}
+                                </Badge>
+                                {alertMeta.showRecallBadge && (
+                                  <Badge variant="destructive" className="w-fit text-[10px] uppercase tracking-wide">
+                                    Recall/FDA
+                                  </Badge>
+                                )}
+                              </div>
                               <CardTitle className="text-sm font-semibold leading-snug">{article.title}</CardTitle>
                               <CardDescription className="text-xs">{article.summary}</CardDescription>
                             </CardHeader>
@@ -1805,7 +1749,8 @@ export default function App() {
                               })()}
                             </CardContent>
                           </Card>
-                        ))}
+                          );
+                        })}
                       </div>
                       ) : (
                         <p className="text-sm text-muted-foreground">No articles from today's research yet. Run an ingest to see pet-relevant articles here.</p>
@@ -1814,6 +1759,16 @@ export default function App() {
                   )}
                 </CardContent>
               </Card>
+            </section>
+
+            <section className="pb-10 border-b border-border">
+              <h2 className="section-label mb-2">Sources</h2>
+              <p className="text-sm text-muted-foreground">
+                Data monitored from public safety alerts, FDA announcements, and peer-reviewed research.
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                AnimalMind provides informational alerts and is not a replacement for veterinary care.
+              </p>
             </section>
 
             {/* Mission / What we do */}
@@ -1835,7 +1790,7 @@ export default function App() {
             {/* Updates */}
             <section id="pet-updates" aria-labelledby="pet-updates-heading" className="py-12 border-t border-border">
               <h2 id="pet-updates-heading" className="section-label mb-2">Updates</h2>
-              <p className="text-lg font-semibold text-foreground mb-1">Get Free Weekly Animal Health Insights</p>
+              <p className="text-lg font-semibold text-foreground mb-1">Get Weekly Alerts</p>
               <p className="text-sm text-muted-foreground mb-4 max-w-md">
                 We’ll email you when AnimalMind Pet launches and when we add new guidance. No spam.
               </p>
@@ -1874,7 +1829,7 @@ export default function App() {
                     aria-label="Email for updates"
                   />
                   <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
-                    {waitlistStatus === "loading" ? "…" : "Get Free Weekly Animal Health Insights"}
+                    {waitlistStatus === "loading" ? "…" : "Subscribe Free"}
                   </Button>
                 </form>
               )}
@@ -1899,7 +1854,7 @@ export default function App() {
       )}
 
       {/* ——— AnimalMind Pro: autonomous research intelligence ——— */}
-      {view === "clinical" && (
+      {audienceType === "clinical" && (
         <>
           <header className="sticky top-0 z-10 border-b border-border bg-card">
             <nav className="mx-auto max-w-4xl px-4 py-3 sm:px-6 flex flex-wrap justify-between items-center gap-2">
@@ -1971,74 +1926,78 @@ export default function App() {
                 </details>
               </section>
             )}
-            {/* Pro CTA — newsletter hero with image */}
-        <section
-          id="pro-cta"
-          aria-labelledby="pro-cta-heading"
-          className="mb-8 sm:mb-10 rounded-lg border border-border bg-muted/30 overflow-hidden"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
-            <div className="lg:col-span-2 relative h-48 sm:h-56 lg:min-h-[240px] order-2 lg:order-1">
-              <img
-                src="https://images.unsplash.com/photo-1576086213369-97a306d36557?w=600&q=80"
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            </div>
-            <div className="lg:col-span-3 p-4 sm:p-6 flex flex-col justify-center order-1 lg:order-2">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md text-muted-foreground border-0">
-                  AnimalMind Pro
-                </Badge>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">AI research monitoring</span>
-              </div>
-              <h2 id="pro-cta-heading" className="text-lg sm:text-xl font-semibold text-foreground leading-tight mb-2">
-                {PRO_MARKETING_HEADLINE}
-              </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                {PRO_MARKETING_VALUE}
+            {/* Pro hero */}
+            <section
+              id="pro-cta"
+              aria-labelledby="pro-cta-heading"
+              className="mb-6 rounded-lg border border-border bg-card p-6 text-center shadow-sm sm:p-8"
+            >
+              <Badge variant="secondary" className="mb-3 text-[10px] font-semibold uppercase tracking-wider">
+                Veterinary Professional View
+              </Badge>
+              <h1 id="pro-cta-heading" className="text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                Your 3-Minute Veterinary Intelligence Brief.
+              </h1>
+              <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
+                Research, drug updates, and outbreak signals - distilled daily.
               </p>
-              <ul className="list-disc pl-5 space-y-1.5 text-sm text-muted-foreground mb-4">
-                {PRO_MARKETING_BENEFITS.map((benefit) => (
-                  <li key={benefit}>{benefit}</li>
-                ))}
-              </ul>
-              <div className="shrink-0 w-full sm:w-auto">
-                {waitlistStatus === "success" ? (
-                  <p className="text-sm text-foreground font-medium py-2">You’re on the list. We’ll notify you when the daily brief launches.</p>
-                ) : (
-                  <a
-                    href="#waitlist"
-                    className="inline-flex w-full sm:w-auto items-center justify-center rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/40 hover:border-foreground/30 min-h-[44px]"
-                  >
-                    Join the updates list
-                  </a>
-                )}
+              <div className="mt-5">
+                <Button
+                  type="button"
+                  className="min-h-[48px] px-6 text-sm font-semibold sm:text-base"
+                  onClick={() => {
+                    document.getElementById("pro-weekly-alerts")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  Get the Daily Pro Brief
+                </Button>
               </div>
-            </div>
-          </div>
-          <p className="px-4 sm:px-6 py-3 border-t border-border/80 text-xs text-muted-foreground">
-            {PRO_MARKETING_CREDIBILITY} Not medical advice.
-          </p>
-        </section>
+            </section>
 
-        {/* Lead — newsletter edition with image */}
-        <section className="pb-8 border-b border-border">
-          <p className="section-label mb-1">AnimalMind Pro</p>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight mb-2">
-            Fast, concise intelligence for veterinary decision-making
-          </h1>
-          <p className="text-muted-foreground leading-relaxed max-w-2xl mb-6">
-            Review high-signal updates across research, outbreaks, drug changes, and regulatory shifts in minutes.
-          </p>
-          <div className="rounded-lg overflow-hidden border border-border bg-muted/20 max-w-2xl mb-6">
-            <img
-              src="https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=700&q=80"
-              alt=""
-              className="w-full h-44 object-cover"
-            />
-          </div>
-        </section>
+            <section
+              id="pro-weekly-alerts"
+              aria-labelledby="pro-weekly-alerts-heading"
+              className="mb-10 rounded-lg border border-border bg-muted/30 p-4 sm:p-5"
+            >
+              <h2 id="pro-weekly-alerts-heading" className="text-lg font-semibold text-foreground">
+                Get Weekly Alerts
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                One email field. No login required.
+              </p>
+              {weeklyAlertStatus === "success" ? (
+                <p className="mt-3 text-sm font-medium text-foreground">{weeklyAlertMessage}</p>
+              ) : (
+                <form
+                  className="mt-3 flex flex-col gap-2 sm:flex-row"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    await submitWeeklyAlertEmail("clinical");
+                  }}
+                >
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={weeklyAlertEmail}
+                    onChange={(e) => setWeeklyAlertEmail(e.target.value)}
+                    disabled={weeklyAlertStatus === "loading"}
+                    className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
+                    aria-label="Email for weekly professional alerts"
+                  />
+                  <Button type="submit" disabled={weeklyAlertStatus === "loading"} className="rounded-md min-h-[44px]">
+                    {weeklyAlertStatus === "loading" ? "…" : "Subscribe Free"}
+                  </Button>
+                </form>
+              )}
+              {weeklyAlertStatus === "error" && weeklyAlertError && (
+                <p className="mt-2 text-sm text-destructive">{weeklyAlertError}</p>
+              )}
+              {!isSupabaseConfigured() && weeklyAlertStatus === "idle" && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Temporary frontend placeholder mode is active until an email endpoint is configured.
+                </p>
+              )}
+            </section>
 
         {/* Mission — how the newsletter works */}
         <section id="mission" aria-labelledby="mission-heading" className="pb-10">
@@ -2171,7 +2130,7 @@ export default function App() {
                             className="rounded-lg border border-border bg-muted/40 p-3 text-center"
                           >
                             {Icon && <Icon className="size-4 text-foreground mx-auto mb-1 block" aria-hidden />}
-                            <span className="block text-xl font-bold text-foreground">{summary.counts[key] ?? 0}</span>
+                            <span className="block text-xl font-bold text-foreground">{summary?.counts?.[key] ?? 0}</span>
                             <span className="block text-[11px] text-muted-foreground">{LABELS[key] ?? key}</span>
                           </div>
                         );
@@ -2179,7 +2138,7 @@ export default function App() {
                     </div>
                     <p className="mt-4 text-sm text-muted-foreground">
                       {(() => {
-                        const total = Object.values(summary.counts).reduce((a, b) => a + b, 0);
+                        const total = Object.values(summary?.counts ?? {}).reduce((a, b) => a + b, 0);
                         return `${total} items across surveillance, literature, clinical, and more. Links open original sources (CDC, PubMed, etc.).`;
                       })()}
                     </p>
@@ -2267,19 +2226,26 @@ export default function App() {
           </div>
 
           <section id="brief-articles" aria-labelledby="brief-articles-heading" className="mt-8">
-            <h2 id="brief-articles-heading" className="section-label mb-2">Daily brief articles</h2>
+            <h2 id="brief-articles-heading" className="section-label mb-2">Clinical Intelligence Feed</h2>
             <p className="text-xs text-muted-foreground mb-4">
-              Auto-generated article drafts from today’s ingest, with direct source links for review.
+              Auto-generated updates from today’s ingest, tagged for professional review.
             </p>
             {proBriefArticles.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {proBriefArticles.map((article) => (
-                  <Card key={`pro-article-${article.id}`} className="border border-border bg-card shadow-sm">
+                {proBriefArticles.map((article) => {
+                  const proTag = classifyProAlertFromTitle(article.title);
+                  return (
+                    <Card key={`pro-article-${article.id}`} className="border border-border bg-card shadow-sm">
                     <CardHeader className="p-4 pb-2">
                       <div className="flex items-center justify-between gap-2">
                         <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
-                          {article.audience === "all" ? "All audiences" : "Pro"}
+                          {proTag}
                         </Badge>
+                        {article.audience === "all" && (
+                          <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                            Cross-audience
+                          </Badge>
+                        )}
                       </div>
                       <CardTitle className="text-base font-semibold">{article.title}</CardTitle>
                       <CardDescription className="text-sm">{article.summary}</CardDescription>
@@ -2320,8 +2286,9 @@ export default function App() {
                         </div>
                       )}
                     </CardContent>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </div>
             ) : (
               <Card className="border border-border bg-card">
@@ -2332,6 +2299,16 @@ export default function App() {
                 </CardContent>
               </Card>
             )}
+          </section>
+
+          <section className="mt-8 rounded-lg border border-border bg-muted/20 p-4 sm:p-5">
+            <h2 className="section-label mb-2">Sources</h2>
+            <p className="text-sm text-muted-foreground">
+              Data monitored from public safety alerts, FDA announcements, and peer-reviewed research.
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              AnimalMind provides informational alerts and is not a replacement for veterinary care.
+            </p>
           </section>
 
           {/* Sources (what the agents track) — full width below */}
@@ -2356,7 +2333,7 @@ export default function App() {
         {/* Updates / Waitlist — Supabase or mailto */}
         <section id="waitlist" aria-labelledby="waitlist-heading" className="py-12 border-t border-border">
           <h2 id="waitlist-heading" className="section-label mb-2">Updates</h2>
-          <p className="text-lg font-semibold text-foreground mb-1">Get Free Weekly Animal Health Insights</p>
+          <p className="text-lg font-semibold text-foreground mb-1">Get Weekly Alerts</p>
           <p className="text-sm text-muted-foreground mb-4 max-w-md">
             Get notified when we add new digests, daily briefs, or major updates. No spam.
           </p>
@@ -2395,7 +2372,7 @@ export default function App() {
                 aria-label="Email for updates"
               />
               <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
-                {waitlistStatus === "loading" ? "…" : "Get Free Weekly Animal Health Insights"}
+                {waitlistStatus === "loading" ? "…" : "Subscribe Free"}
               </Button>
             </form>
           )}

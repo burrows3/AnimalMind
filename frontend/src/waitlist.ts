@@ -7,6 +7,10 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 const WAITLIST_TABLE = (import.meta.env.VITE_SUPABASE_WAITLIST_TABLE as string) || "waitlist";
 
+export function isSupabaseConfigured(): boolean {
+  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+}
+
 export async function submitWaitlist(email: string): Promise<{ ok: boolean; error?: string }> {
   const trimmed = email.trim();
   if (!trimmed) return { ok: false, error: "Email required" };
