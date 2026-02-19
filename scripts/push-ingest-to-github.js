@@ -308,6 +308,33 @@ async function main() {
         external_id: r.url || r.title || '',
       }));
     }
+    if (petRecallRows.length === 0 && fs.existsSync(DATA_DIR)) {
+      // Fallback: use recall snapshots from last ingest (e.g. when live APIs returned empty).
+      const snapshotFiles = ['fda-pet-recalls.json', 'cfia-pet-recalls.json', 'fsa-pet-recalls.json', 'fsanz-pet-recalls.json', 'rasff-pet-feed-alerts.json'];
+      const fetchedAt = meta.lastFetched || new Date().toISOString();
+      for (const file of snapshotFiles) {
+        const p = path.join(DATA_DIR, file);
+        try {
+          const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+          const list = (data && data.recalls) || [];
+          for (const r of list) {
+            if (r && !isFalsePetRecallRow(r)) {
+              petRecallRows.push({
+                data_type: 'recall',
+                condition_or_topic: r.condition_or_topic || 'Pet-related recall',
+                title: r.title || 'Pet recall alert',
+                url: r.url || '',
+                published_at: r.published_at || null,
+                fetched_at: r.fetched_at || data.fetchedAt || fetchedAt,
+                external_id: r.external_id || r.url || r.title || '',
+              });
+            }
+          }
+        } catch (_) {}
+        if (petRecallRows.length >= 80) break;
+      }
+      petRecallRows = petRecallRows.slice(0, 160);
+    }
     const missingPubMedIds = new Set();
     for (const row of [...rows, ...petResearchRows]) {
       if (row.title) continue;
@@ -364,12 +391,9 @@ async function main() {
     console.warn('Could not write static dashboard data files:', e.message);
   }
 
-  if (EXPORT_ONLY) {
-    console.log('Export complete (INGEST_EXPORT_ONLY=1; skipped git commit/push).');
-    return;
+  if (!EXPORT_ONLY) {
+    run('git add -f memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md memory/agent-outputs/ memory/opportunities.md');
   }
-
-  run('git add -f memory/animalmind.db memory/data-sources/ memory/autonomous-insights.md memory/agent-outputs/ memory/opportunities.md');
   if (fs.existsSync(DOCS_SUMMARY)) run('git add docs/data-summary.json');
   if (fs.existsSync(DOCS_SOURCE_HEALTH_JSON)) run('git add docs/source-health.json');
   if (fs.existsSync(DOCS_INGESTED_JSON)) run('git add docs/data/ingested.json');
@@ -392,7 +416,8 @@ async function main() {
   }
 
   const when = new Date().toISOString().replace(/T/, ' ').slice(0, 16);
-  run('git commit -m "Ingest: ' + when + '"');
+  // Use run() for commit so Windows git receives args correctly; when is safe (no quotes)
+  run('git commit -m "' + (EXPORT_ONLY ? 'Export: ' : 'Ingest: ') + when + '"');
   const pushBranch = resolvePushBranch();
   run('git push origin ' + pushBranch);
   console.log('Pushed ingest to GitHub.');

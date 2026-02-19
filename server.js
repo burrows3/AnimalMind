@@ -4,12 +4,8 @@
  * Run: npm run start → http://localhost:3000
  */
 
-require('dotenv').config();
-const path = require('path');
-// Use frontend .env for Supabase when root .env doesn't set them (e.g. local dev)
-require('dotenv').config({ path: path.join(__dirname, 'frontend', '.env') });
-
 const express = require('express');
+const path = require('path');
 const fs = require('fs');
 const { getIngestedGrouped, getIngestedMeta, getIngestedSorted, getIngestedByTypeSorted } = require('./lib/db');
 const { summarizeSourceHealth } = require('./lib/dataFreshness');
@@ -98,80 +94,9 @@ app.use((req, res, next) => {
   }
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self' mailto:"
   );
   next();
-});
-
-app.use(express.json());
-
-// Email signup for updates → Supabase only
-const WAITLIST_BACKUP = path.join(__dirname, 'memory', 'waitlist-backup.jsonl');
-const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim().replace(/\/$/, '');
-const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim();
-const WAITLIST_TABLE = (process.env.SUPABASE_WAITLIST_TABLE || process.env.VITE_SUPABASE_WAITLIST_TABLE || 'waitlist').trim();
-
-function appendWaitlistBackup(email) {
-  try {
-    const dir = path.dirname(WAITLIST_BACKUP);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.appendFileSync(WAITLIST_BACKUP, JSON.stringify({ email, created_at: new Date().toISOString() }) + '\n', 'utf8');
-  } catch (e) {
-    console.warn('Waitlist backup:', e.message);
-  }
-}
-
-function postToSupabase(email) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return Promise.resolve(null);
-  const https = require('https');
-  const body = JSON.stringify({ email });
-  const u = new URL(`${SUPABASE_URL}/rest/v1/${WAITLIST_TABLE}`);
-  return new Promise((resolve) => {
-    const req = https.request(
-      {
-        hostname: u.hostname,
-        path: u.pathname,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          Prefer: 'return=minimal',
-          'Content-Length': Buffer.byteLength(body, 'utf8'),
-        },
-      },
-      (res) => {
-        let data = '';
-        res.on('data', (ch) => (data += ch));
-        res.on('end', () => resolve({ status: res.statusCode, body: data }));
-      }
-    );
-    req.on('error', (e) => resolve({ error: e.message }));
-    req.write(body);
-    req.end();
-  });
-}
-
-app.post('/api/waitlist', rateLimit, (req, res) => {
-  const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return res.status(400).json({ ok: false, error: 'Valid email required' });
-  }
-  appendWaitlistBackup(email);
-  postToSupabase(email).then((out) => {
-    if (out && out.error) {
-      console.warn('Waitlist Supabase request error:', out.error);
-      return res.status(502).json({ ok: false, error: 'Signup service temporarily unavailable.' });
-    }
-    if (out && out.status >= 400) {
-      console.warn('Waitlist Supabase rejected:', out.status, out.body);
-      const msg = out.body && /RLS|policy|permission|denied/i.test(out.body)
-        ? 'Signup not allowed. Check Supabase RLS policies for the waitlist table.'
-        : (out.body || out.status + '').slice(0, 80);
-      return res.status(502).json({ ok: false, error: msg });
-    }
-    res.json({ ok: true });
-  });
 });
 
 // API: ingested data + meta (counts, last updated) for dashboard. Read-only; no credentials.
@@ -287,7 +212,7 @@ app.get('/api/pet-research', rateLimit, (req, res) => {
 // API: pet recall feed (limited). Used by the Pet Safety Dashboard so recall alerts don't get starved by other data types.
 app.get('/api/pet-recalls', rateLimit, (req, res) => {
   try {
-    const rows = getIngestedByTypeSorted('recall', { limit: 120 }).map((r) => ({
+    let rows = getIngestedByTypeSorted('recall', { limit: 120 }).map((r) => ({
       data_type: r.data_type,
       condition_or_topic: r.condition_or_topic || '',
       title: r.title || '',
@@ -296,6 +221,21 @@ app.get('/api/pet-recalls', rateLimit, (req, res) => {
       fetched_at: r.fetched_at || null,
       source: r.source || '',
     }));
+    if (rows.length === 0) {
+      const staticPath = path.join(__dirname, 'public', 'data', 'pet-recalls.json');
+      const staticData = readJsonSafe(staticPath);
+      if (Array.isArray(staticData) && staticData.length > 0) {
+        rows = staticData.map((r) => ({
+          data_type: r.data_type || 'recall',
+          condition_or_topic: r.condition_or_topic || '',
+          title: r.title || '',
+          url: r.url || '',
+          published_at: r.published_at || null,
+          fetched_at: r.fetched_at || null,
+          source: '',
+        }));
+      }
+    }
     res.json({ count: rows.length, ingested: rows });
   } catch {
     res.status(500).json({ error: 'Service temporarily unavailable.' });

@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { submitWaitlist } from "./waitlist";
+import { submitIdea, type IdeaSource } from "./ideas";
 
 const DATA_ORDER = [
   "surveillance",
@@ -650,6 +651,18 @@ function formatIngestedDate(value: string | null | undefined): string {
   });
 }
 
+/** Strip HTML tags and decode common entities so titles/topics display cleanly. */
+function stripHtmlForDisplay(text: string | null | undefined): string {
+  if (!text || typeof text !== "string") return "";
+  const decoded = text
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+  return decoded.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 const PET_SAFETY_SIGNAL_KEYWORDS =
   /\b(recall|withdrawn?|advisory|alert|contaminat(?:ed|ion)|listeria|salmonella|toxic|toxicity|poison(?:ing)?|unsafe)\b/i;
 const PET_SAFETY_CONTEXT_KEYWORDS =
@@ -852,13 +865,13 @@ function stableArticleId(row: IngestedRow): string {
 
 /** Article title from the actual source; fallback only when source has no title. */
 function petArticleTitle(row: IngestedRow): string {
-  const t = (row.title || "").trim();
+  const t = stripHtmlForDisplay(row.title || "");
   if (t) {
     if (t.length <= 72) return t;
     const end = t.lastIndexOf(" ", 69);
     return (end > 0 ? t.slice(0, end) : t.slice(0, 72)) + "…";
   }
-  const topic = friendlyPetTopic(row.condition_or_topic || "");
+  const topic = friendlyPetTopic(stripHtmlForDisplay(row.condition_or_topic || ""));
   return `${topic}: what pet owners should know`;
 }
 
@@ -877,10 +890,7 @@ function petArticleSummary(row: IngestedRow, evidenceText = ""): string {
 }
 
 function articleTopicText(row: IngestedRow): string {
-  const cleaned = (row.condition_or_topic || "pet health")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const cleaned = stripHtmlForDisplay(row.condition_or_topic || "pet health");
   return cleaned || "pet health";
 }
 
@@ -967,7 +977,7 @@ function ensurePetOwnerParagraphs(paragraphs: string[], topic: string): string[]
 function petArticleParagraphs(row: IngestedRow, evidenceText = ""): string[] {
   const topic = articleTopicText(row);
   const sourceLabel = LABELS[row.data_type] ?? row.data_type.replace(/_/g, " ");
-  const citedTitle = shortHeadline(row.title || `Update on ${topic}`, 110);
+  const citedTitle = shortHeadline(stripHtmlForDisplay(row.title) || `Update on ${topic}`, 110);
   const intro = `This article summarizes one source: “${citedTitle}.” It is from ${sourceLabel} and focuses on ${topic}.`;
   const evidenceSummary = firstSentences(evidenceText, 2, 360);
   const interpretation = evidenceSummary
@@ -1101,6 +1111,11 @@ export default function App() {
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [waitlistError, setWaitlistError] = useState("");
+  const [waitlistAlreadyOnList, setWaitlistAlreadyOnList] = useState(false);
+  const [ideaText, setIdeaText] = useState("");
+  const [ideaEmail, setIdeaEmail] = useState("");
+  const [ideaStatus, setIdeaStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [ideaError, setIdeaError] = useState("");
   const [showAllPetResearch, setShowAllPetResearch] = useState(false);
   const [allPetResearchLoading, setAllPetResearchLoading] = useState(false);
   const [allPetResearchError, setAllPetResearchError] = useState("");
@@ -1177,6 +1192,26 @@ export default function App() {
     setAllPetResearchLoading(false);
   }, [showAllPetResearch, allPetResearchRows, allPetResearchLoading]);
 
+  const handleSubmitIdea = useCallback(async (source: IdeaSource) => {
+    const trimmed = ideaText.trim();
+    if (!trimmed) {
+      setIdeaError("Please describe your idea.");
+      setIdeaStatus("error");
+      return;
+    }
+    setIdeaStatus("loading");
+    setIdeaError("");
+    const result = await submitIdea(trimmed, source, ideaEmail.trim() || undefined);
+    if (result.ok) {
+      setIdeaStatus("success");
+      setIdeaText("");
+      setIdeaEmail("");
+    } else {
+      setIdeaStatus("error");
+      setIdeaError(result.error || "Something went wrong.");
+    }
+  }, [ideaText, ideaEmail]);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -1211,7 +1246,11 @@ export default function App() {
   }, [memory]);
 
   const lastUpdated = summary?.lastUpdated
-    ? new Date(summary.lastUpdated).toLocaleString()
+    ? new Date(summary.lastUpdated).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
     : null;
   const ingestFreshnessLabel = summary?.lastUpdated
     ? `Updated ${relativeTime(summary.lastUpdated)}`
@@ -1451,6 +1490,51 @@ export default function App() {
             <p className="mt-10 pt-8 border-t border-border text-center text-xs text-muted-foreground max-w-xl mx-auto">
               Animal Health News run by autonomous AI agents. Research and trends validated by humans. Not medical advice.
             </p>
+            <p className="mt-4 text-center">
+              <a href="#submit-idea" className="text-sm font-medium text-foreground underline underline-offset-2 hover:no-underline">
+                Have feedback? Submit an idea →
+              </a>
+            </p>
+
+            <section id="submit-idea" aria-labelledby="submit-idea-heading" className="mt-10 pt-8 border-t border-border text-center max-w-xl mx-auto">
+              <h2 id="submit-idea-heading" className="text-sm font-semibold text-foreground mb-1">Suggest an improvement</h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                If you have recommendations to make the platform better, let us know.
+              </p>
+              {ideaStatus === "success" ? (
+                <p className="text-sm text-foreground font-medium">Thanks! We got your idea.</p>
+              ) : (
+                <form
+                  className="flex flex-col gap-3 text-left max-w-md mx-auto"
+                  onSubmit={(e) => { e.preventDefault(); handleSubmitIdea("landing"); }}
+                >
+                  <textarea
+                    placeholder="Your idea or recommendation…"
+                    value={ideaText}
+                    onChange={(e) => setIdeaText(e.target.value)}
+                    disabled={ideaStatus === "loading"}
+                    rows={3}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 resize-y min-h-[80px]"
+                    aria-label="Your idea"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Your email (optional)"
+                    value={ideaEmail}
+                    onChange={(e) => setIdeaEmail(e.target.value)}
+                    disabled={ideaStatus === "loading"}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                    aria-label="Email (optional)"
+                  />
+                  <Button type="submit" disabled={ideaStatus === "loading"} className="rounded-md shrink-0 w-full sm:w-auto sm:self-center">
+                    {ideaStatus === "loading" ? "Sending…" : "Submit an idea"}
+                  </Button>
+                  {ideaStatus === "error" && ideaError && (
+                    <p className="text-sm text-destructive">{ideaError}</p>
+                  )}
+                </form>
+              )}
+            </section>
           </main>
           <footer className="border-t border-border py-5 text-center text-xs text-muted-foreground">
             <p>AnimalMind · Animal Health News</p>
@@ -1474,7 +1558,8 @@ export default function App() {
               <div className="flex items-center gap-4">
                 <a href="#pet-safety-dashboard" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Safety dashboard</a>
                 <a href="#pet-brief" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Today's brief</a>
-                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Get updates</a>
+                <a href="#submit-idea" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Submit an idea</a>
+                <a href="#pet-cta" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">Notify me</a>
                 <span className="text-sm text-muted-foreground font-medium">AnimalMind Pet</span>
               </div>
             </nav>
@@ -1517,7 +1602,9 @@ export default function App() {
                     {latestPetSafetyReports.map((row, idx) => {
                       const href = safeHref(row.url);
                       const dateLabel = formatIngestedDate(row.published_at ?? row.fetched_at);
-                      const title = (row.title || row.condition_or_topic || "Pet recall alert").trim();
+                      const title = stripHtmlForDisplay(row.title || row.condition_or_topic || "Pet recall alert");
+                      const subtitle =
+                        stripHtmlForDisplay(row.condition_or_topic) || "Pet recall alert";
                       return (
                         <li key={`pet-safety-report-${idx}`} className="rounded-md border border-border bg-background px-3 py-2">
                           {href !== "#" ? (
@@ -1536,7 +1623,7 @@ export default function App() {
                             </span>
                           )}
                           <p className="mt-1 text-xs text-muted-foreground">
-                            Pet recall alert
+                            {subtitle}
                             {dateLabel ? ` · ${dateLabel}` : ""}
                           </p>
                         </li>
@@ -1608,66 +1695,46 @@ export default function App() {
                     AnimalMind Pet
                   </Badge>
                   <h2 id="pet-cta-heading" className="text-lg sm:text-xl font-semibold text-foreground leading-tight mb-2">
-                    Sign up for advanced Animal Health updates
+                    {BRAND_HEADLINE}
                   </h2>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    We’ll email you when we publish new research and briefs. No spam.
+                    AnimalMind Pet is the owner edition: plain-language guidance from the same autonomous engine as Pro.
                   </p>
                   {waitlistStatus === "success" ? (
-                    <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when Pet launches.</p>
+                    <p className="text-sm text-foreground font-medium">{waitlistAlreadyOnList ? "We have you on the list!" : "You’re on the list. We’ll notify you when Pet launches."}</p>
                   ) : (
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <form
+                      className="flex flex-col sm:flex-row gap-2"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const email = waitlistEmail.trim();
+                        if (!email) return;
+                        setWaitlistStatus("loading");
+                        setWaitlistError("");
+                        const result = await submitWaitlist(email);
+                        if (result.ok) {
+                          setWaitlistAlreadyOnList(!!result.alreadyOnList);
+                          setWaitlistStatus("success");
+                          setWaitlistEmail("");
+                        } else {
+                          setWaitlistStatus("error");
+                          setWaitlistError(result.error || "Something went wrong.");
+                        }
+                      }}
+                    >
                       <input
                         type="email"
                         placeholder="Your email"
                         value={waitlistEmail}
                         onChange={(e) => setWaitlistEmail(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const email = waitlistEmail.trim();
-                            if (email) {
-                              setWaitlistStatus("loading");
-                              setWaitlistError("");
-                              submitWaitlist(email).then((result) => {
-                                if (result.ok) {
-                                  setWaitlistStatus("success");
-                                  setWaitlistEmail("");
-                                } else {
-                                  setWaitlistStatus("error");
-                                  setWaitlistError(result.error || "Something went wrong.");
-                                }
-                              });
-                            }
-                          }
-                        }}
                         disabled={waitlistStatus === "loading"}
                         className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 min-h-[44px]"
                         aria-label="Email"
                       />
-                      <Button
-                        type="button"
-                        disabled={waitlistStatus === "loading"}
-                        className="rounded-md shrink-0 min-h-[44px]"
-                        aria-label="Sign up for updates"
-                        onClick={async () => {
-                          const email = waitlistEmail.trim();
-                          if (!email) return;
-                          setWaitlistStatus("loading");
-                          setWaitlistError("");
-                          const result = await submitWaitlist(email);
-                          if (result.ok) {
-                            setWaitlistStatus("success");
-                            setWaitlistEmail("");
-                          } else {
-                            setWaitlistStatus("error");
-                            setWaitlistError(result.error || "Something went wrong.");
-                          }
-                        }}
-                      >
-                        {waitlistStatus === "loading" ? "…" : "Sign up"}
+                      <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0 min-h-[44px]">
+                        {waitlistStatus === "loading" ? "…" : "Notify me"}
                       </Button>
-                    </div>
+                    </form>
                   )}
                   {waitlistStatus === "error" && waitlistError && (
                     <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
@@ -1990,67 +2057,88 @@ export default function App() {
             {/* Updates */}
             <section id="pet-updates" aria-labelledby="pet-updates-heading" className="py-12 border-t border-border">
               <h2 id="pet-updates-heading" className="section-label mb-2">Updates</h2>
-              <p className="text-lg font-semibold text-foreground mb-1">Sign up for advanced Animal Health updates</p>
+              <p className="text-lg font-semibold text-foreground mb-1">Get notified</p>
               <p className="text-sm text-muted-foreground mb-4 max-w-md">
-                We’ll email you when we publish new research and briefs. No spam.
+                We’ll email you when AnimalMind Pet launches and when we add new guidance. No spam.
               </p>
               {waitlistStatus === "success" ? (
-                <p className="text-sm text-foreground font-medium">You’re on the list. We’ll notify you when we have updates.</p>
+                <p className="text-sm text-foreground font-medium">{waitlistAlreadyOnList ? "We have you on the list!" : "You’re on the list. We’ll notify you when we have updates."}</p>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-2 max-w-md">
+                <form
+                  className="flex flex-col sm:flex-row gap-2 max-w-md"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const email = waitlistEmail.trim();
+                    if (!email) return;
+                    setWaitlistStatus("loading");
+                    setWaitlistError("");
+                    const result = await submitWaitlist(email);
+                    if (result.ok) {
+                      setWaitlistAlreadyOnList(!!result.alreadyOnList);
+                      setWaitlistStatus("success");
+                      setWaitlistEmail("");
+                    } else {
+                      setWaitlistStatus("error");
+                      setWaitlistError(result.error || "Something went wrong.");
+                    }
+                  }}
+                >
                   <input
                     type="email"
                     placeholder="you@example.com"
                     value={waitlistEmail}
                     onChange={(e) => setWaitlistEmail(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        const email = waitlistEmail.trim();
-                        if (email) {
-                          setWaitlistStatus("loading");
-                          setWaitlistError("");
-                          submitWaitlist(email).then((result) => {
-                            if (result.ok) {
-                              setWaitlistStatus("success");
-                              setWaitlistEmail("");
-                            } else {
-                              setWaitlistStatus("error");
-                              setWaitlistError(result.error || "Something went wrong.");
-                            }
-                          });
-                        }
-                      }
-                    }}
                     disabled={waitlistStatus === "loading"}
                     className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
                     aria-label="Email for updates"
                   />
-                  <Button
-                    type="button"
-                    disabled={waitlistStatus === "loading"}
-                    className="rounded-md shrink-0"
-                    onClick={async () => {
-                      const email = waitlistEmail.trim();
-                      if (!email) return;
-                      setWaitlistStatus("loading");
-                      setWaitlistError("");
-                      const result = await submitWaitlist(email);
-                      if (result.ok) {
-                        setWaitlistStatus("success");
-                        setWaitlistEmail("");
-                      } else {
-                        setWaitlistStatus("error");
-                        setWaitlistError(result.error || "Something went wrong.");
-                      }
-                    }}
-                  >
-                    {waitlistStatus === "loading" ? "…" : "Sign up"}
+                  <Button type="submit" disabled={waitlistStatus === "loading"} className="rounded-md shrink-0">
+                    {waitlistStatus === "loading" ? "…" : "Notify me"}
                   </Button>
-                </div>
+                </form>
               )}
               {waitlistStatus === "error" && waitlistError && (
                 <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+              )}
+            </section>
+
+            <section id="submit-idea" aria-labelledby="submit-idea-heading-pet" className="py-8 border-t border-border text-center">
+              <h2 id="submit-idea-heading-pet" className="text-sm font-semibold text-foreground mb-1">Suggest an improvement</h2>
+              <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+                If you have recommendations to make the platform better, let us know.
+              </p>
+              {ideaStatus === "success" ? (
+                <p className="text-sm text-foreground font-medium">Thanks! We got your idea.</p>
+              ) : (
+                <form
+                  className="flex flex-col gap-3 text-left max-w-md mx-auto"
+                  onSubmit={(e) => { e.preventDefault(); handleSubmitIdea("pet"); }}
+                >
+                  <textarea
+                    placeholder="Your idea or recommendation…"
+                    value={ideaText}
+                    onChange={(e) => setIdeaText(e.target.value)}
+                    disabled={ideaStatus === "loading"}
+                    rows={3}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 resize-y min-h-[80px]"
+                    aria-label="Your idea"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Your email (optional)"
+                    value={ideaEmail}
+                    onChange={(e) => setIdeaEmail(e.target.value)}
+                    disabled={ideaStatus === "loading"}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                    aria-label="Email (optional)"
+                  />
+                  <Button type="submit" disabled={ideaStatus === "loading"} className="rounded-md shrink-0 w-full sm:w-auto sm:self-center">
+                    {ideaStatus === "loading" ? "Sending…" : "Submit an idea"}
+                  </Button>
+                  {ideaStatus === "error" && ideaError && (
+                    <p className="text-sm text-destructive">{ideaError}</p>
+                  )}
+                </form>
               )}
             </section>
 
@@ -2089,6 +2177,7 @@ export default function App() {
                 <a href="#mission" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Mission</a>
                 <a href="#topics" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Topics</a>
                 <a href="#track" className="hidden sm:flex px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] items-center">Sources</a>
+                <a href="#submit-idea" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center hidden sm:flex">Submit an idea</a>
                 <a href="#waitlist" className="px-2.5 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 min-h-[44px] flex items-center">Updates</a>
               </div>
             </nav>
@@ -2176,7 +2265,7 @@ export default function App() {
               </ul>
               <div className="shrink-0 w-full sm:w-auto">
                 {waitlistStatus === "success" ? (
-                  <p className="text-sm text-foreground font-medium py-2">You’re on the list. We’ll notify you when the daily brief launches.</p>
+                  <p className="text-sm text-foreground font-medium py-2">{waitlistAlreadyOnList ? "We have you on the list!" : "You’re on the list. We’ll notify you when the daily brief launches."}</p>
                 ) : (
                   <a
                     href="#waitlist"
@@ -2524,15 +2613,15 @@ export default function App() {
           </section>
         </section>
 
-        {/* Waitlist — collect signups for advanced Animal Health updates only */}
+        {/* Updates / Waitlist — Supabase or mailto */}
         <section id="waitlist" aria-labelledby="waitlist-heading" className="py-12 border-t border-border">
           <h2 id="waitlist-heading" className="section-label mb-2">Updates</h2>
-          <p className="text-lg font-semibold text-foreground mb-1">Sign up for advanced Animal Health updates</p>
+          <p className="text-lg font-semibold text-foreground mb-1">Get notified</p>
           <p className="text-sm text-muted-foreground mb-4 max-w-md">
-            We’ll email you when we publish new research and briefs. No spam.
+            We'll email you when AnimalMind Pet launches and when we add new guidance. No spam.
           </p>
           {waitlistStatus === "success" ? (
-            <p className="text-sm text-foreground font-medium">You’re on the list. We’ll email you when we have updates.</p>
+            <p className="text-sm text-foreground font-medium">{waitlistAlreadyOnList ? "We have you on the list!" : "You're on the list! We'll notify you when we have updates."}</p>
           ) : (
             <div className="flex flex-col sm:flex-row gap-2 max-w-md">
               <input
@@ -2549,6 +2638,7 @@ export default function App() {
                       setWaitlistError("");
                       submitWaitlist(email).then((result) => {
                         if (result.ok) {
+                          setWaitlistAlreadyOnList(!!result.alreadyOnList);
                           setWaitlistStatus("success");
                           setWaitlistEmail("");
                         } else {
@@ -2574,6 +2664,7 @@ export default function App() {
                   setWaitlistError("");
                   const result = await submitWaitlist(email);
                   if (result.ok) {
+                    setWaitlistAlreadyOnList(!!result.alreadyOnList);
                     setWaitlistStatus("success");
                     setWaitlistEmail("");
                   } else {
@@ -2582,14 +2673,55 @@ export default function App() {
                   }
                 }}
               >
-                {waitlistStatus === "loading" ? "…" : "Sign up"}
+                {waitlistStatus === "loading" ? "…" : "Notify me"}
               </Button>
             </div>
           )}
           {waitlistStatus === "error" && waitlistError && (
             <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
           )}
-        </section>
+
+          <section id="submit-idea" aria-labelledby="submit-idea-heading-pro" className="pt-10 mt-10 border-t border-border text-center">
+            <h2 id="submit-idea-heading-pro" className="section-label mb-1">Suggest an improvement</h2>
+            <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+              If you have recommendations to make the platform better, let us know.
+            </p>
+            {ideaStatus === "success" ? (
+              <p className="text-sm text-foreground font-medium">Thanks! We got your idea.</p>
+            ) : (
+              <form
+                className="flex flex-col gap-3 text-left max-w-md mx-auto"
+                onSubmit={(e) => { e.preventDefault(); handleSubmitIdea("pro"); }}
+              >
+                <textarea
+                  placeholder="Your idea or recommendation…"
+                  value={ideaText}
+                  onChange={(e) => setIdeaText(e.target.value)}
+                  disabled={ideaStatus === "loading"}
+                  rows={3}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 resize-y min-h-[80px]"
+                  aria-label="Your idea"
+                />
+                <input
+                  type="email"
+                  placeholder="Your email (optional)"
+                  value={ideaEmail}
+                  onChange={(e) => setIdeaEmail(e.target.value)}
+                  disabled={ideaStatus === "loading"}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                  aria-label="Email (optional)"
+                />
+                <Button type="submit" disabled={ideaStatus === "loading"} className="rounded-md shrink-0 w-full sm:w-auto sm:self-center">
+                  {ideaStatus === "loading" ? "Sending…" : "Submit an idea"}
+                </Button>
+                {ideaStatus === "error" && ideaError && (
+                  <p className="text-sm text-destructive">{ideaError}</p>
+                )}
+              </form>
+            )}
+          </section>
+
+          </section>
 
         <div className="pt-8 flex justify-center">
           <a href="#data" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
