@@ -1,33 +1,33 @@
 {
-  "updatedAt": "2026-02-17T03:17:09.014Z",
+  "updatedAt": "2026-02-19T03:36:36.568Z",
   "topics": [
     {
       "topic": "Early Detection of Disease Across Species",
-      "count": 26
+      "count": 31
     },
     {
       "topic": "Decoding Animal Pain and Distress",
-      "count": 18
+      "count": 23
     },
     {
       "topic": "Preclinical Disease States",
-      "count": 13
+      "count": 18
     },
     {
       "topic": "Unexplained Recovery and Resilience",
-      "count": 16
+      "count": 21
     },
     {
       "topic": "Microbiome–Behavior–Health Coupling",
-      "count": 13
+      "count": 18
     },
     {
       "topic": "Biological Timing and Treatment Response",
-      "count": 8
+      "count": 13
     },
     {
       "topic": "Non-Linear Dose and Response Effects",
-      "count": 8
+      "count": 13
     },
     {
       "topic": "Emergent Effects of Complex Care Pathways",
@@ -85,6 +85,6 @@
   "totals": {
     "topicCount": 20,
     "topicsWithItems": 20,
-    "totalItems": 229
+    "totalItems": 264
   }
 }
